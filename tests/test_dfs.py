@@ -7,11 +7,11 @@ python -m tests.test_dfs
 """
 class DFSCacheClass(unittest.TestCase):
 
-    def test__DFSCache_exec_DFS__search_head_type_1__case3(self):
+    def test__DFSCache_exec__search_head_type_1__case3(self):
 
         q = test_dfs_graph_3()
         x = DFSCache(1,q,search_head_type=1)
-        x.exec_DFS() 
+        x.exec() 
         x.store_minpaths(num_paths=1000)
 
         npath1 = NodePath.preload([3, 1],[1])
@@ -27,11 +27,11 @@ class DFSCacheClass(unittest.TestCase):
         for pt in npaths: 
                 assert pt in x.min_paths[3]
 
-    def test__DFSCache_exec_DFS__search_head_type_1AND2__case2(self):
+    def test__DFSCache_exec__search_head_type_1AND2__case2(self):
         g = test_dfs_graph_2()
         x = DFSCache(1,g,search_head_type=1)
 
-        x.exec_DFS()
+        x.exec()
 
         q = x.paths_to_head(7)
         q = sorted(q,key=lambda x: x.cost())
@@ -39,19 +39,19 @@ class DFSCacheClass(unittest.TestCase):
         assert q[0].cost() == 2
 
         x = DFSCache(1,g,search_head_type=2)
-        x.exec_DFS()
+        x.exec()
         q2 = x.paths_to_head(7)
         assert len(q) > len(q2) 
         return
 
-    def test__DFSCache_exec_DFS__search_head_type_1AND2__case4(self):
+    def test__DFSCache_exec__search_head_type_1AND2__case4(self):
         q = test_dfs_graph_4()
         x = DFSCache(1,q,search_head_type=1)
-        x.exec_DFS() 
+        x.exec() 
         x.store_minpaths(num_paths=1000)
 
         x2 = DFSCache(1,q,search_head_type=2)
-        x2.exec_DFS()
+        x2.exec()
         x2.store_minpaths(num_paths=1000)
 
         distances = {0:1,1:0,2:1,3:2,4:3}
@@ -60,11 +60,11 @@ class DFSCacheClass(unittest.TestCase):
                 assert distances[k] == v[0].cost()
                 assert len(v) == len(x2.min_paths[k])
 
-    def test__DFSCache_exec_DFS__search_head_type_1__case1(self):
+    def test__DFSCache_exec__search_head_type_1__case1(self):
 
         q = test_dfs_graph_1()
         x = DFSCache(1,q,search_head_type=1)
-        x.exec_DFS() 
+        x.exec() 
         x.store_minpaths(num_paths=1000)
 
         assert x.min_paths[0][0].cost() == 1
