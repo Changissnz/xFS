@@ -1,11 +1,4 @@
-'''
-the four variables are
- then:
- 1. The rate that node i is a delegate to question j , W.
- 2. The rate of contradiction, X.
- 3. The duplicates of a question j asked to node i, Y .
- 4. The mean of the answers of a node i to a question j, Z.
-'''
+import numpy as np 
 
 class QStruct:
 
