@@ -1,2 +1,2 @@
 # python -m streamlit run main.py
-from viface.main_vis import * 
+from face.xfs_ui import * 
