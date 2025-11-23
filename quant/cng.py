@@ -50,6 +50,8 @@ converging linear congruential generator
 class CLCG:
 
     def __init__(self,start,m,a,n0,n1,convergence_index,convergence_cycle_length,convergence_type,prg): 
+        assert type(start) == type(m) == type(a) == type(n0) == type(n1)
+        assert type(start) == int 
         assert n0 < n1
         assert not (m == 0 and a == 0)
         assert convergence_index < n1 - n0 
