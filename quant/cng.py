@@ -68,6 +68,7 @@ class CLCG:
         self.prg = prg 
 
         self.c = 0 
+        self.c2 = 0 
         self.converged = False 
 
         self.current_cycle = set()  
@@ -94,13 +95,16 @@ class CLCG:
         ci = self.component_of(self.s_)
 
         self.current_cycle |= {self.s_} 
-        
+
         # case: current cycle equals full component, switch to another component 
-        if self.gd.components[ci] == self.current_cycle:
+        gdc = flatten_setseq(self.gd.components[ci])
+        if gdc == self.current_cycle:
             self.current_cycle.clear() 
             x = self.choose_alt_component({ci})
             if x != -1: 
                 self.s_ = self.choose_element_in_component(x)
+                self.c,self.c2 = self.c + 1,self.c2 + 1  
+                
                 return self.s_ 
             # subcase: no alternative component exists
 
@@ -209,9 +213,8 @@ class CLCG:
         return s 
 
     def component_of(self,s): 
-
         for (i,x) in enumerate(self.gd.components):
-            if s in x: 
+            if {s} in x: 
                 return i 
         return -1 
     
