@@ -434,6 +434,12 @@ class ExprTree:
 
             elif node.val == "&":
                 return "(" + decide_at_point(node.left) + ")" + node.val + "(" + decide_at_point(node.right) + ")"
+            elif node.val == "!":
+                if type(node.left) != type(None): 
+                    return node.val + decide_at_point(node.left)
+                else: 
+                    assert type(node.right) != type(None) 
+                    return node.val + decide_at_point(node.right)
             else:
                 return node.val
 
@@ -554,6 +560,29 @@ class ExprTree:
             else:
                 uniqueDecisions.add(dec)
                 c += 1
+
+    def possible_decision_to_map(self,index): 
+        assert index in self.possibleDecisions 
+
+        D = dict() 
+
+        def traverse(node): 
+            assert node.val != "|" 
+
+            if node.val == "!": 
+                if type(node.left) != type(None): 
+                    D[node.left.val] = False
+                else: 
+                    assert type(node.right) != type(None) 
+                    D[node.right.val] = False 
+            elif node.val == "&": 
+                traverse(node.left)
+                traverse(node.right) 
+            else: 
+                D[node.val] = True 
+                
+        traverse(self.possibleDecisions[index])
+        return D 
 
     @staticmethod
     def rewind_to_root_(node):
