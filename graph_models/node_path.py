@@ -78,6 +78,9 @@ class XFSCache:
         ## vertex -> previous vertex -> score 
         self.costfrom_table = defaultdict(defaultdict)
 
+        # used to keep track of previous move
+        self.previous_edges = [] 
+
         self.min_paths = {} 
         self.init_cache() 
 

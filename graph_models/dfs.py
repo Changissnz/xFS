@@ -18,6 +18,7 @@ class DFSCache(XFSCache):
             nextnode_priority_function)
 
     def move_one(self):
+        self.previous_edges.clear() 
 
         # move to a random available node from the reference
         q = self.ref_neighbors_travelled[self.reference]
@@ -36,7 +37,10 @@ class DFSCache(XFSCache):
             return self.move_one()
 
         # case: move to random available node
-        q = available.pop()
+        if type(self.nnpf) != type(None): 
+            q = self.nnpf(self.reference,available) 
+        else: 
+            q = available.pop()
 
         cost = self.fetch_edge_cost(self.reference,q)
         
@@ -45,12 +49,13 @@ class DFSCache(XFSCache):
             # update reference
         self.ref_neighbors_travelled[self.reference] = self.ref_neighbors_travelled[\
             self.reference] | {q}
+        self.previous_edges.append((self.reference,q))
 
         if self.search_head_type == 2:
             self.ref_neighbors_travelled[q] = self.ref_neighbors_travelled[q]\
                 | {self.reference}
         self.reference_varcache.insert(0,deepcopy(self.reference))
-        self.reference = q        
+        self.reference = q
         return True 
     
 
