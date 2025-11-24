@@ -1,4 +1,4 @@
-import numpy as np 
+from .micrograph import * 
 
 class QStruct:
 
@@ -24,17 +24,22 @@ class QStruct:
     def update(self,node_idn,q_idn,answer):
         f = self.frate[node_idn,q_idn]
         self.frate[node_idn,q_idn] += 1 
+        assert False 
 
 class RStruct: 
 
-    def __init__(self,node_idn,answers:dict,answer_objective:dict):  
+    def __init__(self,node_idn,answers:dict,answer_objective:dict,prg):   
         self.node_idn = node_idn
+        # question idn -> answer 
         self.answers = answers 
+        # question idn -> 0|1|2
         self.answer_objective = answer_objective
         return
+
+    def answer(self,question):
+        return -1 
     
 class RNet:
 
-    def __init__(self,d:dict,rstruct_map,q):
-
+    def __init__(self,mg:MicroGraph,rstruct_map,q):
         return -1 
