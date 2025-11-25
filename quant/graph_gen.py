@@ -1,4 +1,5 @@
 from collections import defaultdict 
+from math import ceil 
 
 class GraphGen:
 
@@ -11,11 +12,7 @@ class GraphGen:
         assert is_dsg in {0,1}
         assert type(is_realtime_gen) == bool 
         assert type(vertex_degree) == int and vertex_degree > 0 
-
-        if type(edge_connectivity) == float: 
-            assert 1.0 >= edge_connectivity >= 0.0 
-        else: 
-            assert type(edge_connectivity) == type(None)
+        assert type(edge_connectivity) == float and 1.0 >= edge_connectivity >= 0.0 
 
         self.is_dsg = is_dsg 
         self.prg = prg 
@@ -88,7 +85,6 @@ class GraphGen:
             stat = self.new__realtime() 
         else: 
             stat = self.new_edge() 
-
         self.finstat = not stat 
         return not self.finstat 
 
@@ -96,6 +92,12 @@ class GraphGen:
         # case: maybe add another vertex if vertex capacity not reached
         l = len(self.d)
         if l < self.vertex_degree: 
+
+            # subcase: empty vertices 
+            if l == 0: 
+                self.d[l] = set() 
+                return True 
+
             q = int(self.prg()) % 2 
             # add new vertex 
             if q: 
@@ -103,10 +105,13 @@ class GraphGen:
                 return True 
 
             # subcase: connectivity has been reached, have to add another vertex 
-            ec = self.edge_connectivity_(self.current_edge_degree)
+            ec = self.edge_connectivity_()
             if ec >= self.edge_connectivity: 
                 self.d[l] = set() 
                 return True 
+            # subcase: connectivity has not been reached, add new edge
+            else: 
+                ex = self.new_edge() 
 
         # case: add new edge 
         return self.new_edge()
@@ -130,7 +135,9 @@ class GraphGen:
             if not self.is_dsg: 
                 self.d[nx] |= {n} 
             self.current_edge_degree += 1 
-        return
+            break 
+
+        return True 
 
     def available_endnodes_for_node(self,n):
         rx = set([i for i in range(self.vertex_degree)]) - {n} 
