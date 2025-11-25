@@ -1,4 +1,5 @@
-from collections import defaultdict 
+#from collections import defaultdict 
+from graph_models.micrograph import * 
 from math import ceil 
 
 class GraphGen:
@@ -24,6 +25,9 @@ class GraphGen:
         self.d = defaultdict(set)  
         self.preproc() 
         return
+
+    def to_file(self,fp): 
+        dict_to_file(self.d,fp)
 
     def preproc(self): 
         medges_ = self.max_simple_edges(self.vertex_degree)

@@ -4,6 +4,19 @@ import numpy as np
 import random
 import pickle
 
+def dict_from_file(fp): 
+    fobj = open(fp,"rb")
+    obj = pickle.load(fobj)
+    fobj.close()
+    assert type(obj) == defaultdict 
+    return obj
+
+def dict_to_file(q,fp): 
+    assert type(q) == defaultdict
+    fobj = open(fp,"wb")
+    pickle.dump(q,fobj)
+    fobj.close()
+
 """
 simple undirected graph designed for small-scale use (<= 5000 nodes)
 """
@@ -13,6 +26,14 @@ class MicroGraph:
         assert type(dgraph) == defaultdict
         self.dg = dgraph
         return
+
+    @staticmethod
+    def from_file(fp): 
+        dgraph = dict_from_file(fp)
+        return MicroGraph(dgraph) 
+
+    def to_file(self,fp): 
+        dict_to_file(q,fp) 
 
     def __str__(self):
         return str(self.dg) 
