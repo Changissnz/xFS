@@ -2,6 +2,9 @@ from collections import defaultdict
 
 class GraphGen:
 
+    """
+    is_realtime_gen := ?vertices not declared at start? 
+    """
     def __init__(self,is_dsg,prg,is_realtime_gen:bool,\
         vertex_degree=None,edge_connectivity=None):
 
@@ -22,16 +25,18 @@ class GraphGen:
 
         self.finstat = False 
         self.d = defaultdict(set)  
+        self.preproc() 
         return
 
     def preproc(self): 
-        medges_ = sum([i for i in range(1,self.vertex_degree)])
+        medges_ = self.max_simple_edges(self.vertex_degree)
 
         if self.is_dsg == 0: 
             self.max_edges = medges_
         elif self.is_dsg == 1: 
             self.max_edges = medges_ * 2 
-        self.edge_degree = ceil(self.edge_connectivity * self.max_edges)
+        self.wanted_edge_degree = ceil(self.edge_connectivity * self.max_edges)
+        self.current_edge_degree = 0 
 
         if self.is_realtime_gen: 
             return 
@@ -39,7 +44,94 @@ class GraphGen:
         for i in range(self.vertex_degree): 
             self.d[i] = set() 
         return
+    
+    """
+    given number of vertices 
+    """
+    def max_simple_edges(self,num_vertices): 
+        if num_vertices in {0,1}:  
+            return 0 
+        return sum([i for i in range(1,num_vertices)])
 
+    """
+    current edge connectivity 
+    """
+    def edge_connectivity_(self):
+
+        medges_ = self.max_simple_edges(len(self.d))
+        if medges_ == 0: 
+            return 2.0 
+
+        medges_ = medges_ * 2 if self.is_dsg else medges_ 
+        return self.current_edge_degree_() / medges_ 
+
+
+    def current_edge_degree_(self): 
+        c = 0 
+        for k,v in self.d.items(): 
+            c += len(v) 
+        
+        if self.is_dsg: 
+            return c 
+
+        return int(c / 2)
+
+    def full_run(self): 
+        while not self.finstat: 
+            self.__next__() 
+        
     def __next__(self): 
         if self.finstat: 
             return False 
+
+        if self.is_realtime_gen: 
+            stat = self.new__realtime() 
+        else: 
+            stat = self.new_edge() 
+
+        self.finstat = not stat 
+        return not self.finstat 
+
+    def new__realtime(self): 
+        # case: maybe add another vertex if vertex capacity not reached
+        l = len(self.d)
+        if l < self.vertex_degree: 
+            q = int(self.prg()) % 2 
+            # add new vertex 
+            if q: 
+                self.d[l] = set() 
+                return True 
+
+            # subcase: connectivity has been reached, have to add another vertex 
+            ec = self.edge_connectivity_(self.current_edge_degree)
+            if ec >= self.edge_connectivity: 
+                self.d[l] = set() 
+                return True 
+
+        # case: add new edge 
+        return self.new_edge()
+
+    def new_edge(self): 
+        if self.current_edge_degree >= self.wanted_edge_degree: 
+            return False 
+
+        x = sorted(self.d.keys()) 
+        while len(x) > 0: 
+            n = int(self.prg()) % len(x) 
+            n = x.pop(n)
+            n2 = self.available_endnodes_for_node(n) 
+            if len(n2) == 0: 
+                continue 
+
+            n2 = sorted(n2)
+            nx = int(self.prg()) % len(n2) 
+            nx = n2[nx] 
+            self.d[n] |= {nx} 
+            if not self.is_dsg: 
+                self.d[nx] |= {n} 
+            self.current_edge_degree += 1 
+        return
+
+    def available_endnodes_for_node(self,n):
+        rx = set([i for i in range(self.vertex_degree)]) - {n} 
+        return rx - self.d[n]
