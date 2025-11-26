@@ -15,21 +15,17 @@ class GLExprTableGen:
         self.loss_range = loss_range 
         self.prg = prg 
         self.table = np.zeros((len(var_size),2))
+        self.make_table() 
         return
 
     def make_table(self): 
-        self.table[:,0] = [self.one_gain() for _ in range(self.var_size)] 
-        self.table[:,1] = [self.one_loss() for _ in range(self.var_size)] 
+        self.table[:,0] = [self.one_gl(True) for _ in range(self.var_size)] 
+        self.table[:,1] = [self.one_gl(False) for _ in range(self.var_size)] 
     
-    def one_gain(self):
+    def one_gl(self,is_gain:bool):
         ratio = self.one_ratio() 
-        q = self.gain_range[0] 
-        return q + (self.gain_range[1] - self.gain_range[0]) * ratio 
-
-    def one_loss(self): 
-        ratio = self.one_ratio() 
-        q = self.loss_range[0] 
-        return q - (self.loss_range[1] - self.loss_range[0]) * ratio
+        R = self.gain_range if is_gain else self.loss_range 
+        return R[0] + ratio * (R[1] - R[0])
 
     def one_ratio(self): 
         one,two = abs(self.prg()),abs(self.prg())
