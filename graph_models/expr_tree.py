@@ -112,7 +112,6 @@ class ExprTree:
             properly assigned.
     """
     def assign_parents(self, node):
-
         def assign(n):
             if n == None: return
 
@@ -120,10 +119,8 @@ class ExprTree:
                 n.left.parent = n
             if n.right != None:
                 n.right.parent = n
-
             assign(n.left)
             assign(n.right)
-
         assign(node)
 
     @staticmethod
@@ -266,11 +263,8 @@ class ExprTree:
     - parses `substring` into an ExprTreeNode
     """
     def parse_into_tree(self, substring, node, prev = None):
-
         if node == False: return False
-
         varData, substring = ExprTree.fetch_next_var(substring)
-
         # finished parsing
         if varData == False: return node
         firstOp = ExprTree.ope.search(substring)

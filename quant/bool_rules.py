@@ -1,5 +1,6 @@
 from graph_models.expr_tree import * 
 from morebs2.numerical_generator import modulo_in_range 
+from math import ceil  
 
 """
 outputs a boolean variable expression. Not guaranteed to be 
@@ -13,8 +14,8 @@ class BoolExprCNFGenerator:
         self.var_list = var_list
         self.prg = prg 
         self.chunk_ratio_range = chunk_ratio_range 
-        self.chunk_size_range = [self.chunk_ratio_range[0] * len(self.var_list),\
-                                self.chunk_ratio_range[1] * len(self.var_list) + 1]
+        self.chunk_size_range = [ceil(self.chunk_ratio_range[0] * len(self.var_list)),\
+                                ceil(self.chunk_ratio_range[1] * len(self.var_list)) + 1]
         self.num_chunks = num_chunks
 
         self.S = "" 
@@ -27,9 +28,7 @@ class BoolExprCNFGenerator:
         self.S = self.S[:-3]
         return
 
-
     def one_chunk_(self): 
-        q = sorted(set(self.var_list) - self.fixed_varset)
         chunk_size = modulo_in_range(int(self.prg()),self.chunk_size_range)
 
         q = deepcopy(self.var_list)
