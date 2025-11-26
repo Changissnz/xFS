@@ -105,6 +105,7 @@ class ExprTree:
         self.occupiedIndices = set()
 
         self.permIterable = None
+        self.c = None 
 
     """
     ATTENTION: this method is used to fix a bug during parsing of string.
@@ -476,41 +477,42 @@ class ExprTree:
     - outputs the decision and a dictionary of key=nodeIdentifier value=choice
         in which each nodeIdentifier belongs to an OR node
     """
-    def inorder_decision_finder(self, permIterable = None):
+    def inorder_decision_finder(self, permIterable = None,num_iter=1000):
+        if type(self.c) == type(None): 
+            self.inorder_decision_finder__preproc(permIterable)
+        
+        stat = True 
+        while num_iter > 0 and stat: 
+            q = self.inorder_decision_finder__one_iter()
+            stat = not type(q) == type(None)
+            num_iter -= 1 
 
-        def choose_child(node, direction):
-            assert node != None, "node cannot be None!"
-            return node.left if direction == "l" else node.right
+    def inorder_decision_finder__one_iter(self): 
+        x = None 
+        try: 
+            x = next(self.permIterable)
+        except:
+            return None  
 
-        def construct_new_tree(refNode, refNodeIndex, orKey):
+        # construct the path
+        for i, k in enumerate(self.orKey.keys()):
+            self.orKey[k] = x[i]
 
-            if refNode == None: return
+        # construct the tree using path info
+        refNode = deepcopy(self.parsedEas)
+        self.possibleDecisions[self.c] = refNode
+        self.inorder_decision_finder__construct_new_tree(refNode, self.c, self.orKey)
+        dec = ExprTree.inorder_traversal_display(self.possibleDecisions[self.c])
 
-            if refNode.val == "|":
-                # get left or right child
-                decision = orKey[refNode.index]
-                x = refNode.left if decision == "l" else refNode.right
+        # TODO: possible bug in ascertaining uniqueness of subtree expression.
+        if dec in self.uniqueDecisions:
+            del self.possibleDecisions[self.c]
+        else:
+            self.uniqueDecisions.add(dec)
+            self.c += 1
+        return refNode 
 
-                # connect child to refNode parent
-                p = refNode.parent
-
-                # case : refNode is root
-                if p == None:
-                    x.parent = None
-                    self.possibleDecisions[refNodeIndex] = x
-                    refNode = x
-                else: # refNode is not root, connect parent to child
-                    isRightChild = self.is_right_child(p, refNode)
-                    if isRightChild:
-                        p.right = x
-                    else:
-                        p.left = x
-                    x.parent = p
-                    refNode = x
-                construct_new_tree(refNode, refNodeIndex, orKey)
-            elif refNode.val == "&":
-                construct_new_tree(refNode.left, refNodeIndex, orKey)
-                construct_new_tree(refNode.right, refNodeIndex, orKey)
+    def inorder_decision_finder__preproc(self,permIterable): 
 
         # label the nodes
         self.label_nodes_with_index()
@@ -520,40 +522,60 @@ class ExprTree:
         self.possibleDecisions = OrderedDict()
 
         # set initial path
-        orKey = OrderedDict()
+        self.orKey = OrderedDict()
         for x in orIndices:
-            orKey[x] = "l"
+            self.orKey[x] = "l"
 
         # get possible paths
-        length = len(orKey)
+        length = len(self.orKey)
 
         if length == 0:
             self.possibleDecisions[0] = deepcopy(self.parsedEas)
             return
 
-        if permIterable == None:
-            permIterable = ExprTree.get_binary_permutations(length, ["l", "r"])
+        if type(permIterable) == type(None):
+            self.permIterable = ExprTree.get_binary_permutations(length, ["l", "r"])
+        else:
+            self.permIterable = permIterable
 
         # construct a tree for each possible path
-        c = 0
-        uniqueDecisions = set()
-        for x in permIterable:
-            # construct the path
-            for i, k in enumerate(orKey.keys()):
-                orKey[k] = x[i]
+        self.c = 0
+        self.uniqueDecisions = set()
+        return
 
-            # construct the tree using path info
-            refNode = deepcopy(self.parsedEas)
-            self.possibleDecisions[c] = refNode
-            construct_new_tree(refNode, c, orKey)
-            dec = ExprTree.inorder_traversal_display(self.possibleDecisions[c])
+    def inorder_decision_finder__choose_child(self,node, direction):
+        assert node != None, "node cannot be None!"
+        return node.left if direction == "l" else node.right
 
-            # TODO: possible bug in ascertaining uniqueness of subtree expression.
-            if dec in uniqueDecisions:
-                del self.possibleDecisions[c]
-            else:
-                uniqueDecisions.add(dec)
-                c += 1
+    def inorder_decision_finder__construct_new_tree(self,refNode, refNodeIndex, orKey):
+
+        if refNode == None: return
+
+        if refNode.val == "|":
+            # get left or right child
+            decision = orKey[refNode.index]
+            x = refNode.left if decision == "l" else refNode.right
+
+            # connect child to refNode parent
+            p = refNode.parent
+
+            # case : refNode is root
+            if p == None:
+                x.parent = None
+                self.possibleDecisions[refNodeIndex] = x
+                refNode = x
+            else: # refNode is not root, connect parent to child
+                isRightChild = self.is_right_child(p, refNode)
+                if isRightChild:
+                    p.right = x
+                else:
+                    p.left = x
+                x.parent = p
+                refNode = x
+            self.inorder_decision_finder__construct_new_tree(refNode, refNodeIndex, orKey)
+        elif refNode.val == "&":
+            self.inorder_decision_finder__construct_new_tree(refNode.left, refNodeIndex, orKey)
+            self.inorder_decision_finder__construct_new_tree(refNode.right, refNodeIndex, orKey)
 
     def possible_decision_to_map(self,index): 
         assert index in self.possibleDecisions 
