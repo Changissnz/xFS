@@ -179,5 +179,8 @@ class XFSCache:
             else:
                 i += 1 
 
+        if self.reference in nodeset: 
+            self.reference = None 
+
         if len(self.reference_varcache) > 0:
-            self.reference = self.reference_varcache.pop(0) 
+            self.reference = self.reference_varcache.pop(0)

@@ -2,12 +2,15 @@ from .usg_controller import *
 from .graph_gen import * 
 from morebs2.numerical_generator import modulo_in_range
 
+def default_delegation_function(a,a2):
+    return round(a-a2,5) == 0 
+
 # TODO: test 
 class DelegationRuleOperator:
 
     """
     d := defaultdict, graph 
-    d2 := defaultdict|(function f: (delegating node,node candidate) --> bool) 
+    d2 := defaultdict|(function f: (delegating node answer,delegate candidate answer) --> bool) 
     """
     def __init__(self,d,d2=None): 
         self.d = d 
@@ -30,6 +33,7 @@ class DelegationRuleOperator:
         S = usg.searches[0]
 
         def type_1_delegation(ref): 
+            nonlocal D 
             X = set([x[1] for x in S.previous_edges])
             acc = self.d2[ref].intersection(X)  
             rej = X - acc 
@@ -37,7 +41,7 @@ class DelegationRuleOperator:
             S.remove_nodeset_from_refvarcache(rej)
 
         def type_2_delegation():
-
+            nonlocal D 
             X = [x[1] for x in S.previous_edges]
             D2 = set()
             D3 = set()
@@ -48,23 +52,22 @@ class DelegationRuleOperator:
                 else: 
                     D3 |= {x} 
 
-            D |= D2 
+            D = D | D2 
             S.remove_nodeset_from_refvarcache(D3) 
             return
 
         while stat: 
             ref = S.reference
-            usg.move_search(0) 
-            if len(S.previous_edges) == 0 and len(S.reference_varcache) == 0: 
-                stat = False 
+            _,stat,_ = usg.move_search(0) 
+            if not stat: 
                 continue 
 
             if dtype == 1:
-                type_1_delegation()
+                type_1_delegation(ref)
             else: 
                 type_2_delegation()
 
-            if len(S.reference_varcache) == 0:
+            if type(S.reference) == type(None): 
                 stat = False 
         return D 
 
