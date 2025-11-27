@@ -1,5 +1,6 @@
 from .usg_controller import * 
 from .graph_gen import * 
+from morebs2.numerical_generator import modulo_in_range
 
 # TODO: test 
 class DelegationRuleOperator:
@@ -15,21 +16,27 @@ class DelegationRuleOperator:
 
     def delegate_from_node(self,n,q,rstruct_map): 
         if type(self.d2) == defaultdict:
-            return -1#self.d2[n]
-        return -1 
+            return self.delegate_from_node__typeX(n,q,rstruct_map,1)
+        return self.delegate_from_node__typeX(n,q,rstruct_map,2) 
 
-    def delegate_from_node__type1(self,n,q,rstruct_map):
+    def delegate_from_node__typeX(self,n,q,rstruct_map,dtype):
+        assert dtype in {1,2}
+
         usg = USGController() 
         usg.set_new_search(False,n,self.d)
 
         stat = True 
         D = set()
         S = usg.searches[0]
-        while stat: 
-            usg.move_search(0) 
-            if len(S.previous_edges) == 0 and len(S.reference_varcache) == 0: 
-                stat = False 
-                continue 
+
+        def type_1_delegation(ref): 
+            X = set([x[1] for x in S.previous_edges])
+            acc = self.d2[ref].intersection(X)  
+            rej = X - acc 
+            D |= acc 
+            S.remove_nodeset_from_refvarcache(rej)
+
+        def type_2_delegation():
 
             X = [x[1] for x in S.previous_edges]
             D2 = set()
@@ -43,10 +50,22 @@ class DelegationRuleOperator:
 
             D |= D2 
             S.remove_nodeset_from_refvarcache(D3) 
+            return
+
+        while stat: 
+            ref = S.reference
+            usg.move_search(0) 
+            if len(S.previous_edges) == 0 and len(S.reference_varcache) == 0: 
+                stat = False 
+                continue 
+
+            if dtype == 1:
+                type_1_delegation()
+            else: 
+                type_2_delegation()
 
             if len(S.reference_varcache) == 0:
                 stat = False 
-
         return D 
 
     def cmp_two_nodes_at_q(self,n,n2,q,rstruct_map):
