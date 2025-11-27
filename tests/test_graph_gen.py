@@ -56,5 +56,16 @@ class GraphGenClass(unittest.TestCase):
         gg5.full_run() 
         assert gg5.current_edge_degree == 17  
 
+        # case: isotransform 
+        gg5.isotransform(25)
+        D2 = gg5.d 
+
+        ans = defaultdict(set,{25: {27}, 26: {35, 27}, \
+            27: {32, 33, 34, 35, 36, 25, 26, 28, 29, 30, 31}, \
+            28: {27, 35}, 29: {35, 27}, 30: {27}, 31: {27, 35}, \
+            32: {27}, 33: {35, 27}, 34: {27, 35}, \
+            35: {33, 34, 26, 27, 28, 29, 31}, 36: {27}}) 
+        assert D2 == ans 
+
 if __name__ == '__main__':
     unittest.main()

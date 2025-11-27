@@ -11,7 +11,7 @@ class USGController:
         self.search_target_nodeset = dict()
         self.found_target_nodeset = dict() 
         self.search_ctr = 0 
-        return -1 
+        return
 
     def set_new_search(self,is_dfs:bool,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
@@ -40,13 +40,13 @@ class USGController:
         q = self.searches[search_index] 
         stat1 = q.move_one()  
 
-        tcost = sum([self.fetch_edge_cost(x[0],x[1]) \
+        tcost = sum([q.fetch_edge_cost(x[0],x[1]) \
             for x in q.previous_edges])
 
         found_nodes = set()
         for x in q.previous_edges:
             if x[1] in self.search_target_nodeset[search_index]:
-                found_nodes |= {self.x[1]}
-                self.found_target_nodeset |= {self.x[1]}
+                found_nodes |= {x[1]}
+                self.found_target_nodeset[search_index] |= {x[1]}
 
         return tcost,stat1,found_nodes 
