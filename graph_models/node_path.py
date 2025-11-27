@@ -170,3 +170,14 @@ class XFSCache:
             c = v[0].cost(cost_func)
             if c == d: nsd = nsd | {k}
         return nsd
+
+    def remove_nodeset_from_refvarcache(self,nodeset): 
+        i = 0 
+        while i < len(self.reference_varcache):
+            if self.reference_varcache[i] in nodeset:
+                self.reference_varcache.pop(i)
+            else:
+                i += 1 
+
+        if len(self.reference_varcache) > 0:
+            self.reference = self.reference_varcache.pop(0) 

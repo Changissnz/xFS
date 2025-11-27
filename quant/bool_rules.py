@@ -42,3 +42,9 @@ class BoolExprCNFGenerator:
             S += s + " | " 
         S = S[:-3] + ")" 
         return S 
+
+
+class BoolExprContra: 
+
+    def __init__(self,S,T):  
+        self.preproc() 
