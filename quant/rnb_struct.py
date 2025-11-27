@@ -98,12 +98,30 @@ class RStruct:
         self.prg = prg 
         # 0 -> no feedback, -1 -> negative feedback, 1 -> positive feedback 
         self.prev_feedback = dict() 
-        for k in self.answer_objective: self.prev_feedback[k] = 0 
+        for k in self.answers: self.prev_feedback[k] = 0 
 
         self.resistance = resistance 
         # used in the case of `answer_objective` == 1 
         self.tiebreaker_end = int(self.prg()) % 2 
         return
+
+    def cmp_answer(self,rstruct):
+        assert type(rstruct) == RStruct 
+        D = {} 
+        D2 = set()
+        for k,v in self.answers.items(): 
+            if k in rstruct.answers:
+                D[k] = v - rstruct.answers[k] 
+            else: 
+                D2 |= {k} 
+        return D,D2 
+
+    def __str__(self): 
+        s = "node idn: {}\n".format(self.node_idn) 
+        s += "answers: \n{}\n".format(self.answers) 
+        s += "answer obj: \n{}\n".format(self.answer_objective) 
+        s += "resistance: \n{}\n".format(self.resistance)  
+        return s
 
     # TODO: test 
     """
@@ -138,12 +156,12 @@ class RStruct:
         # set uniform answers 
         uniform_answer_dict = dict()
         for u in uniform_answers: 
-            uniform_answer_dict[u] = int(modulo_in_range(self.prg(),answer_range)) 
+            uniform_answer_dict[u] = int(modulo_in_range(prg(),answer_range)) 
 
         def one_answer_dict():
             X = deepcopy(uniform_answer_dict) 
             for c in varied_answers: 
-                X[c] = int(modulo_in_range(self.prg(),answer_range)) 
+                X[c] = int(modulo_in_range(prg(),answer_range)) 
             return X 
 
         def one_rnode(n_idn): 
@@ -157,7 +175,7 @@ class RStruct:
         edge_connectivity = e0 / e1 
 
         # generate the graph 
-        gg = GraphGen(is_dsg=True,prg=prg,is_realtime_gen=is_realtime_gen,\
+        gg = GraphGen(is_dsg=False,prg=prg,is_realtime_gen=is_realtime_gen,\
             vertex_degree=num_nodes,edge_connectivity=edge_connectivity)
         gg.full_run() 
         gg.isotransform(start_node_idn) 
