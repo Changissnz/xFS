@@ -29,6 +29,19 @@ class GraphGen:
     def to_file(self,fp): 
         dict_to_file(self.d,fp)
 
+    # TODO: test 
+    def isotransform(self,start_integer):
+        x = dict() 
+        R1 = [i for i in range(self.vertex_degree)]
+        R2 = [i for i in range(start_integer,start_integer + self.vertex_degree)] 
+        
+        for (i,j) in zip(R1,R2): 
+            x[i] = j 
+        
+        mg = MicroGraph(self.d) 
+        mg2 = MicroGraph.isotransform_MG(mg,x)
+        self.d = mg2.dg 
+
     def preproc(self): 
         medges_ = self.max_simple_edges(self.vertex_degree)
 
