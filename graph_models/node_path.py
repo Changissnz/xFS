@@ -124,18 +124,15 @@ class XFSCache:
     """
     def paths_to_head(self,node,num_paths=float('inf')):
         paths = [NodePath(node)]
-        ## ??
-        #cft_copy = deepcopy(self.costfrom_table)
+        
         cft_copy = self.invert_costtable() 
         results = [] 
-        ##print("HEAD", self.start_node ," NODE ",node)
         while len(paths) > 0 and len(results) < num_paths:
             p = paths.pop(0)
             t = p.tail()
             q = cft_copy[t]
 
             # check to see if path is result
-            ##print('\t\ttail: ',t)
             stat1 = p.tail() == self.start_node            
             if stat1:
                 results.append(p)
