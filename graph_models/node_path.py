@@ -20,6 +20,30 @@ class NodePath:
         npath.pweights = pw 
         return npath 
 
+    def __getitem__(self,i):
+        if isinstance(i, slice): 
+            return self.p.__getitem__(i)    
+
+        if type(i) in {list,np.ndarray}:
+            qx = []
+            for i_ in i:
+                qx.append(self.__getitem__(i_))
+            return qx 
+
+        assert i < len(self) 
+        return self.p[i]  
+
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        if self.index < len(self.l):
+            x = self.l[self.index]
+            self.index += 1
+            return x
+        raise StopIteration
+
     def __len__(self):
         return len(self.p)
 
