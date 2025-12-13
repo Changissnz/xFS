@@ -213,11 +213,3 @@ class RStruct:
         assert question in self.answers
         
         return -1 
-    
-"""
-Respondent Network Bot 
-"""
-class RNBot:
-
-    def __init__(self,d:defaultdict,rstruct_map,q,delegation_rule,delegation_effect_rule):
-        return -1

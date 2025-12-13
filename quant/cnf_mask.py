@@ -15,7 +15,7 @@ and `prior_potential`.
 In this algorithm, the starting neighbor set of n in `G` is the set of nodes connected 
 to n minus the set of nodes comprising `npath`. 
 
-These starting neighbor set is reduced in size to satisfy the parameters of class instance. 
+These starting neighbor sets are reduced in size to satisfy the parameters of class instance. 
 
 In masking algorithm, there are two classes of connectivities.
 The first class applies when `prior_connectivity`= None. The 
@@ -129,12 +129,13 @@ class CNFGraphMask:
         if is_partial: return self.to_subgraph_partial() 
         return self.to_subgraph_full() 
 
-    def to_subgraph_partial(self): 
+    def to_subgraph_partial(self,is_directed:bool=False): 
         d = defaultdict(set) 
         for i in range(len(self.npath) - 1): 
             # add the original nodes from base path 
             d[self.npath[i]] |= {self.npath[i+1]} 
-            d[self.npath[i+1]] |= {self.npath[i]} 
+            if not is_directed:
+                d[self.npath[i+1]] |= {self.npath[i]} 
 
             ## adding neighbors 
             d[self.npath[i]] |= self.neighbor_sets[i] 
@@ -146,7 +147,8 @@ class CNFGraphMask:
                 for nx2_ in nx2: 
                     if nx2_ in self.G[nx_]: 
                         d[nx_] |= {nx2_} 
-                        d[nx2_] |= {nx_} 
+                        if not is_directed:
+                            d[nx2_] |= {nx_} 
 
         d[self.npath[-1]] |= self.neighbor_sets[-1] 
         for x in self.neighbor_sets[-1]: d[x] |= {self.npath[-1]}
