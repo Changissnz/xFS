@@ -45,7 +45,7 @@ class MicroGraph:
                 del self.dg[k]
             else:
                 v_ = set([s for s in v if s not in ns])
-                self.dg[k] = v
+                self.dg[k] = v_ 
 
     def subgraph_by_nodeset_(self,ns):
         mg2 = deepcopy(self)

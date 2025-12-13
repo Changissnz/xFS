@@ -118,13 +118,15 @@ class GraphGen:
             q = int(self.prg()) % 2 
             # add new vertex 
             if q: 
-                self.d[l] = set() 
+                if l not in self.d: 
+                    self.d[l] = set() 
                 return True 
 
             # subcase: connectivity has been reached, have to add another vertex 
             ec = self.edge_connectivity_()
             if ec >= self.edge_connectivity: 
-                self.d[l] = set() 
+                if l not in self.d: 
+                    self.d[l] = set() 
                 return True 
             # subcase: connectivity has not been reached, add new edge
             else: 
@@ -151,9 +153,9 @@ class GraphGen:
             self.d[n] |= {nx} 
             if not self.is_dsg: 
                 self.d[nx] |= {n} 
+
             self.current_edge_degree += 1 
             break 
-
         return True 
 
     def available_endnodes_for_node(self,n):

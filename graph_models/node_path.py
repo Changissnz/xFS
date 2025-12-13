@@ -1,5 +1,6 @@
 from collections import defaultdict 
 from copy import deepcopy
+import numpy as np 
 
 DEFAULT_EDGE_COST_FUNCTION = lambda u,v,c: 1
 CUMULATIVE_EDGE_COST_FUNCTION = lambda u,v,c: 1 + c  
@@ -38,8 +39,8 @@ class NodePath:
         return self
 
     def __next__(self):
-        if self.index < len(self.l):
-            x = self.l[self.index]
+        if self.index < len(self.p):
+            x = self.p[self.index]
             self.index += 1
             return x
         raise StopIteration

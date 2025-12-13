@@ -1,8 +1,10 @@
 from graph_models.node_path import * 
+from graph_models.micrograph import * 
 from .bool_rules import * 
 from types import MethodType,FunctionType
 from morebs2.graph_basics import is_undirected_graph
 from morebs2.numerical_generator import prg_choose_n,default_std_Python_prng
+from morebs2.measures import zero_div
 
 # TODO: test this. 
 """
@@ -29,7 +31,7 @@ each node in `npath`.
 class CNFGraphMask:
 
     def __init__(self,npath:NodePath,G:defaultdict,\
-        prior_connectivity:float,prior_potential:float,conn_type:int,prng=None):
+        prior_connectivity:float,prior_potential:float,prng=None):
 
         assert type(npath) == NodePath
         assert type(G) == defaultdict 
@@ -80,6 +82,9 @@ class CNFGraphMask:
         for (i,x) in enumerate(self.neighbor_sets): 
             X = sorted(x) 
             n = ceil(self.ppotential * len(X))
+            if n == 0: 
+                self.neighbor_sets[i] = set() 
+                continue 
             X_ = prg_choose_n(X,n,self.prng,is_unique_picker=True)
             self.neighbor_sets[i] = set(X_) 
         return
@@ -117,9 +122,37 @@ class CNFGraphMask:
         c = 0 
         for q in Q: 
             c += int(q in self.G[prior_node]) 
-        return c / len(Q) >= self.pconn
+        
+        return zero_div(c,len(Q),0.0) >= self.pconn
 
-    def to_subgraph(self): 
+    def to_subgraph(self,is_partial:bool=True):
+        if is_partial: return self.to_subgraph_partial() 
+        return self.to_subgraph_full() 
+
+    def to_subgraph_partial(self): 
+        d = defaultdict(set) 
+        for i in range(len(self.npath) - 1): 
+            # add the original nodes from base path 
+            d[self.npath[i]] |= {self.npath[i+1]} 
+            d[self.npath[i+1]] |= {self.npath[i]} 
+
+            ## adding neighbors 
+            d[self.npath[i]] |= self.neighbor_sets[i] 
+            for x in self.neighbor_sets[i]: d[x] |= {self.npath[i]}  
+
+            # add existing edges between neighbors of i and (i+1) 
+            nx,nx2 = self.neighbor_sets[i],self.neighbor_sets[i+1] 
+            for nx_ in nx: 
+                for nx2_ in nx2: 
+                    if nx2_ in self.G[nx_]: 
+                        d[nx_] |= {nx2_} 
+                        d[nx2_] |= {nx_} 
+
+        d[self.npath[-1]] |= self.neighbor_sets[-1] 
+        for x in self.neighbor_sets[-1]: d[x] |= {self.npath[-1]}
+        return d 
+
+    def to_subgraph_full(self):  
         # collect all nodes 
         sq = [] 
         for i in range(len(self.npath)): 
@@ -127,14 +160,14 @@ class CNFGraphMask:
             sq.extend(self.neighbor_sets[i]) 
 
         mg = MicroGraph(self.G)
-        mg2 = mg.subgraph_by_nodeset_(sq) 
+        mg2 = mg.subgraph_by_nodeset_(set(sq))
         return mg2.dg
 
-    def to_cnf_expression(self):
-
+    def to_cnf_expr(self):
+        ex = ""
         for i in range(len(self.npath)): 
-            ex = self.to_cnf_expression_(i)
-            ex = " + " 
+            ex += self.to_cnf_expression_(i)
+            ex += " & " 
         ex = ex[:-3] 
         return ex
 

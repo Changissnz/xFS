@@ -15,7 +15,7 @@ def unordered_setseq__equals(s1,s2):
 
 ### lone file test 
 """
-python -m tests.test_micrograph 
+py -m tests.test_micrograph 
 """
 ###
 class MicroGraphClass(unittest.TestCase):
