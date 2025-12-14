@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog,font
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-import networkx as nx
 from graph_models.micrograph import * 
 import time 
 
@@ -26,18 +25,6 @@ def get_text_size_in_inches(text_widget):
 
     return width_in, height_in
 
-def dict_to_networkx(d): 
-    G = nx.Graph()
-
-    nodes = list(d.keys()) 
-    edges = []
-    for k,v in d.items(): 
-        for v_ in v: 
-            edges.append((k,v_))
-
-    G.add_nodes_from(nodes)
-    G.add_edges_from(edges)
-    return G 
 
 """
 the main Tkinter application class for xFS user 

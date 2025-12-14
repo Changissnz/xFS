@@ -3,7 +3,7 @@ import unittest
 
 ### lone file test 
 """
-python -m tests.test_usg_controller
+py -m tests.test_usg_controller
 """
 ###
 class USGControllerClass(unittest.TestCase):

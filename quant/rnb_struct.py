@@ -21,10 +21,11 @@ class DelegationRuleOperator:
         return
 
     def delegate_from_node(self,n,q,rstruct_map): 
-        return self.delegate_from_node__typeX(n,q,rstruct_map) 
+        return self.delegate_from_node_(n,q,rstruct_map) 
 
-    def delegate_from_node__typeX(self,n,q,rstruct_map):
+    def delegate_from_node_(self,n,q,rstruct_map):
         usg = USGController() 
+        #print("SET NEW SEARCH: ",self.d)
         usg.set_new_search(False,n,self.d)
 
         stat = True 
@@ -37,6 +38,7 @@ class DelegationRuleOperator:
             D2 = set()
             D3 = set()
             for x in X: 
+                #print("\tcmp {}+{}".format(n,x)) 
                 stat2 = self.cmp_two_nodes_at_q(n,x,q,rstruct_map)
                 if stat2: 
                     D2 |= {x} 
@@ -59,13 +61,17 @@ class DelegationRuleOperator:
 
         while stat: 
             ref = S.reference
+            #print("MOVING")
             _,stat,_ = usg.move_search(0) 
+            #print("STAT: ",stat)
             if not stat: 
                 continue 
 
             type_2_delegation()
             if type(S.reference) == type(None): 
                 stat = False 
+        #print("n={},q={}, D={}".format(n,q,D)) 
+        D |= {n} 
         return ask_nodeset(),D 
 
     def cmp_two_nodes_at_q(self,n,n2,q,rstruct_map):

@@ -11,7 +11,6 @@ class RNBot:
         for v in rstruct_map.values(): assert type(v) == RStruct 
         assert type(q) == QStruct
         assert type(delegation_rule) == DelegationRuleOperator
-        
         self.d = d 
         self.rstruct_map = rstruct_map
         self.qstruct = q 
@@ -33,4 +32,4 @@ class RNBot:
         return rnbot
 
     def facilitate_question(self,n,q): 
-        return self.delegation_rule.delegate_from_node__typeX(n,q,self.rstruct_map)
+        return self.delegation_rule.delegate_from_node(n,q,self.rstruct_map)

@@ -3,6 +3,8 @@ from copy import deepcopy
 import numpy as np
 import random
 import pickle
+import networkx as nx 
+import matplotlib.pyplot as plt
 
 def dict_from_file(fp): 
     fobj = open(fp,"rb")
@@ -16,6 +18,28 @@ def dict_to_file(q,fp):
     fobj = open(fp,"wb")
     pickle.dump(q,fobj)
     fobj.close()
+
+def dict_to_networkx(d): 
+    G = nx.Graph()
+
+    nodes = list(d.keys()) 
+    edges = []
+    for k,v in d.items(): 
+        for v_ in v: 
+            edges.append((k,v_))
+
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+    return G 
+
+def dict_to_plot(q): 
+
+    G = nx.Graph()
+    G.add_edges_from([(1, 2), (2, 3), (3, 4), (1, 4), (1, 5)])
+
+    G = dict_to_networkx(q) 
+    nx.draw(G, with_labels=True)
+    plt.show()
 
 """
 simple undirected graph designed for small-scale use (<= 5000 nodes)
