@@ -8,6 +8,19 @@ from collections import Counter
 def default_delegation_function(a,a2):
     return round(a-a2,5) == 0 
 
+def default_delegation_effect_function(ans_diff,del_nodeset):
+    assert ans_diff >= 0. 
+    if len(del_nodeset) > 1: return 0 
+    return -ans_diff 
+
+def update_mean(mean_value,new_value,new_frequency): 
+    assert type(new_frequency) in {int,np.int32,np.int64} 
+    assert new_frequency > 0 
+
+    new_value = (mean_value * (new_frequency - 1)) + new_value 
+    return new_value / frequency 
+
+
 # TODO: test 
 class DelegationRuleOperator:
 
@@ -110,6 +123,15 @@ class QStruct:
         S += str(self.arate)
         return S 
 
+    def answer_(self,q): 
+        assert q in self.answer_keys 
+        x = self.answers[q] 
+
+        if type(x) != type(None): return x 
+
+        index = self.answer_keys.index(q) 
+        rs = self.arate[:,index]
+        return np.mean(rs) 
     
     def init_mat(self): 
         # delegation rate
@@ -120,17 +142,43 @@ class QStruct:
         self.frate = np.zeros(self.dim) 
         # average answers 
         self.arate = np.zeros(self.dim)  
+
+        # extended delegation info 
+        # node -> question idn -> delegate nodes 
+        self.extended_delinfo = defaultdict(defaultdict) 
         return
 
-    def update(self,node_idn,q_idn,answer):
-        f = self.frate[node_idn,q_idn]
-        self.frate[node_idn,q_idn] += 1 
-        assert False 
+    def update(self,node_idn,q_idn,answer,delegation_info):
+        q_index = self.answer_keys.index(q_idn) 
+
+        del_stat = 0 
+        if type(delegation_info) == set:
+            self.extended_delinfo[node_idn][q_index] = delegation_info 
+            del_stat = int(len(delegation_info) > 1) 
+        elif type(delegation_info) == bool: 
+            del_stat = int(delegation_info) 
+        else: 
+            assert type(delegation_info) == type(None)
+
+        self.frate[node_idn,q_index] += 1 
+        f = self.frate[node_idn,q_index] 
+
+        self.arate[node_idn,q_index] = \
+            update_mean(self.arate[node_idn,q_index],answer,f)
+        
+        ans = self.answer_(q_idn) 
+        diff = abs(answer - ans) 
+        self.crate[node_idn,q_index] = \
+            update_mean(self.crate[node_idn,q_index],diff,f) 
+
+        self.drate[node_idn,q_index] = \
+            update_mean(self.drate[node_idn,q_index],del_stat,f)  
+        return diff  
 
     @staticmethod 
     def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None):
         assert len(rs_map) > 0 
-        assert answer_type in {"most frequent","random"}  
+        assert answer_type in {"most frequent","random","none"}  
 
         if type(prg) == type(None): 
             prg = default_std_Python_prng() 
@@ -159,6 +207,9 @@ class QStruct:
                 arange = answer_range[k] 
                 x = int(prg())
                 answers[k] = modulo_in_range(int(prg()),arange) 
+        elif answer_type == "none": 
+            for k in answer_keys: 
+                answers[k] = None  
         else:
 
             vf = lambda x: x[1] 

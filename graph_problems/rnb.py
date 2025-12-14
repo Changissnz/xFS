@@ -3,10 +3,16 @@ from morebs2.graph_basics import is_undirected_graph
 
 """
 Respondent Network Bot 
+
+There is an `open information` option for QStruct: 
+- QStruct receives information on delegation nodes. 
 """
 class RNBot:
 
-    def __init__(self,d:defaultdict,rstruct_map,q,delegation_rule,delegation_effect_rule=None):
+    def __init__(self,d:defaultdict,rstruct_map,q,delegation_rule,\
+        delegation_effect_rule=default_delegation_effect_function,\
+        qstruct_open_info:bool=False):
+
         assert is_undirected_graph(d) 
         for v in rstruct_map.values(): assert type(v) == RStruct 
         assert type(q) == QStruct
@@ -15,6 +21,7 @@ class RNBot:
         self.rstruct_map = rstruct_map
         self.qstruct = q 
         self.delegation_rule = delegation_rule
+        self.open_info = qstruct_open_info
 
     @staticmethod 
     def generate_instance(num_nodes,resistance,num_questions,answer_objective,\
@@ -33,3 +40,12 @@ class RNBot:
 
     def facilitate_question(self,n,q): 
         return self.delegation_rule.delegate_from_node(n,q,self.rstruct_map)
+
+    def exec_question(self,n,q): 
+        ans,del_nodeset = self.facilitate_question(n,q) 
+
+        di = None if not self.open_info else del_nodeset 
+        self.qstruct.update(n,q,ans,di)
+
+    def __next__(self): 
+        return -1 
