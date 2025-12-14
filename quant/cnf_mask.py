@@ -27,6 +27,8 @@ each node in `npath`.
         for the neighbor set N_{i+1}, 
             ceil(`prior_connectivity * |N_{i+1}|`)
         of those nodes of N_{i_1} are connected to q_i. 
+Parameter `prior_potential` is the ratio of nodes in every neighbor set after set has 
+been reduced in size by `prior_connectivity` requirement. 
 """
 class CNFGraphMask:
 
