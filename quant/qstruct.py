@@ -1,50 +1,9 @@
-from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng,prg_seqsort_ties
+from .qstruct_aux import * 
 from morebs2.matrix_methods import vector_to_string,string_to_vector
-from types import MethodType,FunctionType 
-from collections import Counter,defaultdict 
+from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng,prg_seqsort_ties
 from copy import deepcopy 
-import numpy as np 
-
-#-------------------------------------------------------------------------------------------------------------
-
-def update_mean(mean_value,new_value,new_frequency): 
-    assert type(new_frequency) in {int,np.int32,np.int64} 
-    assert new_frequency > 0 
-
-    new_value = (mean_value * (new_frequency - 1)) + new_value 
-    return new_value / frequency 
-
-def is_valid_rnb_info_mode(info_mode):
-    if not type(info_mode) in {list,tuple}: return False 
-    if not (len(info_mode) == 4 and set(info_mode).issubset({0,1})): return False 
-    return True 
-
-def default_QStruct_query_cost(n,q): 
-    return 1 
-
-def info_on_query(expected_node_resistance,delta,querycost_func): 
-    assert delta >= 0. 
-
-    num_attempts = zero_div(expected_node_resistance,delta,float('inf'))
-    query_cost = None 
-    if not np.isinf(num_attempts): 
-        num_attempts = ceil(num_attempts) 
-        query_cost = 0 
-        for _ in range(num_attempts): 
-            query_cost += querycost_func(n,q) 
-    else: 
-        query_cost = float('inf')
-    return num_attempts,query_cost 
-
-def default_QStruct_F2FixCost_function(scalar:float = 1.0):
-
-    def f(qstruct,node): 
-        contra_row = qstruct.crate[node,:]
-        contra_sum = np.sum(contra_row) 
-        return contra_sum * scalar 
-    return f 
-
-#------------------------------------------------------------------------------------------------------
+from collections import Counter,defaultdict 
+from types import MethodType,FunctionType 
 
 """
 info_mode := list, 4 x (0|1), used in RNBot. 
@@ -82,6 +41,10 @@ class QStruct:
         self.f2fix_cost_func = f2fix_cost_func 
         self.prg = prg 
         self.init_mat() 
+
+        # start up a move log, and load the first move 
+        self.qsm_log = QSMoveLog() 
+        self.load_first_move() 
 
     def __str__(self): 
         S = "ANSWERS" 
@@ -204,15 +167,28 @@ class QStruct:
             self.cn_resistances = x2 
         return
 
-    #------------------------ method for first scan of (node,question) pairs 
-    def initial_query(self): 
+    #------------------------ methods for sending out info on next move to RNBot 
+
+    def next_move(self): 
+        cat,info = self.qsm_log.run_active_move()
+
+        if type(cat) == type(None): 
+            self.follow_up_on_prev_move() 
+
+    def load_first_move(self):
+        category = "initial scan"
+        additional_info = tuple(self.dim)
+        self.qsm_log.load_QSMove(category,additional_info)
+        return
+
+    def follow_up_on_prev_move(self):
         return -1 
 
     def f1_or_f2_decision(self): 
 
         return -1 
 
-    #------------------------ method for analysis of nodes based on querying (F1-fix)  
+    #------------------------ methods for analysis of nodes based on querying (F1-fix)  
     #------------------------ and F2-fix costs. 
 
     def f1_fix_review(self): 
