@@ -1,5 +1,6 @@
-from quant.rnb_struct import * 
-from morebs2.numerical_generator import * 
+from quant.rstruct import * 
+from quant.qstruct import * 
+#from morebs2.numerical_generator import * 
 from .rnb_samples import * 
 import unittest
 
@@ -18,7 +19,7 @@ def RStructGraph_sample_1():
 
 ### lone file test 
 """
-py -m tests.test_rnb_struct
+py -m tests.test_rstruct
 """
 ###
 class RNBClasses(unittest.TestCase):
@@ -74,7 +75,7 @@ class RNBClasses(unittest.TestCase):
 
     def test__DelegationRuleOperator__delegate_from_node(self):
         Q = RStructGraph_sample_1() 
-        do = DelegationRuleOperator(defaultdict(set,Q[1]),default_delegation_function) 
+        do = DelegationRuleOperator(defaultdict(set,Q[1]),default_delegation) 
         N = do.delegate_from_node(0,0,Q[0]) 
         assert N[1] == {0,1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, "got {}".format(N)
 

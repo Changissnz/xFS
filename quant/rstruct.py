@@ -1,25 +1,18 @@
-from .usg_controller import * 
 from .graph_gen import * 
-from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng,prg_seqsort_ties
-from morebs2.matrix_methods import vector_to_string,string_to_vector
+from .usg_controller import * 
+from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng
 from types import MethodType,FunctionType 
 from collections import Counter 
 
-def default_delegation_function(a,a2):
+def default_delegation(a,a2):
     return round(a-a2,5) == 0 
 
-def default_delegation_effect_function(ans_diff,del_nodeset):
+def default_delegation_effect(ans_diff,del_nodeset):
     assert ans_diff >= 0. 
     if len(del_nodeset) > 1: return 0 
     return -ans_diff 
 
-def update_mean(mean_value,new_value,new_frequency): 
-    assert type(new_frequency) in {int,np.int32,np.int64} 
-    assert new_frequency > 0 
-
-    new_value = (mean_value * (new_frequency - 1)) + new_value 
-    return new_value / frequency 
-
+#---------------------------------------------------------------------------------------------
 
 # TODO: test 
 class DelegationRuleOperator:
@@ -31,6 +24,7 @@ class DelegationRuleOperator:
     def __init__(self,d,d2=None): 
         self.d = d 
         self.d2 = d2 
+        self.no_delegation = set() 
         return
 
     def delegate_from_node(self,n,q,rstruct_map): 
@@ -52,6 +46,12 @@ class DelegationRuleOperator:
             D3 = set()
             for x in X: 
                 #print("\tcmp {}+{}".format(n,x)) 
+
+                # case: node cannot be used as a delegate 
+                if x in self.no_delegation: 
+                    D3 |= {x} 
+                    continue 
+
                 stat2 = self.cmp_two_nodes_at_q(n,x,q,rstruct_map)
                 if stat2: 
                     D2 |= {x} 
@@ -97,140 +97,9 @@ class DelegationRuleOperator:
     def generate_delegation_rule__type1(prg):
         return -1 
 
-class QStruct:
+#---------------------------------------------------------------------------------------------
 
-    def __init__(self,dim,answers:dict): 
-        assert len(dim) == 2
-        assert type(dim[0]) == type(dim[1]) 
-        assert min(dim) > 0 and type(dim[0]) == int 
-        assert dim[1] == len(answers) 
 
-        self.dim = dim 
-        self.answers = answers 
-        self.answer_keys = sorted(self.answers.keys()) 
-        self.init_mat() 
-
-    def __str__(self): 
-        S = "ANSWERS" 
-        S += str(self.answers) + "\n" 
-        S += "\n" + "DELEGATION" + "\n" 
-        S += str(self.drate)
-        S += "\n" + "CONTRADICTION" + "\n" 
-        S += str(self.crate)
-        S += "\n" + "Q-FREQUENCY" + "\n" 
-        S += str(self.frate)
-        S += "\n" + "AVERAGE ANSWERS" + "\n" 
-        S += str(self.arate)
-        return S 
-
-    def answer_(self,q): 
-        assert q in self.answer_keys 
-        x = self.answers[q] 
-
-        if type(x) != type(None): return x 
-
-        index = self.answer_keys.index(q) 
-        rs = self.arate[:,index]
-        return np.mean(rs) 
-    
-    def init_mat(self): 
-        # delegation rate
-        self.drate = np.zeros(self.dim) 
-        # contradiction rate 
-        self.crate = np.zeros(self.dim) 
-        # question frequency rate 
-        self.frate = np.zeros(self.dim) 
-        # average answers 
-        self.arate = np.zeros(self.dim)  
-
-        # extended delegation info 
-        # node -> question idn -> delegate nodes 
-        self.extended_delinfo = defaultdict(defaultdict) 
-        return
-
-    def update(self,node_idn,q_idn,answer,delegation_info):
-        q_index = self.answer_keys.index(q_idn) 
-
-        del_stat = 0 
-        if type(delegation_info) == set:
-            self.extended_delinfo[node_idn][q_index] = delegation_info 
-            del_stat = int(len(delegation_info) > 1) 
-        elif type(delegation_info) == bool: 
-            del_stat = int(delegation_info) 
-        else: 
-            assert type(delegation_info) == type(None)
-
-        self.frate[node_idn,q_index] += 1 
-        f = self.frate[node_idn,q_index] 
-
-        self.arate[node_idn,q_index] = \
-            update_mean(self.arate[node_idn,q_index],answer,f)
-        
-        ans = self.answer_(q_idn) 
-        diff = abs(answer - ans) 
-        self.crate[node_idn,q_index] = \
-            update_mean(self.crate[node_idn,q_index],diff,f) 
-
-        self.drate[node_idn,q_index] = \
-            update_mean(self.drate[node_idn,q_index],del_stat,f)  
-        return diff  
-
-    @staticmethod 
-    def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None):
-        assert len(rs_map) > 0 
-        assert answer_type in {"most frequent","random","none"}  
-
-        if type(prg) == type(None): 
-            prg = default_std_Python_prng() 
-        assert type(prg) in {MethodType,FunctionType}
-
-        # get the number of questions 
-        l0 = set() 
-        answer_keys = set() 
-        answer_range = None 
-        for v in rs_map.values(): 
-            l0 |= {len(v.answers)}
-
-            r0 = sorted(v.answers.keys())
-            answer_keys |= {vector_to_string(r0)}
-            answer_range = v.answers_range 
-
-        assert len(l0) == 1 
-        l0 = l0.pop() 
-        answer_keys = answer_keys.pop() 
-        answer_keys = string_to_vector(answer_keys)
-
-        dim = (len(rs_map),l0)
-        answers = dict()
-        if answer_type == "random": 
-            for k in answer_keys: 
-                arange = answer_range[k] 
-                x = int(prg())
-                answers[k] = modulo_in_range(int(prg()),arange) 
-        elif answer_type == "none": 
-            for k in answer_keys: 
-                answers[k] = None  
-        else:
-
-            vf = lambda x: x[1] 
-
-            # key := question 
-            # value := list<(answer,frequency)>
-            d = defaultdict(Counter)
-            for rs in rs_map.values(): 
-                c2 = rs.answer_map() 
-                for k,v in c2.items(): 
-                    d[k][v] += 1 
-
-            for k in answer_keys: 
-                q = d[k] 
-                q = [(k2,v2) for k2,v2 in q.items()] 
-                q2 = prg_seqsort_ties(q,prg,vf)
-                
-                ans = q2[-1] 
-                answers[k] = ans[0]
-        return QStruct(dim,answers)
-     
 class RStruct: 
 
     def __init__(self,node_idn,resistance:float,answers:dict,answer_objective:dict,answers_range:dict,prg):   
@@ -371,3 +240,7 @@ class RStruct:
         for k in self.answers.keys(): 
             c[k] = self.answer_(k) 
         return c 
+
+    def update_resistance(self,change): 
+        assert change <= 0. 
+        self.resistance += change 
