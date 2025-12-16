@@ -32,12 +32,12 @@ def info_on_query(expected_node_resistance,delta,querycost_func):
         query_cost = float('inf')
     return num_attempts,query_cost 
 
-def default_QStruct_F2FixCost_function(scalar:float = 1.0):
+def default_QStruct_F2FixCost_function(adder:float=100,scalar:float = 10):
 
     def f(qstruct,node): 
         contra_row = qstruct.crate[node,:]
         contra_sum = np.sum(contra_row) 
-        return contra_sum * scalar 
+        return contra_sum * scalar + adder 
     return f 
 
 #------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ class QSMove:
     def __init__(self,category,additional_info): 
         self.ssi = None 
         self.f1_attempt_counter = 0 
-        if category == "initial_scan": 
+        if category == "initial scan": 
             assert type(additional_info) == tuple
             assert len(additional_info) == 2
 
@@ -66,7 +66,11 @@ class QSMove:
             assert type(additional info) == tuple 
             assert len(additional_info) == 3 
         else: 
-            assert type(additional_info) == set 
+            # (delegate node set, (target node,question,expected number of attempts to querybreak))
+            assert type(additional_info[0]) == set
+            assert len(additional_info[0]) > 0  
+            assert type(additional_info[1]) == tuple 
+            assert len(additional_info[1]) == 3
 
         self.category = category
         self.additional_info = additional_info
@@ -90,10 +94,10 @@ class QSMove:
             self.f1_attempt_counter += 1 
             return self.category,tuple(self.additional_info[:2]) 
         
-        if len(self.additional_info) == 0: 
+        if len(self.additional_info[0]) == 0: 
             self.fin_stat = True 
             return None,None 
-        return self.category,self.additional_info.pop() 
+        return self.category,self.additional_info[0].pop() 
              
 class QSMoveLog: 
 

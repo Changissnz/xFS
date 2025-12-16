@@ -174,6 +174,9 @@ class QStruct:
 
         if type(cat) == type(None): 
             self.follow_up_on_prev_move() 
+            cat,info = self.qsm_log.run_active_move() 
+
+        return cat,info 
 
     def load_first_move(self):
         category = "initial scan"
@@ -181,16 +184,119 @@ class QStruct:
         self.qsm_log.load_QSMove(category,additional_info)
         return
 
-    def follow_up_on_prev_move(self):
-        return -1 
-
     def f1_or_f2_decision(self): 
+        f1_node_info = self.f1_fix_review()
+        if type(f1_node_info) == type(None): return None 
 
-        return -1 
+        n,q = f1_node_info[0],f1_node_info[1]
+        first_degree_delegates,f2_delegate_cost = \
+            self.f2_nodeset_fix_for_target_node(n,q) 
+
+        if type(first_degree_delegates) == type(None): 
+            self.qsm_log.load_QSMove("f1-fix node",f1_node_info)
+            return self.qsm_log.active_move 
+
+        # case: make F1-fix move         
+        if f1_node_info[2] <= f2_delegate_cost: 
+            self.qsm_log.load_QSMove("f1-fix node",f1_node_info)
+        # case: make F2-fix move
+        else: 
+            self.qsm_log.load_QSMove("f2-fix nodeset",\
+                (first_degree_delegates,(n,q,f1_node_info[3])))
+        return self.qsm_log.active_move 
+
+    def f2_nodeset_fix_for_target_node(self,n,q): 
+
+        m = self.f2_fix_review()
+
+        if type(m) == type(None): 
+            return None,None
+
+        # determine the cost of F2-fixing delegate nodes of n. 
+        first_degree_delegates = set() 
+
+        # case: delegate nodes known. 
+        if self.open_info[0]: 
+            del_nodes = self.extended_delinfo[n][q]
+        #       subcase: graph structure known. F2-fix only the 
+        #                1st degree neighboring delegate nodes
+            if self.open_info[3]: 
+                # 1st degree neighbors 
+                neighbors = self.graph_config[n]
+                first_degree_delegates = neighbors.union(del_nodes) 
+
+        #       subcase: graph structure unknown. 
+        #                Absolute approach: attempt to F2-fix all 
+        #                nodes. 
+            else: 
+                first_degree_delegates = set(m[:,0])
+        
+        # case: delegate nodes unknown. 
+        else: 
+        #       subcase: graph structure known.
+        #                choose all neighbors of graph 
+            if self.open_info[3]: 
+                first_degree_delegates = set(self.graph_config[n]) 
+        #       subcase: graph structure unknown. 
+        #       choose an arbitrary node to F2-fix
+            else: 
+                candidates = set([i for i in range(self.dim[0])]) - self.f2fixed_nodes 
+                index = int(self.prg()) % len(candidates)
+                del_node = sorted(candidates)[index]
+                first_degree_delegates = set([del_node])
+
+        f2_delegate_cost = 0 
+        for m_ in m: 
+            if m_[0] in first_degree_delegates:
+                f2_delegate_cost += m_[1] 
+
+        return first_degree_delegates,f2_delegate_cost 
+
+    def follow_up_on_prev_move(self):
+        assert len(self.qsm_log.cache) > 0 
+
+        prev_move = self.qsm_log.cache[-1] 
+
+        if prev_move.category == "initial scan": 
+            self.f1_or_f2_decision() 
+            return 
+        elif prev_move.category == "f1-fix node": 
+            target_node = prev_mode.additional_info[0]
+            # check if target node has been broken 
+            stat = target_node in self.terminated_nodes
+
+            # move to next decision,F1|F2-fix 
+            if stat: 
+                self.f1_or_f2_decision() 
+            # try F2-fixing delegate nodes 
+            else: 
+                f1_node_info = prev_move.additional_info
+                first_degree_delegates,f2_delegate_cost = \
+                    self.f2_nodeset_fix_for_target_node(f1_node_info)
+                
+                if type(first_degree_delegates) == type(None): 
+                    self.f1_or_f2_decision()
+                else: 
+                    self.qsm_log.load_QSMove("f2-fix nodeset",\
+                    (first_degree_delegates,(\
+                    f1_node_info[0],f1_node_info[1],f1_node_info[3])))
+            return
+        else: 
+            f1_info = prev_move.additional_info[1]
+            self.qsm_log.load_QSMove("f1-fix nodeset",f1_info)
+            return
+        return
 
     #------------------------ methods for analysis of nodes based on querying (F1-fix)  
     #------------------------ and F2-fix costs. 
 
+    """
+    return:
+    - [0] cheapest node to F1-fix
+      [1] question identifier 
+      [2] expected cost of query until node broken
+      [3] expected number of queries until node broken 
+    """
     def f1_fix_review(self): 
         # collect into matrix 
         f1_mat = np.zeros((0,4)) 
@@ -203,6 +309,8 @@ class QStruct:
                 self.expected_node_querybreak_cost(n)
 
             f1_mat = np.vstack((n,q,query_cost,num_attempts)) 
+        if f1_mat.shape[0] == 0: 
+            return None 
 
         # tie-breaker for best node 
         v = f1_mat[:,2] 
@@ -225,7 +333,7 @@ class QStruct:
             # get the min (max abs) of rc_row 
             rc_row = self.rcrate[n,:] 
 
-                # choose the minimum index of min 
+                # choose a random index of min 
             m = np.min(rc_row) 
             indices = np.where(m == np.min(rc_row))[0]
             q_index = int(self.prg()) % len(indices) 
@@ -247,13 +355,24 @@ class QStruct:
         num_attempts,query_cost = info_on_query(expected_node_resistance,contra,self.querycost_func) 
         return q,query_cost,num_attempts 
 
+    """
+    return: np.array, k x 2, 
+        column [0] -> node identifier 
+        column [1] -> cost 
+    """
     def f2_fix_review(self):
         f2_mat = np.zeros((0,2))
         for n in range(self.dim[0]): 
             if n in self.f2fixed_nodes:
                 continue 
+            if n in self.terminated_nodes:
+                continue 
+
             cost = self.f2_fix_cost(n)
             f2_mat = np.vstack((n,cost)) 
+        
+        if f2_mat.shape[0] == 0: 
+            return None 
         return f2_mat 
 
     def f2_fix_cost(self,n):  
@@ -285,6 +404,8 @@ class QStruct:
         answer_keys = string_to_vector(answer_keys)
 
         dim = (len(rs_map),l0)
+
+        # calculate answers according to type 
         answers = dict()
         if answer_type == "random": 
             for k in answer_keys: 
