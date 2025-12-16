@@ -2,13 +2,14 @@
 # auxiliary methods for <QStruct> 
 
 from morebs2.search_space_iterator import * 
+from math import ceil 
 
 def update_mean(mean_value,new_value,new_frequency): 
-    assert type(new_frequency) in {int,np.int32,np.int64} 
+    assert type(new_frequency) in {int,np.int32,np.int64,float,np.float32,np.float64} 
     assert new_frequency > 0 
 
     new_value = (mean_value * (new_frequency - 1)) + new_value 
-    return new_value / frequency 
+    return new_value / new_frequency 
 
 def is_valid_rnb_info_mode(info_mode):
     if not type(info_mode) in {list,tuple}: return False 
@@ -18,7 +19,7 @@ def is_valid_rnb_info_mode(info_mode):
 def default_QStruct_query_cost(n,q): 
     return 1 
 
-def info_on_query(expected_node_resistance,delta,querycost_func): 
+def info_on_query(n,q,expected_node_resistance,delta,querycost_func): 
     assert delta >= 0. 
 
     num_attempts = zero_div(expected_node_resistance,delta,float('inf'))
@@ -63,7 +64,7 @@ class QSMove:
 
         elif category == "f1-fix node":
             # (node index,question index,num attempts)
-            assert type(additional info) == tuple 
+            assert type(additional_info) == tuple 
             assert len(additional_info) == 3 
         else: 
             # (delegate node set, (target node,question,expected number of attempts to querybreak))
@@ -77,10 +78,13 @@ class QSMove:
         self.fin_stat = False 
         return
 
+    def __str__(self): 
+        return "* {}\n* {}".format(self.category,self.additional_info) 
+
     def __next__(self):
         if self.fin_stat: return None 
 
-        if self.category == "initial_scan":
+        if self.category == "initial scan":
             if self.ssi.reached_end(): 
                 self.fin_stat = True 
                 return None,None
@@ -94,6 +98,8 @@ class QSMove:
             self.f1_attempt_counter += 1 
             return self.category,tuple(self.additional_info[:2]) 
         
+        #print("ADDITIONAL INFO FOR {}".format(self.category))
+        #print(self.additional_info)
         if len(self.additional_info[0]) == 0: 
             self.fin_stat = True 
             return None,None 
@@ -120,6 +126,10 @@ class QSMoveLog:
             return None,None 
         return cat,info
 
+    def active_move_str(self): 
+        if type(self.active_move) == type(None): 
+            return "none" 
+        return str(self.active_move)
     
 
 #------------------------------------------------------------------------------------------------------

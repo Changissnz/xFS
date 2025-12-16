@@ -13,13 +13,15 @@ and an <RStruct> is for them to have the same answers to the k
 questions. Conceptualization of this bot was written in a paper 
 @ https://github.com/Changissnz/RNB/blob/main/info/t1.pdf . 
 
-QStruct can execute one of two moves for every turn:
+<QStruct> can execute one of two moves for every turn:
 - F1-fix: question a node n on question k_i. Node's resistance 
           changes according to these two factors:
     = magnitude of contradiction between node answer and <QStruct>
       answer. 
     = the delegate nodes that n relies on for defense against the 
       force of <QStruct>'s questioning. 
+- F2-fix: applied onto some node n_i. Node n_i cannot serve as a delegate 
+  node for any other node afterwards. 
 * default for F1-fix is for the resistance delta of n on question k_i
   to be
       |(answer of n on k_i) - (answer of <QStruct> on k_i)|
@@ -34,9 +36,10 @@ QStruct can execute one of two moves for every turn:
   edge distance 1 to node n cannot serve as delegates to n on k_i, then 
   any other node n_x also cannot serve as delegate, even though n_x and 
   n may share the same answer on k_i. 
+* if node's resistance falls to 0 or below, <QStruct> aligns node by 
+  force-feeding it <QStruct>'s wanted answers. Node also cannot serve as 
+  a delegate to other nodes. 
 
-- F2-fix: applied onto some node n_i. Node n_i cannot serve as a delegate 
-  node for any other node afterwards. 
 ------------------------------------------------------------------------
 
 qstruct_open_info_mode := list, 4 x (0|1). 
@@ -49,7 +52,7 @@ class RNBot:
 
     def __init__(self,d:defaultdict,rstruct_map,q,delegation_rule,\
         delegation_effect_rule=default_delegation_effect,\
-        qstruct_open_info_mode=(0,0,0,0)):
+        qstruct_open_info_mode=(0,0,0,0),verbose:bool=True):
 
         assert is_undirected_graph(d) 
         for v in rstruct_map.values(): assert type(v) == RStruct 
@@ -61,9 +64,11 @@ class RNBot:
         self.d = d 
         self.rstruct_map = rstruct_map
         self.qstruct = q 
+        self.qstruct.verbose = verbose 
         self.delegation_rule = delegation_rule
         self.delegation_effect_rule = delegation_effect_rule 
         self.open_info = qstruct_open_info_mode 
+        self.verbose = verbose 
 
         self.relay_basic_info_to_Q()
 
@@ -72,7 +77,7 @@ class RNBot:
     @staticmethod 
     def generate_instance(num_nodes,resistance,num_questions,answer_objective,\
         answer_range,num_questions_to_vary,prg,start_node_idn,qstructgen_answer_type,\
-        qstruct_open_info_mode=(0,0,0,0)): 
+        qstruct_open_info_mode=(0,0,0,0),verbose=True): 
 
         Q = RStruct.generate_RStructGraph__type_uniform(num_nodes,resistance,\
             num_questions,answer_objective,answer_range,num_questions_to_vary,\
@@ -82,13 +87,18 @@ class RNBot:
         qs0 = QStruct.generate_instance_from_RStructMap(rs_map,qstructgen_answer_type,prg) 
         dro = DelegationRuleOperator(Q[1],d2=default_delegation)
 
-        rnbot = RNBot(Q[1],rs_map,qs0,dro,qstruct_open_info_mode=qstruct_open_info_mode)
+        rnbot = RNBot(Q[1],rs_map,qs0,dro,qstruct_open_info_mode=qstruct_open_info_mode,\
+            verbose=verbose) 
         return rnbot
 
     #------------------------------- preprocessing 
 
     def relay_basic_info_to_Q(self):
         D = self.rstruct_node_resistances()
+        if self.verbose: 
+            S = "-/" * 20 
+            print("* loading starting node resistances\n\t{}\n{}".format(D,S))
+
         G = self.d if self.open_info[3] else None 
         self.qstruct.load_initial_info(D,G) 
 
@@ -104,6 +114,7 @@ class RNBot:
         return self.delegation_rule.delegate_from_node(n,q,self.rstruct_map)
 
     def exec_question(self,n,q): 
+
         ans,del_nodeset = self.facilitate_question(n,q) 
 
         di = None 
@@ -114,15 +125,23 @@ class RNBot:
         self.relay_info_to_Q(n,q,ans,del_nodeset)
 
     def relay_info_to_Q(self,n,q,node_ans,del_nodeset): 
+        if self.verbose: print("* F1 (node,question): ({},{})".format(n,q))
 
         x0 = None if not self.open_info[0] else del_nodeset 
 
-        ans2 = self.qstruct.answer_()
+        ans2 = self.qstruct.answer_(q) 
         ans_diff = abs(ans2 - node_ans)
         res_change = self.delegation_effect_rule(ans_diff,del_nodeset)
 
         # apply resistance change to node 
         self.rstruct_map[n].update_resistance(res_change) 
+
+        if self.verbose: 
+            print("* node answer: {}".format(node_ans))
+            print("* delegate nodeset:\n\t{}".format(del_nodeset)) 
+            print("* Q answer: {}\tdiff: {}".format(ans2,ans_diff)) 
+            print("* resistance change: {}".format(res_change))
+            print("* node resistance: {}".format(self.rstruct_map[n].resistance))
         
         # case: RStruct has been terminated. 
         if self.rstruct_map[n].resistance <= 0.: 
@@ -146,7 +165,12 @@ class RNBot:
         rs = self.rstruct_map[n] 
         f2cost = self.qstruct.f2_fix_cost(n)
         
+        X = self.qstruct.energy 
         self.qstruct.energy -= f2cost 
+        if self.verbose: 
+            print("* F2   node {} cost {}".format(n,f2cost)) 
+            print("* energy   t_0={},t_1={}".format(X,self.qstruct.energy))
+
         self.delegation_rule.add_no_delegation({n})
         self.qstruct.add_f2_fixed_nodes({n}) 
 
@@ -154,6 +178,10 @@ class RNBot:
 
     def __next__(self): 
         self.exec_QStruct_move()
+
+        if self.verbose: 
+            S = "-/"
+            print(S * 20)
         return
 
     def exec_QStruct_move(self):
@@ -165,8 +193,9 @@ class RNBot:
             return 
 
         if cat in {"initial scan", "f1-fix node"}:
-            n,q = info[0],info[1]
+            n,q = int(info[0]),int(info[1])
             self.exec_question(n,q) 
         else: 
+            n = info 
             self.f2_fix_node(n)
         return

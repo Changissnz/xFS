@@ -17,7 +17,8 @@ class QStruct:
 
     def __init__(self,dim,answers:dict,energy=float(10**5),\
         info_mode=(0,0,0,0),query_cost_func=default_QStruct_query_cost,\
-        f2fix_cost_func=default_QStruct_F2FixCost_function(),prg=None):
+        f2fix_cost_func=default_QStruct_F2FixCost_function(),prg=None,\
+        verbose=False):
 
         assert len(dim) == 2
         assert type(dim[0]) == type(dim[1]) 
@@ -40,6 +41,7 @@ class QStruct:
         self.querycost_func = query_cost_func
         self.f2fix_cost_func = f2fix_cost_func 
         self.prg = prg 
+        self.verbose = verbose 
         self.init_mat() 
 
         # start up a move log, and load the first move 
@@ -169,10 +171,10 @@ class QStruct:
         self.energy = self.energy - self.querycost_func(node_idn,q_idn) 
 
         del_stat = 0 
-        if type(delegation_info) == bool: 
-            del_stat = int(delegation_info) 
+        if type(delegation_bool) == bool: 
+            del_stat = int(delegation_bool) 
         else: 
-            assert type(delegation_info) == type(None)
+            assert type(delegation_bool) == type(None)
 
         self.frate[node_idn,q_index] += 1 
         f = self.frate[node_idn,q_index] 
@@ -238,9 +240,24 @@ class QStruct:
     def next_move_(self): 
         cat,info = self.qsm_log.run_active_move()
 
+        if self.verbose: 
+            print("~ " * 20)
+
         if type(cat) == type(None): 
+            if self.verbose: print("Q following up on previous move")
             self.follow_up_on_prev_move() 
             cat,info = self.qsm_log.run_active_move() 
+
+        if self.verbose: 
+            print("\tQ active move info")
+            print("* ", cat)
+            print("* ", info) 
+            print("\t---------------")
+            print(self.qsm_log.active_move_str()) 
+            #print(self.qsm_log.active_move.additional_info) 
+
+        if self.verbose: 
+            print("~ " * 20)
 
         return cat,info 
 
@@ -282,11 +299,11 @@ class QStruct:
         first_degree_delegates = set() 
 
         # case: delegate nodes known. 
-        if self.open_info[0]: 
+        if self.info_mode[0]: 
             del_nodes = self.extended_delinfo[n][q]
         #       subcase: graph structure known. F2-fix only the 
         #                1st degree neighboring delegate nodes
-            if self.open_info[3]: 
+            if self.info_mode[3]: 
                 # 1st degree neighbors 
                 neighbors = self.graph_config[n]
                 first_degree_delegates = neighbors.union(del_nodes) 
@@ -301,7 +318,7 @@ class QStruct:
         else: 
         #       subcase: graph structure known.
         #                choose all neighbors of graph 
-            if self.open_info[3]: 
+            if self.info_mode[3]: 
                 first_degree_delegates = set(self.graph_config[n]) 
         #       subcase: graph structure unknown. 
         #       choose an arbitrary node to F2-fix
@@ -349,7 +366,7 @@ class QStruct:
             return
         else: 
             f1_info = prev_move.additional_info[1]
-            self.qsm_log.load_QSMove("f1-fix nodeset",f1_info)
+            self.qsm_log.load_QSMove("f1-fix node",f1_info)
             return
         return
 
@@ -374,9 +391,12 @@ class QStruct:
             q,query_cost,num_attempts = \
                 self.expected_node_querybreak_cost(n)
 
-            f1_mat = np.vstack((n,q,query_cost,num_attempts)) 
+            f1_mat = np.vstack((f1_mat,(n,q,query_cost,num_attempts)))
         if f1_mat.shape[0] == 0: 
             return None 
+        
+        #print("F1_MAT")
+        #print(f1_mat)
 
         # tie-breaker for best node 
         v = f1_mat[:,2] 
@@ -391,11 +411,11 @@ class QStruct:
     def expected_node_querybreak_cost(self,n): 
 
         # subcases: current node resistances known|unknown   
-        expected_node_resistance = self.cn_resistances[n] if self.open_info[2] else self.in_resistances[n]
+        expected_node_resistance = self.cn_resistances[n] if self.info_mode[2] else self.in_resistances[n]
 
         # resistance delta known 
         # case: get the question that yields the greatest change in resistance 
-        if self.open_info[1]: 
+        if self.info_mode[1]: 
             # get the min (max abs) of rc_row 
             rc_row = self.rcrate[n,:] 
 
@@ -406,7 +426,7 @@ class QStruct:
             q_index = indices[q_index] 
             q = self.answer_keys[q_index] 
 
-            num_attempts,query_cost = info_on_query(expected_node_resistance,abs(m),self.querycost_func) 
+            num_attempts,query_cost = info_on_query(n,q,expected_node_resistance,abs(m),self.querycost_func) 
             return q,query_cost,num_attempts 
 
         # resistance delta unknown 
@@ -418,7 +438,7 @@ class QStruct:
             # get the contradiction of (node,q_index) 
         contra = self.crate[n,q_index] 
 
-        num_attempts,query_cost = info_on_query(expected_node_resistance,contra,self.querycost_func) 
+        num_attempts,query_cost = info_on_query(n,q,expected_node_resistance,contra,self.querycost_func) 
         return q,query_cost,num_attempts 
 
     """
