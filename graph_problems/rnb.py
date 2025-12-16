@@ -4,7 +4,40 @@ from quant.qstruct import *
 from morebs2.graph_basics import is_undirected_graph
 
 """
-Respondent Network Bot 
+Respondent Network Bot. 
+
+A querying framework by a <QStruct> onto a network of <RStruct> 
+nodes. Objective is for <QStruct> to make all <RStruct> nodes 
+"align" in answers to k questions. Alignment between <QStruct> 
+and an <RStruct> is for them to have the same answers to the k 
+questions. Conceptualization of this bot was written in a paper 
+@ https://github.com/Changissnz/RNB/blob/main/info/t1.pdf . 
+
+QStruct can execute one of two moves for every turn:
+- F1-fix: question a node n on question k_i. Node's resistance 
+          changes according to these two factors:
+    = magnitude of contradiction between node answer and <QStruct>
+      answer. 
+    = the delegate nodes that n relies on for defense against the 
+      force of <QStruct>'s questioning. 
+* default for F1-fix is for the resistance delta of n on question k_i
+  to be
+      |(answer of n on k_i) - (answer of <QStruct> on k_i)|
+  if there are no delegate nodes for n on question k_i. 
+* default requirement for a node n_j being a delegate for node n on 
+  question k_i is 
+      (answer of n_j on k_i) = (answer of n on k_i). 
+* default delegation effect is if the delegate nodeset is at least size 1, 
+  then the resistance delta is 0 (immunity for node n on question k_i). 
+* a node n will attempt to delegate to other nodes by a breadth-first 
+  search pattern. A weakness of this pattern is that if the neighbors of 
+  edge distance 1 to node n cannot serve as delegates to n on k_i, then 
+  any other node n_x also cannot serve as delegate, even though n_x and 
+  n may share the same answer on k_i. 
+
+- F2-fix: applied onto some node n_i. Node n_i cannot serve as a delegate 
+  node for any other node afterwards. 
+------------------------------------------------------------------------
 
 qstruct_open_info_mode := list, 4 x (0|1). 
             [0] -> delegation nodes known? 
