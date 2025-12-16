@@ -34,6 +34,8 @@ class RNBot:
 
         self.relay_basic_info_to_Q()
 
+        self.fin_stat = False 
+
     @staticmethod 
     def generate_instance(num_nodes,resistance,num_questions,answer_objective,\
         answer_range,num_questions_to_vary,prg,start_node_idn,qstructgen_answer_type,\
@@ -50,10 +52,14 @@ class RNBot:
         rnbot = RNBot(Q[1],rs_map,qs0,dro,qstruct_open_info_mode=qstruct_open_info_mode)
         return rnbot
 
+    #------------------------------- preprocessing 
+
     def relay_basic_info_to_Q(self):
         D = self.rstruct_node_resistances()
         G = self.d if self.open_info[3] else None 
         self.qstruct.load_initial_info(D,G) 
+
+    #------------------------------ F1-fix methods 
 
     def rstruct_node_resistances(self): 
         D = dict() 
@@ -84,6 +90,11 @@ class RNBot:
 
         # apply resistance change to node 
         self.rstruct_map[n].update_resistance(res_change) 
+        
+        # case: RStruct has been terminated. 
+        if self.rstruct_map[n].resistance <= 0.: 
+            self.delegation_rule.add_no_delegation({n}) 
+            self.qstruct.add_terminated_nodes({n})
 
         # load up two variables for QStruct open info mode 
         x1,x2 = None,None 
@@ -95,5 +106,34 @@ class RNBot:
         self.qstruct.accept_info(n,q,x0,x1,x2)
         return
 
+    #------------------------------ F2-fix methods 
+
+    def f2_fix_node(self,n): 
+        assert n in self.rstruct_map
+        rs = self.rstruct_map[n] 
+        f2cost = self.qstruct.f2_fix_cost(n)
+        
+        self.qstruct.energy -= f2cost 
+        self.delegation_rule.add_no_delegation({n})
+        self.qstruct.add_f2_fixed_nodes({n}) 
+
+    #------------------------------- move methods 
+
     def __next__(self): 
-        return -1 
+        self.exec_QStruct_move()
+        return
+
+    def exec_QStruct_move(self):
+        if self.fin_stat: return 
+
+        cat,info = self.qstruct.next_move()
+        if type(cat) == type(None): 
+            self.fin_stat = True 
+            return 
+
+        if cat in {"initial scan", "f1-fix node"}:
+            n,q = info[0],info[1]
+            self.exec_question(n,q) 
+        else: 
+            self.f2_fix_node(n)
+        return

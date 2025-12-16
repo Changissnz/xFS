@@ -93,6 +93,10 @@ class DelegationRuleOperator:
         #print("ANS ",a1,a2) 
         return self.d2(a1,a2) 
 
+    def add_no_delegation(self,nodeset): 
+        self.no_delegation |= nodeset
+        return
+
     @staticmethod
     def generate_delegation_rule__type1(prg):
         return -1 

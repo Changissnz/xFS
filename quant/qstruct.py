@@ -101,11 +101,72 @@ class QStruct:
         self.extended_delinfo = defaultdict(defaultdict) 
         return
 
+    @staticmethod 
+    def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None,energy=float(10**5)):
+        assert len(rs_map) > 0 
+        assert answer_type in {"most frequent","random","none"}  
+
+        if type(prg) == type(None): 
+            prg = default_std_Python_prng() 
+        assert type(prg) in {MethodType,FunctionType}
+
+        # get the number of questions 
+        l0 = set() 
+        answer_keys = set() 
+        answer_range = None 
+        for v in rs_map.values(): 
+            l0 |= {len(v.answers)}
+
+            r0 = sorted(v.answers.keys())
+            answer_keys |= {vector_to_string(r0)}
+            answer_range = v.answers_range 
+
+        assert len(l0) == 1 
+        l0 = l0.pop() 
+        answer_keys = answer_keys.pop() 
+        answer_keys = string_to_vector(answer_keys)
+
+        dim = (len(rs_map),l0)
+
+        # calculate answers according to type 
+        answers = dict()
+        if answer_type == "random": 
+            for k in answer_keys: 
+                arange = answer_range[k] 
+                x = int(prg())
+                answers[k] = modulo_in_range(int(prg()),arange) 
+        elif answer_type == "none": 
+            for k in answer_keys: 
+                answers[k] = None  
+        else:
+
+            vf = lambda x: x[1] 
+
+            # key := question 
+            # value := list<(answer,frequency)>
+            d = defaultdict(Counter)
+            for rs in rs_map.values(): 
+                c2 = rs.answer_map() 
+                for k,v in c2.items(): 
+                    d[k][v] += 1 
+
+            for k in answer_keys: 
+                q = d[k] 
+                q = [(k2,v2) for k2,v2 in q.items()] 
+                q2 = prg_seqsort_ties(q,prg,vf)
+                
+                ans = q2[-1] 
+                answers[k] = ans[0]
+
+        return QStruct(dim,answers,prg=prg,energy=energy)
+    
+    #----------------------------------------------------------------------------------------------
+
     def update(self,node_idn,q_idn,answer,delegation_bool):
         q_index = self.answer_keys.index(q_idn) 
 
         # update energy from query 
-        self.energy = self.energy + self.querycost_func(node_idn,q_idn) 
+        self.energy = self.energy - self.querycost_func(node_idn,q_idn) 
 
         del_stat = 0 
         if type(delegation_info) == bool: 
@@ -169,7 +230,12 @@ class QStruct:
 
     #------------------------ methods for sending out info on next move to RNBot 
 
-    def next_move(self): 
+    def next_move(self):
+        if self.energy <= 0.:
+            return None,None  
+        return self.next_move_()
+
+    def next_move_(self): 
         cat,info = self.qsm_log.run_active_move()
 
         if type(cat) == type(None): 
@@ -378,62 +444,10 @@ class QStruct:
     def f2_fix_cost(self,n):  
         return self.f2fix_cost_func(self,n)
 
-    @staticmethod 
-    def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None,energy=float(10**5)):
-        assert len(rs_map) > 0 
-        assert answer_type in {"most frequent","random","none"}  
+    #--------------------------------- update methods for terminated nodes, F2-fixed nodes 
 
-        if type(prg) == type(None): 
-            prg = default_std_Python_prng() 
-        assert type(prg) in {MethodType,FunctionType}
+    def add_terminated_nodes(self,nodeset): 
+        self.terminated_nodes |= nodeset 
 
-        # get the number of questions 
-        l0 = set() 
-        answer_keys = set() 
-        answer_range = None 
-        for v in rs_map.values(): 
-            l0 |= {len(v.answers)}
-
-            r0 = sorted(v.answers.keys())
-            answer_keys |= {vector_to_string(r0)}
-            answer_range = v.answers_range 
-
-        assert len(l0) == 1 
-        l0 = l0.pop() 
-        answer_keys = answer_keys.pop() 
-        answer_keys = string_to_vector(answer_keys)
-
-        dim = (len(rs_map),l0)
-
-        # calculate answers according to type 
-        answers = dict()
-        if answer_type == "random": 
-            for k in answer_keys: 
-                arange = answer_range[k] 
-                x = int(prg())
-                answers[k] = modulo_in_range(int(prg()),arange) 
-        elif answer_type == "none": 
-            for k in answer_keys: 
-                answers[k] = None  
-        else:
-
-            vf = lambda x: x[1] 
-
-            # key := question 
-            # value := list<(answer,frequency)>
-            d = defaultdict(Counter)
-            for rs in rs_map.values(): 
-                c2 = rs.answer_map() 
-                for k,v in c2.items(): 
-                    d[k][v] += 1 
-
-            for k in answer_keys: 
-                q = d[k] 
-                q = [(k2,v2) for k2,v2 in q.items()] 
-                q2 = prg_seqsort_ties(q,prg,vf)
-                
-                ans = q2[-1] 
-                answers[k] = ans[0]
-
-        return QStruct(dim,answers,prg=prg,energy=energy)
-     
+    def add_f2_fixed_nodes(self,nodeset): 
+        self.f2fixed_nodes |= nodeset  
