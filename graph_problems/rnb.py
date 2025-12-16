@@ -85,6 +85,7 @@ class RNBot:
 
         rs_map = Q[0] 
         qs0 = QStruct.generate_instance_from_RStructMap(rs_map,qstructgen_answer_type,prg) 
+        qs0.set_info_mode(qstruct_open_info_mode)
         dro = DelegationRuleOperator(Q[1],d2=default_delegation)
 
         rnbot = RNBot(Q[1],rs_map,qs0,dro,qstruct_open_info_mode=qstruct_open_info_mode,\
@@ -119,7 +120,7 @@ class RNBot:
 
         di = None 
         if self.open_info[0]: 
-            di = int(len(del_nodeset) > 1)
+            di = len(del_nodeset) > 1
 
         self.qstruct.update(n,q,ans,di)
         self.relay_info_to_Q(n,q,ans,del_nodeset)
@@ -169,7 +170,7 @@ class RNBot:
         self.qstruct.energy -= f2cost 
         if self.verbose: 
             print("* F2   node {} cost {}".format(n,f2cost)) 
-            print("* energy   t_0={},t_1={}".format(X,self.qstruct.energy))
+            print("* energy   t_0={}  t_1={}".format(X,self.qstruct.energy))
 
         self.delegation_rule.add_no_delegation({n})
         self.qstruct.add_f2_fixed_nodes({n}) 
@@ -191,6 +192,9 @@ class RNBot:
         if type(cat) == type(None): 
             self.fin_stat = True 
             return 
+
+        if self.verbose: 
+            print("\t\tMoving\n")
 
         if cat in {"initial scan", "f1-fix node"}:
             n,q = int(info[0]),int(info[1])

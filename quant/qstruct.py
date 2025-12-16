@@ -62,6 +62,7 @@ class QStruct:
         return S 
 
     def set_info_mode(self,info_mode): 
+        ##print("SETTING INFO ",info_mode)
         assert is_valid_rnb_info_mode(info_mode)
         self.info_mode = info_mode 
 
@@ -168,7 +169,11 @@ class QStruct:
         q_index = self.answer_keys.index(q_idn) 
 
         # update energy from query 
+        X = self.energy 
         self.energy = self.energy - self.querycost_func(node_idn,q_idn) 
+        
+        if self.verbose: 
+            print("* Q energy,  t_0={}  t_1={}".format(X,self.energy))
 
         del_stat = 0 
         if type(delegation_bool) == bool: 
@@ -217,7 +222,7 @@ class QStruct:
         if not self.info_mode[1]: 
             assert type(x1) == type(None) 
         else: 
-            assert type(x1) == float 
+            ##print("X11: ",x1) 
             f = self.frate[node_idn,q_index] 
             self.rcrate[node_idn,q_index] = \
                 update_mean(self.rcrate[node_idn,q_index],x1,f)   
@@ -226,7 +231,10 @@ class QStruct:
             assert type(x2) == type(None) 
         else: 
             assert type(x2) == dict 
-            assert set(x2.keys()) == set(self.answer_keys) 
+            ##print("X22")
+            ##print(x2.keys())
+            ##print(self.answer_keys)
+            assert set(x2.keys()) == set([i for i in range(self.dim[0])])
             self.cn_resistances = x2 
         return
 
@@ -250,9 +258,11 @@ class QStruct:
 
         if self.verbose: 
             print("\tQ active move info")
+            print("\t\tshort")
             print("* ", cat)
             print("* ", info) 
             print("\t---------------")
+            print("\t\tfull")
             print(self.qsm_log.active_move_str()) 
             #print(self.qsm_log.active_move.additional_info) 
 
@@ -274,14 +284,17 @@ class QStruct:
         n,q = f1_node_info[0],f1_node_info[1]
         first_degree_delegates,f2_delegate_cost = \
             self.f2_nodeset_fix_for_target_node(n,q) 
-
+        
         if type(first_degree_delegates) == type(None): 
-            self.qsm_log.load_QSMove("f1-fix node",f1_node_info)
+            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
             return self.qsm_log.active_move 
 
         # case: make F1-fix move         
         if f1_node_info[2] <= f2_delegate_cost: 
-            self.qsm_log.load_QSMove("f1-fix node",f1_node_info)
+                        # (node index,question index,num attempts)
+            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
         # case: make F2-fix move
         else: 
             self.qsm_log.load_QSMove("f2-fix nodeset",\
@@ -291,6 +304,8 @@ class QStruct:
     def f2_nodeset_fix_for_target_node(self,n,q): 
 
         m = self.f2_fix_review()
+        print("MM:")
+        print(m) 
 
         if type(m) == type(None): 
             return None,None
@@ -344,7 +359,7 @@ class QStruct:
             self.f1_or_f2_decision() 
             return 
         elif prev_move.category == "f1-fix node": 
-            target_node = prev_mode.additional_info[0]
+            target_node = prev_move.additional_info[0]
             # check if target node has been broken 
             stat = target_node in self.terminated_nodes
 
@@ -421,7 +436,7 @@ class QStruct:
 
                 # choose a random index of min 
             m = np.min(rc_row) 
-            indices = np.where(m == np.min(rc_row))[0]
+            indices = np.where(m == rc_row)[0]
             q_index = int(self.prg()) % len(indices) 
             q_index = indices[q_index] 
             q = self.answer_keys[q_index] 
@@ -455,7 +470,7 @@ class QStruct:
                 continue 
 
             cost = self.f2_fix_cost(n)
-            f2_mat = np.vstack((n,cost)) 
+            f2_mat = np.vstack((f2_mat,(n,cost))) 
         
         if f2_mat.shape[0] == 0: 
             return None 
