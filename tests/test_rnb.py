@@ -2,6 +2,19 @@ from graph_problems.rnb import *
 from .rnb_samples import * 
 import unittest
 
+def RNBot_parameters_case_T(): 
+    num_nodes = 10 
+    resistance = 10 ** 3 
+    num_questions = 6
+    answer_objective = 0 
+    answer_range = [-10,10] 
+    num_questions_to_vary = 3
+    prg = prg__LCG(14,53,23,1212) 
+    start_node_idn = 0 
+
+    return num_nodes,resistance,num_questions,answer_objective,\
+        answer_range,num_questions_to_vary,prg,start_node_idn
+
 ### lone file test 
 """
 py -m tests.test_rnb 
@@ -57,14 +70,9 @@ class RNBotClass(unittest.TestCase):
 
     def test__RNBot__next__case_1(self):
 
-        num_nodes = 10 
-        resistance = 10 ** 3 
-        num_questions = 6
-        answer_objective = 0 
-        answer_range = [-10,10] 
-        num_questions_to_vary = 3
-        prg = prg__LCG(14,53,23,1212) 
-        start_node_idn = 0 
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
 
         qstructgen_answer_type = "random"
         qstruct_open_info_mode=(1,1,1,1)
@@ -81,17 +89,32 @@ class RNBotClass(unittest.TestCase):
 
     def test__RNBot__next__case_2(self):
 
-        num_nodes = 10 
-        resistance = 10 ** 3 
-        num_questions = 6
-        answer_objective = 0 
-        answer_range = [-10,10] 
-        num_questions_to_vary = 0
-        prg = prg__LCG(14,53,23,1212) 
-        start_node_idn = 0 
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+        num_questions_to_vary = 0 
 
         qstructgen_answer_type = "random"
         qstruct_open_info_mode=(1,1,1,1)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=True) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q = rnbot.sim_status() 
+        ans = '\tQ is active?\nTrue\n\n\tActive <RStruct> Nodes:\n'
+        assert q == ans 
+
+    def test__RNBot__next__case_3(self):
+
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(0,0,0,0)
         rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
                 verbose=True) 
