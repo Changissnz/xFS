@@ -43,13 +43,17 @@ def default_QStruct_F2FixCost_function(adder:float=100,scalar:float = 10):
 
 #------------------------------------------------------------------------------------------------------
 
-QSMOVE_CAT = {"initial scan","f1-fix node","f2-fix nodeset"}
+QSMOVE_CAT = {"initial scan","f1-fix node","f2-fix nodeset","scan node","partial scan"}
 
 class QSMove: 
 
     def __init__(self,category,additional_info): 
+        assert category in QSMOVE_CAT
+        
         self.ssi = None 
         self.f1_attempt_counter = 0 
+        self.scan_node_counter = 0 
+
         if category == "initial scan": 
             assert type(additional_info) == tuple
             assert len(additional_info) == 2
@@ -62,10 +66,27 @@ class QSMove:
             self.ssi = SearchSpaceIterator(bounds,start_point,column_order,ssi_hop,\
                 cycleOn = False,cycleIs = 0)
 
+        elif category == "partial scan": 
+            assert type(additional_info) == tuple
+            assert len(additional_info) == 2
+            assert type(additional_info[0]) == list 
+
+            bounds = np.array([[0,len(additional_info[0])],\
+                        [0,additional_info[1]]]) 
+            start_point = bounds[:,0]
+            column_order = [1,0] 
+            ssi_hop = np.array(bounds[:,1])  
+            self.ssi = SearchSpaceIterator(bounds,start_point,column_order,ssi_hop,\
+                cycleOn = False,cycleIs = 0)
+
         elif category == "f1-fix node":
             # (node index,question index,num attempts)
             assert type(additional_info) == tuple 
             assert len(additional_info) == 3 
+        elif category == "scan node": 
+            # (node index, num questions)
+            assert type(additional_info) == tuple 
+            assert len(additional_info) == 2 
         else: 
             # (delegate node set, (target node,question,expected number of attempts to querybreak))
             assert type(additional_info[0]) == set
@@ -90,6 +111,14 @@ class QSMove:
                 return None,None
             return self.category,next(self.ssi) 
         
+        if self.category == "partial scan": 
+            if self.ssi.reached_end(): 
+                self.fin_stat = True 
+                return None,None
+            index = next(self.ssi) 
+            nq = (self.additional_info[0][int(index[0])],int(index[1]))
+            return self.category,nq 
+
         if self.category == "f1-fix node":
             if self.f1_attempt_counter >= self.additional_info[2]:
                 self.fin_stat = True 
@@ -98,8 +127,14 @@ class QSMove:
             self.f1_attempt_counter += 1 
             return self.category,tuple(self.additional_info[:2]) 
         
-        #print("ADDITIONAL INFO FOR {}".format(self.category))
-        #print(self.additional_info)
+        if self.category == "scan node": 
+            if self.scan_node_counter >= self.additional_info[1]: 
+                return None,None 
+
+            q = self.scan_node_counter 
+            self.scan_node_counter += 1
+            return self.category, (int(self.additional_info[0]),q)
+
         if len(self.additional_info[0]) == 0: 
             self.fin_stat = True 
             return None,None 

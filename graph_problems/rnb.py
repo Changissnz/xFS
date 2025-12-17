@@ -117,6 +117,7 @@ class RNBot:
     def exec_question(self,n,q): 
 
         ans,del_nodeset = self.facilitate_question(n,q) 
+        del_nodeset -= {n} 
 
         di = None 
         if self.open_info[0]: 
@@ -196,10 +197,23 @@ class RNBot:
         if self.verbose: 
             print("\t\tMoving\n")
 
-        if cat in {"initial scan", "f1-fix node"}:
+        if cat in {"initial scan", "f1-fix node","scan node","partial scan"}:
             n,q = int(info[0]),int(info[1])
             self.exec_question(n,q) 
         else: 
             n = info 
             self.f2_fix_node(n)
         return
+
+    def sim_status(self): 
+        qstat = self.qstruct.energy > 0. 
+        D = self.rstruct_node_resistances() 
+        L = [] 
+        for k,v in D.items(): 
+            if v > 0.: 
+                L.append(k) 
+        L = sorted(L) 
+
+        S = "\tQ is active?\n" + str(qstat) + "\n\n" 
+        S += "\tActive <RStruct> Nodes:\n" + vector_to_string(L) 
+        return  S

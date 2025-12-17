@@ -77,15 +77,15 @@ class QStruct:
         return np.mean(rs) 
     
     def init_mat(self): 
-        # delegation rate
+        # delegation rate, cumulative 
         self.drate = np.zeros(self.dim) 
-        # contradiction rate 
+        # contradiction rate, average
         self.crate = np.zeros(self.dim) 
-        # question frequency rate 
+        # question frequency rate, cumulative
         self.frate = np.zeros(self.dim) 
-        # average answers 
+        # average answers, average
         self.arate = np.zeros(self.dim)  
-        # resistance changes 
+        # resistance changes, most recent 
         self.rcrate = np.zeros(self.dim)
 
         # initial node resistances 
@@ -192,8 +192,7 @@ class QStruct:
         self.crate[node_idn,q_index] = \
             update_mean(self.crate[node_idn,q_index],diff,f) 
 
-        self.drate[node_idn,q_index] = \
-            update_mean(self.drate[node_idn,q_index],del_stat,f)  
+        self.drate[node_idn,q_index] += del_stat 
         return diff  
 
     """
@@ -201,7 +200,6 @@ class QStruct:
     """
     def load_initial_info(self,D,G): 
         assert len(D) == self.dim[0] 
-        #assert set(D.keys()) == set(self.answer_keys), "{}\n{}".format(set(D.keys()),set(self.answer_keys))
         self.in_resistances = D 
         self.cn_resistances = deepcopy(D) 
 
@@ -222,18 +220,13 @@ class QStruct:
         if not self.info_mode[1]: 
             assert type(x1) == type(None) 
         else: 
-            ##print("X11: ",x1) 
-            f = self.frate[node_idn,q_index] 
-            self.rcrate[node_idn,q_index] = \
-                update_mean(self.rcrate[node_idn,q_index],x1,f)   
+            f = self.frate[node_idn,q_index]  
+            self.rcrate[node_idn,q_index] = x1 
 
         if not self.info_mode[2]: 
             assert type(x2) == type(None) 
         else: 
             assert type(x2) == dict 
-            ##print("X22")
-            ##print(x2.keys())
-            ##print(self.answer_keys)
             assert set(x2.keys()) == set([i for i in range(self.dim[0])])
             self.cn_resistances = x2 
         return
@@ -277,6 +270,14 @@ class QStruct:
         self.qsm_log.load_QSMove(category,additional_info)
         return
 
+    def load_partial_scan(self): 
+        qx = sorted(set([i for i in range(self.dim[0])]) - self.terminated_nodes)
+        if len(qx) == 0: return 
+
+        category = "partial scan" 
+        additional_info = (qx,self.dim[1]) 
+        self.qsm_log.load_QSMove(category,additional_info)
+
     def f1_or_f2_decision(self): 
         f1_node_info = self.f1_fix_review()
         if type(f1_node_info) == type(None): return None 
@@ -284,7 +285,7 @@ class QStruct:
         n,q = f1_node_info[0],f1_node_info[1]
         first_degree_delegates,f2_delegate_cost = \
             self.f2_nodeset_fix_for_target_node(n,q) 
-        
+
         if type(first_degree_delegates) == type(None): 
             f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
             self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
@@ -304,8 +305,6 @@ class QStruct:
     def f2_nodeset_fix_for_target_node(self,n,q): 
 
         m = self.f2_fix_review()
-        print("MM:")
-        print(m) 
 
         if type(m) == type(None): 
             return None,None
@@ -321,8 +320,9 @@ class QStruct:
             if self.info_mode[3]: 
                 # 1st degree neighbors 
                 neighbors = self.graph_config[n]
-                first_degree_delegates = neighbors.union(del_nodes) 
-
+                first_degree_delegates = neighbors.intersection(del_nodes) 
+                if len(first_degree_delegates) == 0: 
+                    return None,None
         #       subcase: graph structure unknown. 
         #                Absolute approach: attempt to F2-fix all 
         #                nodes. 
@@ -365,23 +365,20 @@ class QStruct:
 
             # move to next decision,F1|F2-fix 
             if stat: 
-                self.f1_or_f2_decision() 
+                self.load_partial_scan() 
             # try F2-fixing delegate nodes 
             else: 
-                f1_node_info = prev_move.additional_info
-                first_degree_delegates,f2_delegate_cost = \
-                    self.f2_nodeset_fix_for_target_node(f1_node_info)
-                
-                if type(first_degree_delegates) == type(None): 
-                    self.f1_or_f2_decision()
-                else: 
-                    self.qsm_log.load_QSMove("f2-fix nodeset",\
-                    (first_degree_delegates,(\
-                    f1_node_info[0],f1_node_info[1],f1_node_info[3])))
+                num_questions = int(self.dim[1])
+                self.qsm_log.load_QSMove("scan node",(target_node,num_questions))
             return
+        elif prev_move.category == "scan node":
+            self.f1_or_f2_decision() 
+        elif prev_move.category == "partial scan": 
+            self.f1_or_f2_decision() 
         else: 
-            f1_info = prev_move.additional_info[1]
-            self.qsm_log.load_QSMove("f1-fix node",f1_info)
+            node = int(prev_move.additional_info[1][0])
+            num_questions = self.dim[1] 
+            self.qsm_log.load_QSMove("scan node",(node,num_questions))
             return
         return
 
@@ -410,13 +407,11 @@ class QStruct:
         if f1_mat.shape[0] == 0: 
             return None 
         
-        #print("F1_MAT")
-        #print(f1_mat)
 
         # tie-breaker for best node 
         v = f1_mat[:,2] 
-        v_max = np.max(v) 
-        indices = np.where(v_max == v)[0]
+        v_min = np.min(v) 
+        indices = np.where(v_min == v)[0]
         i = int(self.prg()) % len(indices)
         i = indices[i] 
 

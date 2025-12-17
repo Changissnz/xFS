@@ -55,5 +55,55 @@ class RNBotClass(unittest.TestCase):
             assert qx[1] == nodeset_map[i] 
         return
 
+    def test__RNBot__next__case_1(self):
+
+        num_nodes = 10 
+        resistance = 10 ** 3 
+        num_questions = 6
+        answer_objective = 0 
+        answer_range = [-10,10] 
+        num_questions_to_vary = 3
+        prg = prg__LCG(14,53,23,1212) 
+        start_node_idn = 0 
+
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(1,1,1,1)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=True) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q = rnbot.sim_status() 
+        ans = '\tQ is active?\nTrue\n\n\tActive <RStruct> Nodes:\n'
+        assert q == ans 
+
+    def test__RNBot__next__case_2(self):
+
+        num_nodes = 10 
+        resistance = 10 ** 3 
+        num_questions = 6
+        answer_objective = 0 
+        answer_range = [-10,10] 
+        num_questions_to_vary = 0
+        prg = prg__LCG(14,53,23,1212) 
+        start_node_idn = 0 
+
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(1,1,1,1)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=True) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q = rnbot.sim_status() 
+        ans = '\tQ is active?\nTrue\n\n\tActive <RStruct> Nodes:\n'
+        assert q == ans 
+
+###
+
 if __name__ == '__main__':
     unittest.main()
