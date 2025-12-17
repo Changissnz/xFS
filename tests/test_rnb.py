@@ -126,6 +126,28 @@ class RNBotClass(unittest.TestCase):
         ans = '\tQ is active?\nTrue\n\n\tActive <RStruct> Nodes:\n'
         assert q == ans 
 
+    """
+    case: Q and RNet are already aligned. 
+    """
+    def test__RNBot__next__case_4(self):
+
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+        num_questions_to_vary = 0 
+
+        qstructgen_answer_type = "most frequent"
+        qstruct_open_info_mode=(1,1,1,1)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=True) 
+        rnbot.qstruct.energy /= 100 
+        
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q = rnbot.sim_status()
+        assert q == '\tQ is active?\nFalse\n\n\tActive <RStruct> Nodes:\n0,1,2,3,4,5,6,7,8,9'  
 ###
 
 if __name__ == '__main__':

@@ -1,4 +1,3 @@
-#from quant.rnb_struct import * 
 from quant.rstruct import * 
 from quant.qstruct import * 
 from morebs2.graph_basics import is_undirected_graph

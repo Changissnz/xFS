@@ -62,7 +62,6 @@ class QStruct:
         return S 
 
     def set_info_mode(self,info_mode): 
-        ##print("SETTING INFO ",info_mode)
         assert is_valid_rnb_info_mode(info_mode)
         self.info_mode = info_mode 
 
@@ -257,7 +256,6 @@ class QStruct:
             print("\t---------------")
             print("\t\tfull")
             print(self.qsm_log.active_move_str()) 
-            #print(self.qsm_log.active_move.additional_info) 
 
         if self.verbose: 
             print("~ " * 20)
@@ -293,7 +291,7 @@ class QStruct:
 
         # case: make F1-fix move         
         if f1_node_info[2] <= f2_delegate_cost: 
-                        # (node index,question index,num attempts)
+            # (node index,question index,num attempts)
             f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
             self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
         # case: make F2-fix move
