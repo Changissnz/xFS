@@ -123,14 +123,13 @@ class RNBotClass(unittest.TestCase):
             next(rnbot) 
 
         q = rnbot.sim_status() 
-        ans = '\tQ is active?\nTrue\n\n\tActive <RStruct> Nodes:\n'
-        assert q == ans 
+        ans = '\tQ is active?\nFalse\n\n\tActive <RStruct> Nodes:\n0,1,2,3,4,5,6,7,9'
+        assert q == ans,"got {}".format(q)
 
     """
     case: Q and RNet are already aligned. 
     """
     def test__RNBot__next__case_4(self):
-
         num_nodes,resistance,num_questions,answer_objective,\
             answer_range,num_questions_to_vary,prg,start_node_idn = \
             RNBot_parameters_case_T() 
@@ -142,7 +141,7 @@ class RNBotClass(unittest.TestCase):
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
                 verbose=True) 
         rnbot.qstruct.energy /= 100 
-        
+
         while not rnbot.fin_stat:
             next(rnbot) 
 

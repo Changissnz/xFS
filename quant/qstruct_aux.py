@@ -36,7 +36,7 @@ def info_on_query(n,q,expected_node_resistance,delta,querycost_func):
 def default_QStruct_F2FixCost_function(adder:float=100,scalar:float = 10):
 
     def f(qstruct,node): 
-        contra_row = qstruct.crate[node,:]
+        contra_row = qstruct.crate[node,:] * qstruct.frate[node,:] 
         contra_sum = np.sum(contra_row) 
         return contra_sum * scalar + adder 
     return f 

@@ -30,6 +30,12 @@ questions. Conceptualization of this bot was written in a paper
       (answer of n_j on k_i) = (answer of n on k_i). 
 * default delegation effect is if the delegate nodeset is at least size 1, 
   then the resistance delta is 0 (immunity for node n on question k_i). 
+* default F2-fix cost for a node n_i is based around its total contradiction of 
+  its answers of the k questions to Q. This total contradiction is multiplied 
+  by a parameter scalar and added to by a parameter additive. See 
+  function<default_QStruct_F2FixCost_function> for more information. 
+  This cost function produces greater F2-fix costs the more contradiction a 
+  node has to <QStruct>. 
 * a node n will attempt to delegate to other nodes by a breadth-first 
   search pattern. A weakness of this pattern is that if the neighbors of 
   edge distance 1 to node n cannot serve as delegates to n on k_i, then 
