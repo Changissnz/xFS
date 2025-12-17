@@ -363,10 +363,10 @@ class QStruct:
             # check if target node has been broken 
             stat = target_node in self.terminated_nodes
 
-            # move to next decision,F1|F2-fix 
+            # scan active nodes to update feedback values
             if stat: 
                 self.load_partial_scan() 
-            # try F2-fixing delegate nodes 
+            # scan the target node to update feedback values 
             else: 
                 num_questions = int(self.dim[1])
                 self.qsm_log.load_QSMove("scan node",(target_node,num_questions))
