@@ -348,6 +348,13 @@ class QStruct:
 
         return first_degree_delegates,f2_delegate_cost 
 
+    """
+    NFA#1 for decision-making. 
+    - virtually a DFA, except for some decisions made using a PRG. 
+
+    NFA#1 is not guaranteed to make decisions that result in the cheapest solution 
+    for <QStruct> instance to make an <RStruct> network align with it. 
+    """
     def follow_up_on_prev_move(self):
         assert len(self.qsm_log.cache) > 0 
 
