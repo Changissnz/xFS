@@ -45,10 +45,6 @@ questions. Conceptualization of this bot was written in a paper
   force-feeding it <QStruct>'s wanted answers. Node also cannot serve as 
   a delegate to other nodes. 
 
-<QStruct>'s decision-making uses `NFA#1`. NFA#1 is not guaranteed to 
-produce the cheapest solution. The procedure de-emphasizes the use of 
-F2-fix moves due to the arbitrarily greater cost of an F2-fix in comparison 
-to an F1-fix. 
 ------------------------------------------------------------------------
 
 qstruct_open_info_mode := list, 4 x (0|1). 

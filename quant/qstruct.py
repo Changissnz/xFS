@@ -6,6 +6,18 @@ from collections import Counter,defaultdict
 from types import MethodType,FunctionType 
 
 """
+QStruct makes its decisions using one of three processes: 
+- NFA#1 
+- NFA#2 
+- repeating a prior <QSMoveLog> move (see method<load_prior_QSMoveLog>) 
+
+In <QStruct>'s independent state (no prior <QSMoveLog> reference), its 
+decision-making uses `NFA#1` or `NFA#2`. NFA#1 is not guaranteed to 
+produce the cheapest solution. The procedure de-emphasizes the use of 
+F2-fix moves due to the arbitrarily greater cost of an F2-fix in comparison 
+to an F1-fix. NFA#2 is more stochastic and will lean towards F2-fixing 
+nodes, depending on the PRNG it is given for going for that preference. 
+
 info_mode := list, 4 x (0|1), used in RNBot. 
             [0] -> delegation nodes known? 
             [1] -> feedback on resistance changes given? 
@@ -18,7 +30,7 @@ class QStruct:
     def __init__(self,dim,answers:dict,energy=float(10**5),\
         info_mode=(0,0,0,0),query_cost_func=default_QStruct_query_cost,\
         f2fix_cost_func=default_QStruct_F2FixCost_function(),prg=None,\
-        verbose=False):
+        nfa_type=1,verbose=False):
 
         assert len(dim) == 2
         assert type(dim[0]) == type(dim[1]) 
@@ -31,6 +43,7 @@ class QStruct:
         if type(prg) == type(None): 
             prg = default_std_Python_prng() 
         assert type(prg) in {MethodType,FunctionType}
+        assert nfa_type in {1,2}
 
         self.dim = dim 
         self.answers = answers 
@@ -41,12 +54,15 @@ class QStruct:
         self.querycost_func = query_cost_func
         self.f2fix_cost_func = f2fix_cost_func 
         self.prg = prg 
+        self.nfa_type = nfa_type
         self.verbose = verbose 
         self.init_mat() 
 
         # start up a move log, and load the first move 
         self.qsm_log = QSMoveLog() 
         self.load_first_move() 
+
+        self.repeat_qsm_mode = False 
 
     def __str__(self): 
         S = "ANSWERS" 
@@ -102,6 +118,11 @@ class QStruct:
         # node -> question idn -> delegate nodes 
         self.extended_delinfo = defaultdict(defaultdict) 
         return
+
+    def load_prior_QSMoveLog(self,qsm_log:QSMoveLog):
+        assert type(qsm_log) == QSMoveLog
+        self.qsm_log_prior = qsm_log 
+        self.repeat_qsm_mode = True 
 
     @staticmethod 
     def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None,energy=float(10**5)):
@@ -245,7 +266,8 @@ class QStruct:
 
         if type(cat) == type(None): 
             if self.verbose: print("Q following up on previous move")
-            self.follow_up_on_prev_move() 
+            
+            self.load_next_move() 
             cat,info = self.qsm_log.run_active_move() 
 
         if self.verbose: 
@@ -261,6 +283,26 @@ class QStruct:
             print("~ " * 20)
 
         return cat,info 
+
+    """
+    loads next move into <QSMoveLog> 
+    """
+    def load_next_move(self): 
+        if self.repeat_qsm_mode: 
+            if len(self.qsm_log_prior.cache) > 0: 
+                qsmove = self.qsm_log_prior.cache.pop(0) 
+                qsmove.reset() 
+                self.qsm_log.active_move = qsmove 
+            else: 
+                self.repeat_qsm_mode = False 
+
+        if not self.repeat_qsm_mode: 
+            if self.nfa_type == 1: 
+                self.follow_up_on_prev_move() 
+            else: 
+                self.follow_up_on_prev_move__type2() 
+
+    #------------------------------------------- methods for making decisions, loading moves 
 
     def load_first_move(self):
         category = "initial scan"
@@ -348,6 +390,8 @@ class QStruct:
 
         return first_degree_delegates,f2_delegate_cost 
 
+    #--------------------------------------------- NFA#1 
+
     """
     NFA#1 for decision-making. 
     - virtually a DFA, except for some decisions made using a PRG. 
@@ -385,6 +429,43 @@ class QStruct:
             num_questions = self.dim[1] 
             self.qsm_log.load_QSMove("scan node",(node,num_questions))
             return
+        return
+
+    #--------------------------------------------- NFA#2
+
+    def follow_up_on_prev_move__type2(self): 
+        assert len(self.qsm_log.cache) > 0 
+        prev_move = self.qsm_log.cache[-1] 
+
+        i1,i2 = self.prg(),self.prg() 
+        if prev_move.category == "f2-fix nodeset": 
+
+            # case: f1-fix 
+            if i1 < i2: 
+                f1_node_info = self.f1_fix_review()
+                f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+                self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
+            # case: f1|f2-fix 
+            else: 
+                self.f1_or_f2_decision() 
+        elif prev_move.category == "f1-fix node": 
+            self.load_partial_scan()
+        else: 
+            # case: f2-fix 
+            if i1 < i2: 
+                n = self.most_frequent_delegate_active_node()
+                if type(n) == type(None): 
+                    f1_node_info = self.f1_fix_review()
+                    if type(f1_node_info) == type(None): 
+                        return 
+                    f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+                    self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
+                else: 
+                    self.qsm_log.load_QSMove("f2-fix nodeset",\
+                    ({n},(n,0,1))) 
+            # case: f1|f2-fix 
+            else: 
+                self.f1_or_f2_decision() 
         return
 
     #------------------------ methods for analysis of nodes based on querying (F1-fix)  
@@ -475,6 +556,35 @@ class QStruct:
         if f2_mat.shape[0] == 0: 
             return None 
         return f2_mat 
+
+        #------------------------------ used for NFA#2 
+    def most_frequent_delegate_active_node(self): 
+        nodeset = set() 
+        for n in range(self.dim[0]): 
+            if n in self.f2fixed_nodes:
+                continue 
+            if n in self.terminated_nodes:
+                continue 
+            nodeset |= {int(n)} 
+        
+        if len(nodeset) == 0: return None 
+        dfreq = self.delegation_frequency_for_nodeset(nodeset) 
+        dfreq = [(k,v) for k,v in dfreq.items()] 
+        vf = lambda x: x[1] 
+        dfreq = prg_seqsort_ties(dfreq,self.prg,vf) 
+
+        q = dfreq.pop(-1) 
+        return q[0] 
+    
+    def delegation_frequency_for_nodeset(self,nodeset): 
+        D = defaultdict(int)
+        for n in nodeset: D[n] = 0 
+        for n,Q in self.extended_delinfo.items(): 
+            for q_,ns in Q.items(): 
+                I = ns.intersection(nodeset) 
+                for n2 in I: 
+                    D[n2] += 1 
+        return D 
 
     def f2_fix_cost(self,n):  
         return self.f2fix_cost_func(self,n)

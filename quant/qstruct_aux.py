@@ -54,49 +54,53 @@ class QSMove:
         self.f1_attempt_counter = 0 
         self.scan_node_counter = 0 
 
-        if category == "initial scan": 
-            assert type(additional_info) == tuple
-            assert len(additional_info) == 2
+        self.category = category
+        self.additional_info = additional_info
+        self.spare_cache = [] 
+        self.fin_stat = False 
+        self.load_config() 
 
-            bounds = np.array([[0,additional_info[0]],\
-                        [0,additional_info[1]]]) 
+    def load_config(self): 
+        if self.category == "initial scan": 
+            assert type(self.additional_info) == tuple
+            assert len(self.additional_info) == 2
+
+            bounds = np.array([[0,self.additional_info[0]],\
+                        [0,self.additional_info[1]]]) 
             start_point = bounds[:,0]
             column_order = [1,0] 
-            ssi_hop = np.array(additional_info) 
+            ssi_hop = np.array(self.additional_info) 
             self.ssi = SearchSpaceIterator(bounds,start_point,column_order,ssi_hop,\
                 cycleOn = False,cycleIs = 0)
 
-        elif category == "partial scan": 
-            assert type(additional_info) == tuple
-            assert len(additional_info) == 2
-            assert type(additional_info[0]) == list 
+        elif self.category == "partial scan": 
+            assert type(self.additional_info) == tuple
+            assert len(self.additional_info) == 2
+            assert type(self.additional_info[0]) == list 
 
-            bounds = np.array([[0,len(additional_info[0])],\
-                        [0,additional_info[1]]]) 
+            bounds = np.array([[0,len(self.additional_info[0])],\
+                        [0,self.additional_info[1]]]) 
             start_point = bounds[:,0]
             column_order = [1,0] 
             ssi_hop = np.array(bounds[:,1])  
             self.ssi = SearchSpaceIterator(bounds,start_point,column_order,ssi_hop,\
                 cycleOn = False,cycleIs = 0)
 
-        elif category == "f1-fix node":
+        elif self.category == "f1-fix node":
             # (node index,question index,num attempts)
-            assert type(additional_info) == tuple 
-            assert len(additional_info) == 3 
-        elif category == "scan node": 
+            assert type(self.additional_info) == tuple 
+            assert len(self.additional_info) == 3 
+        elif self.category == "scan node": 
             # (node index, num questions)
-            assert type(additional_info) == tuple 
-            assert len(additional_info) == 2 
+            assert type(self.additional_info) == tuple 
+            assert len(self.additional_info) == 2 
         else: 
             # (delegate node set, (target node,question,expected number of attempts to querybreak))
-            assert type(additional_info[0]) == set
-            assert len(additional_info[0]) > 0  
-            assert type(additional_info[1]) == tuple 
-            assert len(additional_info[1]) == 3
+            assert type(self.additional_info[0]) == set
+            assert len(self.additional_info[0]) > 0  
+            assert type(self.additional_info[1]) == tuple 
+            assert len(self.additional_info[1]) == 3
 
-        self.category = category
-        self.additional_info = additional_info
-        self.fin_stat = False 
         return
 
     def __str__(self): 
@@ -138,7 +142,20 @@ class QSMove:
         if len(self.additional_info[0]) == 0: 
             self.fin_stat = True 
             return None,None 
-        return self.category,self.additional_info[0].pop() 
+        
+        n = self.additional_info[0].pop()
+        self.spare_cache.append(n)
+        return self.category,n 
+
+    def reset(self): 
+        if self.category == "f2-fix nodeset": 
+            self.additional_info[0] = deepcopy(self.spare_cache) 
+            self.spare_cache.clear()
+
+        self.ssi = None 
+        self.f1_attempt_counter = 0 
+        self.scan_node_counter = 0 
+        self.load_config() 
              
 class QSMoveLog: 
 

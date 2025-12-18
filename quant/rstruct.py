@@ -106,7 +106,7 @@ class DelegationRuleOperator:
 
 class RStruct: 
 
-    def __init__(self,node_idn,resistance:float,answers:dict,answer_objective:dict,answers_range:dict,prg):   
+    def __init__(self,node_idn,resistance:float,answers:dict,answer_objective:int,answers_range:dict,prg):   
         self.node_idn = node_idn
         # question idn -> answer 
         self.answers = answers 
