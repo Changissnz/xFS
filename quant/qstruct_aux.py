@@ -104,7 +104,13 @@ class QSMove:
         return
 
     def __str__(self): 
-        return "* {}\n* {}".format(self.category,self.additional_info) 
+        if self.category != "f2-fix nodeset": 
+            return "* {}\n* {}".format(self.category,self.additional_info) 
+        
+        q0 = deepcopy(self.spare_cache) 
+        q0.extend(self.additional_info[0]) 
+        q1 = self.additional_info[1] 
+        return "* {}\n* {}".format(self.category,(q0,q1))  
 
     def __next__(self):
         if self.fin_stat: return None,None  
