@@ -107,7 +107,7 @@ class QSMove:
         return "* {}\n* {}".format(self.category,self.additional_info) 
 
     def __next__(self):
-        if self.fin_stat: return None 
+        if self.fin_stat: return None,None  
 
         if self.category == "initial scan":
             if self.ssi.reached_end(): 
@@ -155,6 +155,7 @@ class QSMove:
         self.ssi = None 
         self.f1_attempt_counter = 0 
         self.scan_node_counter = 0 
+        self.fin_stat = False 
         self.load_config() 
              
 class QSMoveLog: 

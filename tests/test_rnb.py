@@ -146,7 +146,43 @@ class RNBotClass(unittest.TestCase):
             next(rnbot) 
 
         q = rnbot.sim_status()
-        assert q == '\tQ is active?\nFalse\n\n\tActive <RStruct> Nodes:\n0,1,2,3,4,5,6,7,8,9'  
+        assert q == '\tQ is active?\nFalse\n\n\tActive <RStruct> Nodes:\n0,1,2,3,4,5,6,7,8,9' 
+
+    """
+    tests for correct <QStruct> move repeat. 
+    """
+    def test__RNBot__next__case_5(self): 
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(0,0,0,0)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=False)
+        rnbot.qstruct.energy /= 100 
+        rnbot.qstruct.nfa_type = 1 
+        rnbot2 = deepcopy(rnbot) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q0 = rnbot.qstruct.energy 
+        rdict0 = rnbot.rstruct_node_resistances()
+
+
+        rnbot2.qstruct.load_prior_QSMoveLog(rnbot.qstruct.qsm_log) 
+        while not rnbot2.fin_stat:
+            next(rnbot2) 
+
+        q1 = rnbot2.qstruct.energy 
+        rdict1 = rnbot2.rstruct_node_resistances()
+
+        assert q0 == q1 
+        assert rdict0 == rdict1 
+        return 
+
 ###
 
 if __name__ == '__main__':

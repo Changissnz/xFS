@@ -119,10 +119,20 @@ class QStruct:
         self.extended_delinfo = defaultdict(defaultdict) 
         return
 
+    '''
+    NOTE: method does not check for `qsm_log` to be applicable to the same 
+          initial <RNBot> configuration. 
+    BUG: possible. 
+    '''
     def load_prior_QSMoveLog(self,qsm_log:QSMoveLog):
         assert type(qsm_log) == QSMoveLog
         self.qsm_log_prior = qsm_log 
         self.repeat_qsm_mode = True 
+        self.qsm_log.active_move = None 
+        if len(self.qsm_log_prior.cache) > 0: 
+            qsmove = self.qsm_log_prior.cache.pop(0)
+            qsmove.reset() 
+            self.qsm_log.active_move = qsmove 
 
     @staticmethod 
     def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None,energy=float(10**5)):
