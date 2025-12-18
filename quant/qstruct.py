@@ -6,6 +6,8 @@ from collections import Counter,defaultdict
 from types import MethodType,FunctionType 
 
 """
+For use with Respondent Network Bot (see file<graph_problems.rnb>)
+
 QStruct makes its decisions using one of three processes: 
 - NFA#1 
 - NFA#2 

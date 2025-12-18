@@ -14,7 +14,6 @@ def default_delegation_effect(ans_diff,del_nodeset):
 
 #---------------------------------------------------------------------------------------------
 
-# TODO: test 
 class DelegationRuleOperator:
 
     """
@@ -103,7 +102,12 @@ class DelegationRuleOperator:
 
 #---------------------------------------------------------------------------------------------
 
+"""
+For use with Respondent Network Bot (see file<graph_problems.rnb>)
 
+Acts as one node in a network of <RStruct> nodes. 
+A Responder to a questioner, <QStruct>, on k questions. 
+"""
 class RStruct: 
 
     def __init__(self,node_idn,resistance:float,answers:dict,answer_objective:int,answers_range:dict,prg):   
