@@ -204,7 +204,7 @@ class RNBotClass(unittest.TestCase):
 
         assert q0 == q1 
         assert rdict0 == rdict1 
-        assert np.float64(2640.0) == q0 
+        assert np.float64(2136.0) == q0, "got {}".format(q0) 
 
 ###
 

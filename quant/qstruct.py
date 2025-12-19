@@ -11,6 +11,7 @@ For use with Respondent Network Bot (see file<graph_problems.rnb>)
 QStruct makes its decisions using one of three processes: 
 - NFA#1 
 - NFA#2 
+- NFA#3
 - repeating a prior <QSMoveLog> move (see method<load_prior_QSMoveLog>) 
 
 In <QStruct>'s independent state (no prior <QSMoveLog> reference), its 
@@ -491,11 +492,13 @@ class QStruct:
         elif prev_move.category == "f2-fix nodeset":  
             self.target_delegate_node_objective() 
         else: 
-            self.f1_or_f2_decision()
+            self.choose_random_node_for_scan()
+            #self.f1_or_f2_decision()
 
     def choose_random_node_for_scan(self): 
         # choose a random node for "scan node" 
         candidates = sorted(set([i for i in range(self.dim[0])]) - self.terminated_nodes)
+        if len(candidates) == 0: return 
         i = int(self.prg()) % len(candidates)
         target_node = candidates[i] 
         self.qsm_log.load_QSMove("scan node",(target_node,self.dim[1]))
