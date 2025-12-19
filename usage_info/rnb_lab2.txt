@@ -1,0 +1,641 @@
+RESULTS OBTAINED WITH USE OF: class<SimulationSolutionSearch>
+APPROXIMATE DATE AND TIME OF LAB: 12/19/25, 5:04AM. 
+
+    parameters for <RNBot.generate_instance> 
+
+num_nodes = 10 
+resistance = 10 ** 3 
+num_questions = 6
+answer_objective = 0 
+answer_range = [-10,10] 
+num_questions_to_vary = 0
+prg = prg__LCG(14,53,23,1212) 
+start_node_idn = 0 
+qstructgen_answer_type = "random"
+rstruct_objectives = 0 
+rnbot.qstruct.energy = 10 ** 5 
+
+    TEN PRNGs USED  
+prg1 = prg__LCG(14,53,23,1212)
+prg2 = default_std_Python_prng(4000)
+prg3 = default_std_Python_prng(143)
+prg4 = default_std_Python_prng(675)
+prg5 = default_std_Python_prng(2121)
+prg6 = default_std_Python_prng(54199)
+prg7 = default_std_Python_prng(4412)
+prg8 = prg__LCG(0,1,1,3) 
+prg9 = prg__LCG(1,2,1,5) 
+prg10 = prg__LCG(0,0,0,2)
+
+    SOLUTION COMPARISON FUNCTION 
+RNB_env_cmp_solution__type_2_function
+
+    QSTRUCT OPEN INFO MODE 
+[0] -> delegation nodes known? 
+[1] -> feedback on resistance changes given? 
+[2] -> current node resistances known?
+[3] -> graph structure of <RStruct>s known? 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE ONE: CLOSED INFO
+qstruct_open_info_mode=(0,0,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now -44570.0
+iter  2  mode  3
+best -44570.0 now -92586.0
+
+iter  3  mode  1
+best -92586.0 now 10000.0
+iter  4  mode  2
+best -92586.0 now -18251.0
+iter  5  mode  3
+best -92586.0 now -92848.0
+
+iter  6  mode  1
+best -92848.0 now 10000.0
+iter  7  mode  2
+best -92848.0 now -14948.0
+iter  8  mode  3
+best -92848.0 now -93037.0
+
+iter  9  mode  1
+best -93037.0 now 10000.0
+iter  10  mode  2
+best -93037.0 now 10000.0
+iter  11  mode  3
+best -93037.0 now -92824.0
+
+iter  12  mode  1
+best -93037.0 now 10000.0
+iter  13  mode  2
+best -93037.0 now 8484.0
+iter  14  mode  3
+best -93037.0 now -93398.0
+
+iter  15  mode  1
+best -93398.0 now 10000.0
+iter  16  mode  2
+best -93398.0 now -20758.0
+iter  17  mode  3
+best -93398.0 now -92888.0
+
+iter  18  mode  1
+best -93398.0 now 10000.0
+iter  19  mode  2
+best -93398.0 now -23930.0
+iter  20  mode  3
+best -93398.0 now -92625.0
+
+iter  21  mode  1
+best -93398.0 now 10000.0
+iter  22  mode  2
+best -93398.0 now -37478.0
+iter  23  mode  3
+best -93398.0 now -93027.0
+
+iter  24  mode  1
+best -93398.0 now 10000.0
+iter  25  mode  2
+best -93398.0 now -18249.0
+iter  26  mode  3
+best -93398.0 now -92874.0
+
+iter  27  mode  1
+best -93398.0 now 10000.0
+iter  28  mode  2
+best -93398.0 now 10000.0
+iter  29  mode  3
+best -93398.0 now -92916.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE TWO: OPEN INFO
+
+qstruct_open_info_mode = (1,1,1,1)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -96010.0 now -80665.0
+iter  2  mode  3
+best -96010.0 now -84456.0
+
+iter  3  mode  1
+best -96010.0 now -95852.0
+iter  4  mode  2
+best -96010.0 now -78634.0
+iter  5  mode  3
+best -96010.0 now -84456.0
+
+iter  6  mode  1
+best -96010.0 now -93150.0
+iter  7  mode  2
+best -96010.0 now -63246.0
+iter  8  mode  3
+best -96010.0 now -84456.0
+
+iter  9  mode  1
+best -96010.0 now -95024.0
+iter  10  mode  2
+best -96010.0 now 6527.0
+iter  11  mode  3
+best -96010.0 now -84456.0
+
+iter  12  mode  1
+best -96010.0 now -91811.0
+iter  13  mode  2
+best -96010.0 now -82543.0
+iter  14  mode  3
+best -96010.0 now -84456.0
+
+iter  15  mode  1
+best -96010.0 now -94010.0
+iter  16  mode  2
+best -96010.0 now 7312.0
+iter  17  mode  3
+best -96010.0 now -84456.0
+
+iter  18  mode  1
+best -96010.0 now -91390.0
+iter  19  mode  2
+best -96010.0 now -73557.0
+iter  20  mode  3
+best -96010.0 now -84456.0
+
+iter  21  mode  1
+best -96010.0 now -94061.0
+iter  22  mode  2
+best -96010.0 now 8699.0
+iter  23  mode  3
+best -96010.0 now -84456.0
+
+iter  24  mode  1
+best -96010.0 now -90508.0
+iter  25  mode  2
+best -96010.0 now 10000.0
+iter  26  mode  3
+best -96010.0 now -84456.0
+
+iter  27  mode  1
+best -96010.0 now -93227.0
+iter  28  mode  2
+best -96010.0 now 10000.0
+iter  29  mode  3
+best -96010.0 now -84456.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE THREE: PARTIAL INFO
+qstruct_open_info_mode = (0,0,1,1)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now 6398.0
+iter  2  mode  3
+best 6398.0 now -92658.0
+
+iter  3  mode  1
+best -92658.0 now 10000.0
+iter  4  mode  2
+best -92658.0 now 8699.0
+iter  5  mode  3
+best -92658.0 now -92845.0
+
+iter  6  mode  1
+best -92845.0 now 10000.0
+iter  7  mode  2
+best -92845.0 now 9000.0
+iter  8  mode  3
+best -92845.0 now -93091.0
+
+iter  9  mode  1
+best -93091.0 now 10000.0
+iter  10  mode  2
+best -93091.0 now 6355.0
+iter  11  mode  3
+best -93091.0 now -92905.0
+
+iter  12  mode  1
+best -93091.0 now 10000.0
+iter  13  mode  2
+best -93091.0 now 9570.0
+iter  14  mode  3
+best -93091.0 now -93353.0
+
+iter  15  mode  1
+best -93353.0 now 10000.0
+iter  16  mode  2
+best -93353.0 now 8140.0
+iter  17  mode  3
+best -93353.0 now -93113.0
+
+iter  18  mode  1
+best -93353.0 now 10000.0
+iter  19  mode  2
+best -93353.0 now 8785.0
+iter  20  mode  3
+best -93353.0 now -93075.0
+
+iter  21  mode  1
+best -93353.0 now 10000.0
+iter  22  mode  2
+best -93353.0 now 10000.0
+iter  23  mode  3
+best -93353.0 now -93087.0
+
+iter  24  mode  1
+best -93353.0 now 10000.0
+iter  25  mode  2
+best -93353.0 now 9613.0
+iter  26  mode  3
+best -93353.0 now -92941.0
+
+iter  27  mode  1
+best -93353.0 now 10000.0
+iter  28  mode  2
+best -93353.0 now 10000.0
+iter  29  mode  3
+best -93353.0 now -92979.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE FOUR: PARTIAL INFO
+qstruct_open_info_mode = (0,1,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -81592.0 now 9000.0
+iter  2  mode  3
+best -81592.0 now -84429.0
+
+iter  3  mode  1
+best -84429.0 now -83312.0
+iter  4  mode  2
+best -84429.0 now 10000.0
+iter  5  mode  3
+best -84429.0 now -84429.0
+
+iter  6  mode  1
+best -84429.0 now -92786.0
+iter  7  mode  2
+best -92786.0 now 10000.0
+iter  8  mode  3
+best -92786.0 now -84429.0
+
+iter  9  mode  1
+best -92786.0 now -93216.0
+iter  10  mode  2
+best -93216.0 now 9000.0
+iter  11  mode  3
+best -93216.0 now -84429.0
+
+iter  12  mode  1
+best -93216.0 now -83206.0
+iter  13  mode  2
+best -93216.0 now 10000.0
+iter  14  mode  3
+best -93216.0 now -84429.0
+
+iter  15  mode  1
+best -93216.0 now -47156.0
+iter  16  mode  2
+best -93216.0 now 10000.0
+iter  17  mode  3
+best -93216.0 now -84429.0
+
+iter  18  mode  1
+best -93216.0 now -81486.0
+iter  19  mode  2
+best -93216.0 now 10000.0
+iter  20  mode  3
+best -93216.0 now -84429.0
+
+iter  21  mode  1
+best -93216.0 now -68896.0
+iter  22  mode  2
+best -93216.0 now 10000.0
+iter  23  mode  3
+best -93216.0 now -84429.0
+
+iter  24  mode  1
+best -93216.0 now -70186.0
+iter  25  mode  2
+best -93216.0 now 5742.0
+iter  26  mode  3
+best -93216.0 now -84429.0
+
+iter  27  mode  1
+best -93216.0 now -94076.0
+iter  28  mode  2
+best -94076.0 now -84213.0
+iter  29  mode  3
+best -94076.0 now -84429.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE FIVE: PARTIAL INFO
+qstruct_open_info_mode = (0,0,1,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now -44858.0
+iter  2  mode  3
+best -44858.0 now -92658.0
+
+iter  3  mode  1
+best -92658.0 now 10000.0
+iter  4  mode  2
+best -92658.0 now -16292.0
+iter  5  mode  3
+best -92658.0 now -93503.0
+
+iter  6  mode  1
+best -93503.0 now 10000.0
+iter  7  mode  2
+best -93503.0 now 9000.0
+iter  8  mode  3
+best -93503.0 now -93215.0
+
+iter  9  mode  1
+best -93503.0 now 10000.0
+iter  10  mode  2
+best -93503.0 now 10000.0
+iter  11  mode  3
+best -93503.0 now -93199.0
+
+iter  12  mode  1
+best -93503.0 now 10000.0
+iter  13  mode  2
+best -93503.0 now -21457.0
+iter  14  mode  3
+best -93503.0 now -93193.0
+
+iter  15  mode  1
+best -93503.0 now 10000.0
+iter  16  mode  2
+best -93503.0 now 3183.0
+iter  17  mode  3
+best -93503.0 now -93305.0
+
+iter  18  mode  1
+best -93503.0 now 10000.0
+iter  19  mode  2
+best -93503.0 now 8957.0
+iter  20  mode  3
+best -93503.0 now -93037.0
+
+iter  21  mode  1
+best -93503.0 now 10000.0
+iter  22  mode  2
+best -93503.0 now -13289.0
+iter  23  mode  3
+best -93503.0 now -93087.0
+
+iter  24  mode  1
+best -93503.0 now 10000.0
+iter  25  mode  2
+best -93503.0 now -7912.0
+iter  26  mode  3
+best -93503.0 now -92941.0
+
+iter  27  mode  1
+best -93503.0 now 10000.0
+iter  28  mode  2
+best -93503.0 now 10000.0
+iter  29  mode  3
+best -93503.0 now -92979.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE SIX: PARTIAL INFO
+qstruct_open_info_mode = (0,1,1,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -94410.0 now 9000.0
+iter  2  mode  3
+best -94410.0 now -84456.0
+
+iter  3  mode  1
+best -94410.0 now -72782.0
+iter  4  mode  2
+best -94410.0 now 10000.0
+iter  5  mode  3
+best -94410.0 now -84456.0
+
+iter  6  mode  1
+best -94410.0 now -73335.0
+iter  7  mode  2
+best -94410.0 now 10000.0
+iter  8  mode  3
+best -94410.0 now -84456.0
+
+iter  9  mode  1
+best -94410.0 now -92048.0
+iter  10  mode  2
+best -94410.0 now 8000.0
+iter  11  mode  3
+best -94410.0 now -84456.0
+
+iter  12  mode  1
+best -94410.0 now -71062.0
+iter  13  mode  2
+best -94410.0 now 9000.0
+iter  14  mode  3
+best -94410.0 now -84456.0
+
+iter  15  mode  1
+best -94410.0 now -79851.0
+iter  16  mode  2
+best -94410.0 now 10000.0
+iter  17  mode  3
+best -94410.0 now -84456.0
+
+iter  18  mode  1
+best -94410.0 now -72012.0
+iter  19  mode  2
+best -94410.0 now 9000.0
+iter  20  mode  3
+best -94410.0 now -84456.0
+
+iter  21  mode  1
+best -94410.0 now -70675.0
+iter  22  mode  2
+best -94410.0 now 10000.0
+iter  23  mode  3
+best -94410.0 now -84456.0
+
+iter  24  mode  1
+best -94410.0 now -72881.0
+iter  25  mode  2
+best -94410.0 now 5742.0
+iter  26  mode  3
+best -94410.0 now -84456.0
+
+iter  27  mode  1
+best -94410.0 now -94224.0
+iter  28  mode  2
+best -94410.0 now -84358.0
+iter  29  mode  3
+best -94410.0 now -84456.0
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE SEVEN: PARTIAL INFO
+qstruct_open_info_mode = (1,1,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -93594.0 now -84213.0
+iter  2  mode  3
+best -93594.0 now -84429.0
+iter  3  mode  1
+best -93594.0 now -93594.0
+iter  4  mode  2
+best -93594.0 now -84213.0
+iter  5  mode  3
+best -93594.0 now -84429.0
+iter  6  mode  1
+best -93594.0 now -93594.0
+iter  7  mode  2
+best -93594.0 now -84213.0
+iter  8  mode  3
+best -93594.0 now -84429.0
+iter  9  mode  1
+best -93594.0 now -93594.0
+iter  10  mode  2
+best -93594.0 now 10000.0
+iter  11  mode  3
+best -93594.0 now -84429.0
+iter  12  mode  1
+best -93594.0 now -93594.0
+iter  13  mode  2
+best -93594.0 now -84213.0
+iter  14  mode  3
+best -93594.0 now -84429.0
+iter  15  mode  1
+best -93594.0 now -93594.0
+iter  16  mode  2
+best -93594.0 now -84213.0
+iter  17  mode  3
+best -93594.0 now -84429.0
+iter  18  mode  1
+best -93594.0 now -93594.0
+iter  19  mode  2
+best -93594.0 now 10000.0
+iter  20  mode  3
+best -93594.0 now -84429.0
+iter  21  mode  1
+best -93594.0 now -93594.0
+iter  22  mode  2
+best -93594.0 now 10000.0
+iter  23  mode  3
+best -93594.0 now -84429.0
+iter  24  mode  1
+best -93594.0 now -93594.0
+iter  25  mode  2
+best -93594.0 now 10000.0
+iter  26  mode  3
+best -93594.0 now -84429.0
+iter  27  mode  1
+best -93594.0 now -93594.0
+iter  28  mode  2
+best -93594.0 now -84213.0
+iter  29  mode  3
+best -93594.0 now -84429.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE EIGHT: PARTIAL INFO
+
+qstruct_open_info_mode = (1,0,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now 7312.0
+iter  2  mode  3
+best 7312.0 now -92586.0
+
+iter  3  mode  1
+best -92586.0 now 10000.0
+iter  4  mode  2
+best -92586.0 now -36145.0
+iter  5  mode  3
+best -92586.0 now -93115.0
+
+iter  6  mode  1
+best -93115.0 now 10000.0
+iter  7  mode  2
+best -93115.0 now -20828.0
+iter  8  mode  3
+best -93115.0 now -92619.0
+
+iter  9  mode  1
+best -93115.0 now 10000.0
+iter  10  mode  2
+best -93115.0 now 6527.0
+iter  11  mode  3
+best -93115.0 now -92871.0
+
+iter  12  mode  1
+best -93115.0 now 10000.0
+iter  13  mode  2
+best -93115.0 now 7753.0
+iter  14  mode  3
+best -93115.0 now -93071.0
+
+iter  15  mode  1
+best -93115.0 now 10000.0
+iter  16  mode  2
+best -93115.0 now 8699.0
+iter  17  mode  3
+best -93115.0 now -92905.0
+
+iter  18  mode  1
+best -93115.0 now 10000.0
+iter  19  mode  2
+best -93115.0 now -18122.0
+iter  20  mode  3
+best -93115.0 now -92765.0
+
+iter  21  mode  1
+best -93115.0 now 10000.0
+iter  22  mode  2
+best -93115.0 now 10000.0
+iter  23  mode  3
+best -93115.0 now -93027.0
+
+iter  24  mode  1
+best -93115.0 now 10000.0
+iter  25  mode  2
+best -93115.0 now -6872.0
+iter  26  mode  3
+best -93115.0 now -92874.0
+
+iter  27  mode  1
+best -93115.0 now 10000.0
+iter  28  mode  2
+best -93115.0 now 10000.0
+iter  29  mode  3
+best -93115.0 now -92916.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

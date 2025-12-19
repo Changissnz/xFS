@@ -1,4 +1,5 @@
 RESULTS OBTAINED WITH USE OF: class<SimulationSolutionSearch>
+APPROXIMATE DATE AND TIME OF LAB: 12/19/25, 2:24AM. 
 
     parameters for <RNBot.generate_instance> 
 
@@ -20,6 +21,12 @@ prg2 = default_std_Python_prng(4000)
 
     SOLUTION COMPARISON FUNCTION 
 RNB_env_cmp_solution__type_2_function
+
+    QSTRUCT OPEN INFO MODE 
+[0] -> delegation nodes known? 
+[1] -> feedback on resistance changes given? 
+[2] -> current node resistances known?
+[3] -> graph structure of <RStruct>s known? 
 
 #======================== CASE ONE: CLOSED INFO
 qstruct_open_info_mode=(0,0,0,0)

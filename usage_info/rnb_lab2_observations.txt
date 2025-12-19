@@ -1,0 +1,10 @@
+Lab was conducted after revising for the bug noted at the beginning of file 
+`rnb_lab1_observations.txt`. The code for class<QStruct> is that at 5:04AM, 
+12/19.
+
+Lab uses 10 PRNGs, 8 additional to the original 2 from `rnb_lab1`. Results 
+from this lab demonstrate greater competency, on average and best solution 
+obtained, by all of the NFA types. The deficit posed by the bug, in which 
+class<QStruct> makes infinite number of queries (or until node is broken) 
+on a node, is a lack of the <QStruct>'s consideration of its energy resources, 
+an "obsessive" "narrow-minded" decision.

@@ -340,23 +340,27 @@ class QStruct:
         if type(f1_node_info) == type(None): return None 
 
         n,q = f1_node_info[0],f1_node_info[1]
+        num_attempts = f1_node_info[3]
+        if np.isinf(num_attempts): 
+            num_attempts = ceil(self.energy / 10)
+
         first_degree_delegates,f2_delegate_cost = \
             self.f2_nodeset_fix_for_target_node(n,q) 
 
         if type(first_degree_delegates) == type(None): 
-            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            f1_node_info_ = (n,q,num_attempts)
             self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
             return self.qsm_log.active_move 
 
         # case: make F1-fix move         
         if f1_node_info[2] <= f2_delegate_cost: 
             # (node index,question index,num attempts)
-            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            f1_node_info_ = (n,q,num_attempts)
             self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
         # case: make F2-fix move
         else: 
             self.qsm_log.load_QSMove("f2-fix nodeset",\
-                [prg_seqsort(sorted(first_degree_delegates),self.prg),(n,q,f1_node_info[3])])
+                [prg_seqsort(sorted(first_degree_delegates),self.prg),(n,q,num_attempts)])
         return self.qsm_log.active_move 
 
     def f2_nodeset_fix_for_target_node(self,n,q): 
@@ -460,7 +464,13 @@ class QStruct:
             # case: f1-fix 
             if i1 < i2: 
                 f1_node_info = self.f1_fix_review()
-                f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+                node,question,num_attempts = f1_node_info[0],\
+                    f1_node_info[1],f1_node_info[3] 
+
+                if np.isinf(num_attempts): 
+                    num_attempts = ceil(self.energy / 10)
+
+                f1_node_info_ = (node,question,num_attempts) 
                 self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
             # case: f1|f2-fix 
             else: 
@@ -489,6 +499,10 @@ class QStruct:
             n = prev_move.additional_info[0] 
             q,_,num_attempts = \
                 self.expected_node_querybreak_cost(n)
+
+            # case: num_attempts is infinity, lower it to 1/10th of energy 
+            if np.isinf(num_attempts): 
+                num_attempts = ceil(self.energy / 10)
             info = (n,q,num_attempts) 
             self.qsm_log.load_QSMove("f1-fix node",info)
         elif prev_move.category == "f2-fix nodeset":  
@@ -629,7 +643,13 @@ class QStruct:
             f1_node_info = self.f1_fix_review()
             if type(f1_node_info) == type(None): 
                 return 
-            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            
+            n,q = f1_node_info[0],f1_node_info[1]
+            num_attempts = f1_node_info[3] 
+            if np.isinf(num_attempts): 
+                num_attempts = ceil(self.energy / 10)
+
+            f1_node_info_ = (n,q,num_attempts)
             self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
         else: 
             self.qsm_log.load_QSMove("f2-fix nodeset",\
