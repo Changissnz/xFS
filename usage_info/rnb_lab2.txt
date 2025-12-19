@@ -506,54 +506,63 @@ iter  1  mode  2
 best -93594.0 now -84213.0
 iter  2  mode  3
 best -93594.0 now -84429.0
+
 iter  3  mode  1
 best -93594.0 now -93594.0
 iter  4  mode  2
 best -93594.0 now -84213.0
 iter  5  mode  3
 best -93594.0 now -84429.0
+
 iter  6  mode  1
 best -93594.0 now -93594.0
 iter  7  mode  2
 best -93594.0 now -84213.0
 iter  8  mode  3
 best -93594.0 now -84429.0
+
 iter  9  mode  1
 best -93594.0 now -93594.0
 iter  10  mode  2
 best -93594.0 now 10000.0
 iter  11  mode  3
 best -93594.0 now -84429.0
+
 iter  12  mode  1
 best -93594.0 now -93594.0
 iter  13  mode  2
 best -93594.0 now -84213.0
 iter  14  mode  3
 best -93594.0 now -84429.0
+
 iter  15  mode  1
 best -93594.0 now -93594.0
 iter  16  mode  2
 best -93594.0 now -84213.0
 iter  17  mode  3
 best -93594.0 now -84429.0
+
 iter  18  mode  1
 best -93594.0 now -93594.0
 iter  19  mode  2
 best -93594.0 now 10000.0
 iter  20  mode  3
 best -93594.0 now -84429.0
+
 iter  21  mode  1
 best -93594.0 now -93594.0
 iter  22  mode  2
 best -93594.0 now 10000.0
 iter  23  mode  3
 best -93594.0 now -84429.0
+
 iter  24  mode  1
 best -93594.0 now -93594.0
 iter  25  mode  2
 best -93594.0 now 10000.0
 iter  26  mode  3
 best -93594.0 now -84429.0
+
 iter  27  mode  1
 best -93594.0 now -93594.0
 iter  28  mode  2
