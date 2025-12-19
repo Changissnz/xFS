@@ -8,20 +8,22 @@ from types import MethodType,FunctionType
 """
 For use with Respondent Network Bot (see file<graph_problems.rnb>)
 
-QStruct makes its decisions using one of three processes: 
+<QStruct> makes its decisions using one of four processes: 
 - NFA#1 
 - NFA#2 
 - NFA#3
-- repeating a prior <QSMoveLog> move (see method<load_prior_QSMoveLog>) 
+- repeating a prior <QSMoveLog> (see method<load_prior_QSMoveLog>) 
 
 In <QStruct>'s independent state (no prior <QSMoveLog> reference), its 
-decision-making uses `NFA#1` or `NFA#2`. NFA#1 is not guaranteed to 
+decision-making uses `NFA#1`,`NFA#2` or `NFA#3`. NFA#1 is not guaranteed to 
 produce the cheapest solution. The procedure de-emphasizes the use of 
 F2-fix moves due to the arbitrarily greater cost of an F2-fix in comparison 
 to an F1-fix. NFA#2 is more stochastic and will lean towards F2-fixing 
 nodes, depending on the PRNG it is given for going for that preference. 
 NFA#3 prioritizes F2-fixes, and is more expensive on average than #1,#2. 
-For cost-effectiveness of <QStruct>, NFA#3 should rarely be used. 
+For cost-effectiveness of <QStruct>, NFA#3 should rarely be used, 
+theoretically. However, prelimnary test results demonstrate NFA#3 fares 
+well in some cases of partial or closed information for <QStruct>.  
 
 info_mode := list, 4 x (0|1), used in RNBot. 
             [0] -> delegation nodes known? 
@@ -299,10 +301,9 @@ class QStruct:
 
         return cat,info 
 
-    """
-    loads next move into <QSMoveLog> 
-    """
+    
     def load_next_move(self): 
+        # loads next move into <QSMoveLog> 
         if self.repeat_qsm_mode: 
             if len(self.qsm_log_prior.cache) > 0: 
                 qsmove = self.qsm_log_prior.cache.pop(0) 
@@ -311,6 +312,7 @@ class QStruct:
             else: 
                 self.repeat_qsm_mode = False 
 
+        # NFA #(1|2|3)
         if not self.repeat_qsm_mode: 
             if self.nfa_type == 1: 
                 self.follow_up_on_prev_move() 
