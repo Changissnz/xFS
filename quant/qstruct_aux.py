@@ -96,7 +96,7 @@ class QSMove:
             assert len(self.additional_info) == 2 
         else: 
             # (delegate node set, (target node,question,expected number of attempts to querybreak))
-            assert type(self.additional_info[0]) == set
+            assert type(self.additional_info[0]) == list
             assert len(self.additional_info[0]) > 0  
             assert type(self.additional_info[1]) == tuple 
             assert len(self.additional_info[1]) == 3
@@ -149,13 +149,13 @@ class QSMove:
             self.fin_stat = True 
             return None,None 
         
-        n = self.additional_info[0].pop()
+        n = self.additional_info[0].pop(0)
         self.spare_cache.append(n)
         return self.category,n 
 
     def reset(self): 
         if self.category == "f2-fix nodeset": 
-            self.additional_info[0] = deepcopy(self.spare_cache) 
+            self.additional_info = (deepcopy(self.spare_cache),self.additional_info[1]) 
             self.spare_cache.clear()
 
         self.ssi = None 

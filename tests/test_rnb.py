@@ -170,6 +170,42 @@ class RNBotClass(unittest.TestCase):
         assert rdict0 == rdict1 
         return 
 
+    """
+    test NFA#3 
+    """
+    def test__RNBot__next__case_6(self): 
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+
+        num_questions_to_vary = 0 
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(0,0,0,0)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=True)
+        rnbot.qstruct.energy /= 10 
+        rnbot.qstruct.nfa_type = 3 
+        rnbot2 = deepcopy(rnbot) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        q0 = rnbot.qstruct.energy 
+        rdict0 = rnbot.rstruct_node_resistances()
+
+
+        rnbot2.qstruct.load_prior_QSMoveLog(rnbot.qstruct.qsm_log) 
+        while not rnbot2.fin_stat:
+            next(rnbot2) 
+
+        q1 = rnbot2.qstruct.energy 
+        rdict1 = rnbot2.rstruct_node_resistances()
+
+        assert q0 == q1 
+        assert rdict0 == rdict1 
+        assert np.float64(2640.0) == q0 
+
 ###
 
 if __name__ == '__main__':

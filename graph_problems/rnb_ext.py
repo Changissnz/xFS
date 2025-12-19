@@ -10,13 +10,17 @@ def RNB_env_prng_assignment_function(rnbot:RNBot,prg):
 starting NFA should be NFA#1. Function shift 
 is
 NFA#1 -> NFA#2
-NFA#2 -> None. 
+NFA#2 -> NFA#3
+NFA#3 -> None.  
 """
 def RNB_env_mode_shift_function(rnbot:RNBot): 
     if rnbot.qstruct.nfa_type == 1: 
         rnbot.qstruct.nfa_type = 2 
         return rnbot 
     elif rnbot.qstruct.nfa_type == 2: 
+        rnbot.qstruct.nfa_type = 3
+        return rnbot 
+    else: 
         return None 
 
 def RNB_env_solution_fetch_function(rnbot:RNBot): 

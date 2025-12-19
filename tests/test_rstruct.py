@@ -1,6 +1,5 @@
 from quant.rstruct import * 
 from quant.qstruct import * 
-#from morebs2.numerical_generator import * 
 from .rnb_samples import * 
 import unittest
 

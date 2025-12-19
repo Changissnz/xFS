@@ -1,6 +1,6 @@
 from .qstruct_aux import * 
 from morebs2.matrix_methods import vector_to_string,string_to_vector
-from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng,prg_seqsort_ties
+from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng,prg_seqsort_ties,prg_seqsort 
 from copy import deepcopy 
 from collections import Counter,defaultdict 
 from types import MethodType,FunctionType 
@@ -45,7 +45,7 @@ class QStruct:
         if type(prg) == type(None): 
             prg = default_std_Python_prng() 
         assert type(prg) in {MethodType,FunctionType}
-        assert nfa_type in {1,2}
+        assert nfa_type in {1,2,3}
 
         self.dim = dim 
         self.answers = answers 
@@ -311,8 +311,10 @@ class QStruct:
         if not self.repeat_qsm_mode: 
             if self.nfa_type == 1: 
                 self.follow_up_on_prev_move() 
-            else: 
+            elif self.nfa_type == 2: 
                 self.follow_up_on_prev_move__type2() 
+            else: 
+                self.follow_up_on_prev_move__type3() 
 
     #------------------------------------------- methods for making decisions, loading moves 
 
@@ -351,7 +353,7 @@ class QStruct:
         # case: make F2-fix move
         else: 
             self.qsm_log.load_QSMove("f2-fix nodeset",\
-                (first_degree_delegates,(n,q,f1_node_info[3])))
+                [prg_seqsort(sorted(first_degree_delegates),self.prg),(n,q,f1_node_info[3])])
         return self.qsm_log.active_move 
 
     def f2_nodeset_fix_for_target_node(self,n,q): 
@@ -465,20 +467,38 @@ class QStruct:
         else: 
             # case: f2-fix 
             if i1 < i2: 
-                n = self.most_frequent_delegate_active_node()
-                if type(n) == type(None): 
-                    f1_node_info = self.f1_fix_review()
-                    if type(f1_node_info) == type(None): 
-                        return 
-                    f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
-                    self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
-                else: 
-                    self.qsm_log.load_QSMove("f2-fix nodeset",\
-                    ({n},(n,0,1))) 
+                self.target_delegate_node_objective() 
             # case: f1|f2-fix 
             else: 
                 self.f1_or_f2_decision() 
         return
+
+    #------------------------------------------------- NFA #3 
+
+    def follow_up_on_prev_move__type3(self): 
+        assert len(self.qsm_log.cache) > 0 
+        prev_move = self.qsm_log.cache[-1] 
+
+        # choose F2-fix if available  
+        if prev_move.category in {"initial scan","partial scan"}: 
+            self.target_delegate_node_objective() 
+        elif prev_move.category == "scan node": 
+            n = prev_move.additional_info[0] 
+            q,_,num_attempts = \
+                self.expected_node_querybreak_cost(n)
+            info = (n,q,num_attempts) 
+            self.qsm_log.load_QSMove("f1-fix node",info)
+        elif prev_move.category == "f2-fix nodeset":  
+            self.target_delegate_node_objective() 
+        else: 
+            self.f1_or_f2_decision()
+
+    def choose_random_node_for_scan(self): 
+        # choose a random node for "scan node" 
+        candidates = sorted(set([i for i in range(self.dim[0])]) - self.terminated_nodes)
+        i = int(self.prg()) % len(candidates)
+        target_node = candidates[i] 
+        self.qsm_log.load_QSMove("scan node",(target_node,self.dim[1]))
 
     #------------------------ methods for analysis of nodes based on querying (F1-fix)  
     #------------------------ and F2-fix costs. 
@@ -569,7 +589,7 @@ class QStruct:
             return None 
         return f2_mat 
 
-        #------------------------------ used for NFA#2 
+        #------------------------------ used for NFA#2+3
     def most_frequent_delegate_active_node(self): 
         nodeset = set() 
         for n in range(self.dim[0]): 
@@ -597,6 +617,18 @@ class QStruct:
                 for n2 in I: 
                     D[n2] += 1 
         return D 
+
+    def target_delegate_node_objective(self): 
+        n = self.most_frequent_delegate_active_node()
+        if type(n) == type(None): 
+            f1_node_info = self.f1_fix_review()
+            if type(f1_node_info) == type(None): 
+                return 
+            f1_node_info_ = (f1_node_info[0],f1_node_info[1],f1_node_info[3])
+            self.qsm_log.load_QSMove("f1-fix node",f1_node_info_)
+        else: 
+            self.qsm_log.load_QSMove("f2-fix nodeset",\
+            ([n],(n,0,1))) 
 
     def f2_fix_cost(self,n):  
         return self.f2fix_cost_func(self,n)

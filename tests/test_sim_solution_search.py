@@ -44,7 +44,7 @@ class SimulationSolutionSearchClass(unittest.TestCase):
 
         i = 0 
         while not S.fin_stat: 
-            print("iter ",i)
+            print("iter ",i, " mode ", i % 3 + 1)
             S.process_one()
             i += 1 
         return 
