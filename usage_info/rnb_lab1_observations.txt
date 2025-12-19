@@ -1,7 +1,7 @@
 Refer to file `rnb_lab1.txt`. 
 
-The code for class<QStruct> is that at 2:24AM, 12/19. The code for this version does correct 
-calculated F1-fix moves (see method<QStruct.f1_fix_review>), of format 
+The code for class<QStruct> is that at 2:24AM, 12/19. The code for this version 
+calculates F1-fix moves (see method<QStruct.f1_fix_review>), of format 
     (node,question,expected cost of breaking node,number of query attempts), 
 with `number of query attempts` at INFINITY. Taking these moves completely negate the 
 <QStruct>'s energy. This feature is practically a bug. 
