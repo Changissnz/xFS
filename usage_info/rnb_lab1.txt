@@ -1,0 +1,169 @@
+RESULTS OBTAINED WITH USE OF: class<SimulationSolutionSearch>
+
+    parameters for <RNBot.generate_instance> 
+
+num_nodes = 10 
+resistance = 10 ** 3 
+num_questions = 6
+answer_objective = 0 
+answer_range = [-10,10] 
+num_questions_to_vary = 0
+prg = prg__LCG(14,53,23,1212) 
+start_node_idn = 0 
+qstructgen_answer_type = "random"
+rstruct_objectives = 0 
+rnbot.qstruct.energy = 10 ** 5 
+
+    TWO PRNGs USED  
+prg1 = prg__LCG(14,53,23,1212)
+prg2 = default_std_Python_prng(4000)
+
+    SOLUTION COMPARISON FUNCTION 
+RNB_env_cmp_solution__type_2_function
+
+#======================== CASE ONE: CLOSED INFO
+qstruct_open_info_mode=(0,0,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now -44570.0
+iter  2  mode  3
+best -44570.0 now -92586.0
+iter  3  mode  1
+best -92586.0 now 10000.0
+iter  4  mode  2
+best -92586.0 now -18251.0
+iter  5  mode  3
+best -92586.0 now -92848.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE TWO: OPEN INFO
+qstruct_open_info_mode=(1,1,1,1)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -96010.0 now 9000.0
+iter  2  mode  3
+best -96010.0 now 9000.0
+iter  3  mode  1
+best -96010.0 now -95852.0
+iter  4  mode  2
+best -96010.0 now 9000.0
+iter  5  mode  3
+best -96010.0 now 9000.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE THREE: PARTIAL INFO
+qstruct_open_info_mode = (0,0,1,1)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now 6398.0
+iter  2  mode  3
+best 6398.0 now -92658.0
+iter  3  mode  1
+best -92658.0 now 10000.0
+iter  4  mode  2
+best -92658.0 now 8699.0
+iter  5  mode  3
+best -92658.0 now -92845.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE FOUR: PARTIAL INFO
+qstruct_open_info_mode = (0,1,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -81592.0 now 10000.0
+iter  2  mode  3
+best -81592.0 now 9000.0
+iter  3  mode  1
+best -81592.0 now -83312.0
+iter  4  mode  2
+best -83312.0 now 10000.0
+iter  5  mode  3
+best -83312.0 now 9000.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE FIVE: PARTIAL INFO
+qstruct_open_info_mode = (0,0,1,0)
+
+#--------------- RESULTS
+
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now -44858.0
+iter  2  mode  3
+best -44858.0 now -92658.0
+iter  3  mode  1
+best -92658.0 now 10000.0
+iter  4  mode  2
+best -92658.0 now -16292.0
+iter  5  mode  3
+best -92658.0 now -93503.0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#======================== CASE SIX: PARTIAL INFO
+qstruct_open_info_mode = (0,1,1,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -94410.0 now 10000.0
+iter  2  mode  3
+best -94410.0 now 9000.0
+iter  3  mode  1
+best -94410.0 now -72782.0
+iter  4  mode  2
+best -94410.0 now 10000.0
+iter  5  mode  3
+best -94410.0 now 9000.0
+
+#======================== CASE SEVEN: PARTIAL INFO
+qstruct_open_info_mode = (1,1,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best -93594.0 now 9000.0
+iter  2  mode  3
+best -93594.0 now 9000.0
+iter  3  mode  1
+best -93594.0 now -93594.0
+iter  4  mode  2
+best -93594.0 now 9000.0
+iter  5  mode  3
+best -93594.0 now 9000.0
+
+#======================== CASE EIGHT: PARTIAL INFO
+qstruct_open_info_mode = (1,0,0,0)
+
+#--------------- RESULTS
+
+iter  0  mode  1
+iter  1  mode  2
+best 10000.0 now 7312.0
+iter  2  mode  3
+best 7312.0 now -92586.0
+iter  3  mode  1
+best -92586.0 now 10000.0
+iter  4  mode  2
+best -92586.0 now -36145.0
+iter  5  mode  3
+best -92586.0 now -93115.0

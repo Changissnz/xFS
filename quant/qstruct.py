@@ -20,6 +20,8 @@ produce the cheapest solution. The procedure de-emphasizes the use of
 F2-fix moves due to the arbitrarily greater cost of an F2-fix in comparison 
 to an F1-fix. NFA#2 is more stochastic and will lean towards F2-fixing 
 nodes, depending on the PRNG it is given for going for that preference. 
+NFA#3 prioritizes F2-fixes, and is more expensive on average than #1,#2. 
+For cost-effectiveness of <QStruct>, NFA#3 should rarely be used. 
 
 info_mode := list, 4 x (0|1), used in RNBot. 
             [0] -> delegation nodes known? 

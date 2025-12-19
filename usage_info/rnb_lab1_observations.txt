@@ -1,0 +1,36 @@
+Refer to file `rnb_lab1.txt`. 
+
+Using the parameters specified at the beginning of the file, class<SimulationSolutionSearch> 
+was used to demonstrate effectiveness of each of the NFAs #1,#2,#3. 
+
+Scoring for NFA performance uses a weighted function of the remaining <QStruct> energy 
+and the cumulative resistance of the Respondent Network Bot. 
+
+According to scores produced for every class<QStruct> information mode specified, 
+NFA#1 performed the best when there was completely open information. NFA#1, designed 
+for cost-efficiency by avoiding F2-fix moves, lost in performance metrics with other 
+cases of information (closed or partial). 
+
+In test case #1, NFA#2 performed better than NFA#1, NFA#3 performed much better than NFA#2. 
+NFA#1 was not able to inflict a single negative change of resistance against the Respondent 
+Network Bot for test cases #1,#3,#5,#8. 
+
+NFA#3, despite its affinity for F2-fix, a move type that is typically much more expensive 
+than F1-fix, demonstrated its ability to defeat a Respondent Network Bot in cases of 
+partial or closed information given to it. NFA#2 seems to be a "half-measures" kind of 
+procedure. 
+
+Table below summarizes on NFA performance for Respondent Network Bot Lab #1. 
+
+
+Test Case      NFA performance (best to worst)     Information Mode 
+---------     ---------------------------------    ----------------
+1               3,2,1                                (0,0,0,0)
+2               1,2 & 3 TIED                         (1,1,1,1)
+3               3,2,1                                (0,0,1,1)
+4               1,3,2                                (0,1,0,0)
+5               3,2,1                                (0,0,1,0)
+6               1,3,2                                (0,1,1,0)
+7               1,2 & 3 TIED                         (1,1,0,0)
+8               3,2,1                                (1,0,0,0)
+
