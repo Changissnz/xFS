@@ -85,7 +85,7 @@ class RNBotClass(unittest.TestCase):
         qstruct_open_info_mode=(1,1,1,1)
         rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
-                verbose=True) 
+                verbose=False) 
 
         while not rnbot.fin_stat:
             next(rnbot) 
@@ -104,7 +104,7 @@ class RNBotClass(unittest.TestCase):
         qstruct_open_info_mode=(0,0,0,0)
         rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
-                verbose=True) 
+                verbose=False) 
 
         while not rnbot.fin_stat:
             next(rnbot) 
@@ -126,7 +126,7 @@ class RNBotClass(unittest.TestCase):
         qstruct_open_info_mode=(1,1,1,1)
         rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
-                verbose=True) 
+                verbose=False) 
         rnbot.qstruct.energy /= 100 
 
         while not rnbot.fin_stat:
@@ -183,7 +183,7 @@ class RNBotClass(unittest.TestCase):
         qstruct_open_info_mode=(0,0,0,0)
         rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
-                verbose=True)
+                verbose=False)
         rnbot.qstruct.energy /= 10 
         rnbot.qstruct.nfa_type = 3 
         rnbot2 = deepcopy(rnbot) 
@@ -205,6 +205,28 @@ class RNBotClass(unittest.TestCase):
         assert q0 == q1 
         assert rdict0 == rdict1 
         assert np.float64(2136.0) == q0, "got {}".format(q0) 
+
+
+    def test__RNBot__next__case_7(self):
+
+        num_nodes,resistance,num_questions,answer_objective,\
+            answer_range,num_questions_to_vary,prg,start_node_idn = \
+            RNBot_parameters_case_T() 
+        
+        num_nodes = 100 
+        num_questions_to_vary = 0 
+        resistance /= 10 
+
+        qstructgen_answer_type = "random"
+        qstruct_open_info_mode=(1,1,1,1)
+        rnbot = RNBot.generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+                answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
+                verbose=False) 
+
+        while not rnbot.fin_stat:
+            next(rnbot) 
+
+        assert rnbot.qstruct.energy == -1130.0
 
 ###
 

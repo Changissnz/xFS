@@ -4,10 +4,12 @@ class BFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
-        nextnode_priority_function=None): 
+        nextnode_priority_function=None,no_duplicate_touch_nodes:bool=False): 
 
         super().__init__(start_node,d,edge_cost_function,\
             nextnode_priority_function)
+        self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
+        self.touched_nodes = set([self.reference]) 
 
     def move_one(self):
 
@@ -36,9 +38,19 @@ class BFSCache(XFSCache):
             self.costfrom_table[self.reference][q_] = self.fetch_edge_cost(self.reference,q_)
 
         self.ref_neighbors_travelled[self.reference] -= set(q)
-        self.reference_varcache.extend(q) 
 
+        q = self.filter_no_duplicate_touch_nodes(q) 
+        self.reference_varcache.extend(q) 
+        
+        if self.no_duplicate_touch_nodes: 
+            self.touched_nodes |= set(q) 
+        
         if len(self.reference_varcache) == 0: 
             return False 
         self.reference = self.reference_varcache.pop(0)
         return True 
+
+    def filter_no_duplicate_touch_nodes(self,q): 
+        if not self.no_duplicate_touch_nodes: 
+            return q 
+        return [q_ for q_ in q if q_ not in self.touched_nodes] 

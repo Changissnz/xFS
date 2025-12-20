@@ -33,6 +33,7 @@ class DelegationRuleOperator:
         usg = USGController() 
         #print("SET NEW SEARCH: ",self.d)
         usg.set_new_search(False,n,self.d)
+        usg.set_no_duplicate_touch__BFS(0)
 
         stat = True 
         D = set()
@@ -73,7 +74,7 @@ class DelegationRuleOperator:
 
         while stat: 
             ref = S.reference
-            #print("MOVING")
+            #print("MOVING: ",ref) 
             _,stat,_ = usg.move_search(0) 
             #print("STAT: ",stat)
             if not stat: 
@@ -83,6 +84,7 @@ class DelegationRuleOperator:
             if type(S.reference) == type(None): 
                 stat = False 
         #print("n={},q={}, D={}".format(n,q,D)) 
+        #print("------------------------------------")
         D |= {n} 
         return ask_nodeset(),D 
 
