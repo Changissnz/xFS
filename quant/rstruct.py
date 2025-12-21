@@ -1,4 +1,4 @@
-from .graph_gen import * 
+from graph_models.graph_gen import * 
 from .usg_controller import * 
 from morebs2.numerical_generator import modulo_in_range,prg__LCG,default_std_Python_prng
 from types import MethodType,FunctionType 

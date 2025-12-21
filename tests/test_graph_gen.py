@@ -1,10 +1,10 @@
-from quant.graph_gen import * 
+from graph_models.graph_gen import * 
 from quant.cng import * 
 import unittest
 
 ### lone file test 
 """
-python -m tests.test_graph_gen 
+py -m tests.test_graph_gen 
 """
 ###
 class GraphGenClass(unittest.TestCase):

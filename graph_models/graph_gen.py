@@ -1,5 +1,4 @@
-#from collections import defaultdict 
-from graph_models.micrograph import * 
+from .micrograph import * 
 from math import ceil 
 
 class GraphGen:
