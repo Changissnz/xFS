@@ -17,6 +17,7 @@ class BFSCache(XFSCache):
 
     def move_one(self):
         self.previous_edges.clear() 
+        ##print("moving {}".format(len(self.reference_varcache))) 
 
         # get all neighbors, untravelled 
         q = self.d[self.reference] - self.ref_neighbors_travelled[self.reference]
@@ -48,7 +49,7 @@ class BFSCache(XFSCache):
             """ 
             self.costfrom_table[self.reference][q_] = new_cost 
 
-        self.ref_neighbors_travelled[self.reference] -= set(q)
+        self.ref_neighbors_travelled[self.reference] |= set(q)
 
         q = self.filter_no_duplicate_touch_nodes(q) 
         self.reference_varcache.extend(q) 

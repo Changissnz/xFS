@@ -134,9 +134,7 @@ class GraphGen:
                     stat = True 
                 if stat: 
                     return stat 
-
-            # subcase: connectivity has not been reached, add new edge
-            ex = self.new_edge() 
+            return self.new_edge() 
 
         # case: add new edge 
         return self.new_edge()
