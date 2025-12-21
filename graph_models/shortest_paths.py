@@ -2,7 +2,9 @@ from .node_path import *
 from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort
 from types import MethodType,FunctionType
 
-
+"""
+designed for use with bigger graphs (> 50 nodes).
+"""
 class BDFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,is_bfs:bool=True,prg=None,\

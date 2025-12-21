@@ -1,6 +1,9 @@
 from .node_path import * 
 
 """
+designed for use with smaller graphs (< 50 nodes). Offers comprehensive backtracking 
+for obtaining paths. 
+
 search_head_type := 1 for thorough, 2 for filtered;
     1 produces all possible paths, 2 produces less paths 
         in which none may be the shortest path. 

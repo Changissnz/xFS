@@ -1,5 +1,9 @@
 from .node_path import * 
 
+"""
+designed for use with smaller graphs (< 50 nodes). Offers comprehensive backtracking 
+for obtaining paths. 
+"""
 class BFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,\
