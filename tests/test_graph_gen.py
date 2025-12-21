@@ -91,5 +91,20 @@ class GraphGenClass(unittest.TestCase):
             stat = is_undirected_graph(gg.d) 
             assert stat == (not is_dsg )
 
+    def test__GraphGen__full_run__case_3(self): 
+
+        lx = prg__LCG(55,3,19,212) 
+
+        is_dsg = 0  
+        prg = lx 
+        is_realtime_gen = True 
+        vertex_degree = 20 
+        edge_connectivity = 0.33 
+        gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity)
+        gg.full_run() 
+        D = gg.d 
+
+        assert gg.current_edge_degree == ceil(edge_connectivity * gg.max_simple_edges(20)) 
+
 if __name__ == '__main__':
     unittest.main()

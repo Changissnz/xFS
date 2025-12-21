@@ -80,6 +80,8 @@ class NodePath:
     def cost(self,cost_func=sum):
         return cost_func(self.pweights) 
 
+# NOTE: there are some features not yet implemented, such as 
+#           parameter<cost_func> for function<store_minpaths>. 
 """
 parent class for DFSCache and BFSCache 
 """
@@ -106,7 +108,7 @@ class XFSCache:
         # used to keep track of previous move
         self.previous_edges = [] 
 
-        self.min_paths = {} 
+        self.min_paths = defaultdict(list)
         self.init_cache() 
 
     def init_cache(self):
@@ -164,13 +166,14 @@ class XFSCache:
                 continue
     
             pq = list(set(q.keys()) - set(p.p))
-            pq = sorted(pq,key=lambda x: q[x])[::-1]
+            pq = sorted(pq,key=lambda x: q[x])#[::-1]
             for k in pq:
                 v = q[k] 
                 p2 = p + (k,v)
                 paths.insert(0,p2)
         return results 
 
+    # NOTE: `cost_func`not fully implemented yet. 
     def store_minpaths(self,ns=None,num_paths=1,cost_func=sum):
         if type(ns) == type(None):
             ns = set(self.ref_neighbors_travelled.keys())

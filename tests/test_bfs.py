@@ -3,7 +3,7 @@ from graph_models.bfs import *
 import unittest 
 
 """
-python -m tests.test_bfs
+py -m tests.test_bfs
 """
 class BFSCacheClass(unittest.TestCase):
 

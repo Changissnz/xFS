@@ -12,7 +12,6 @@ class BFSCache(XFSCache):
         self.touched_nodes = set([self.reference]) 
 
     def move_one(self):
-
         self.previous_edges.clear() 
 
         # get all neighbors, untravelled 
@@ -35,7 +34,15 @@ class BFSCache(XFSCache):
         for q_ in q:
             self.previous_edges.append((self.reference,q_))
             self.ref_neighbors_travelled[q_] |= {self.reference} 
-            self.costfrom_table[self.reference][q_] = self.fetch_edge_cost(self.reference,q_)
+            new_cost = self.fetch_edge_cost(self.reference,q_)
+
+            ### ??? 
+            """
+            if self.reference in self.costfrom_table: 
+                if q_ in self.costfrom_table[self.reference]: 
+                    new_cost = min([q_,new_cost]) 
+            """ 
+            self.costfrom_table[self.reference][q_] = new_cost 
 
         self.ref_neighbors_travelled[self.reference] -= set(q)
 

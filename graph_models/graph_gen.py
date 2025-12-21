@@ -100,7 +100,7 @@ class GraphGen:
         if self.is_realtime_gen: 
             stat = self.new__realtime() 
         else: 
-            stat = self.new_edge() 
+            stat = self.new_edge()
         self.finstat = not stat 
         return not self.finstat 
 
@@ -115,21 +115,28 @@ class GraphGen:
                 return True 
 
             q = int(self.prg()) % 2 
+
+            stat = False 
             # add new vertex 
             if q: 
                 if l not in self.d: 
                     self.d[l] = set() 
-                return True 
+                    stat = True 
+                if stat: 
+                    return stat 
 
+            stat = False 
             # subcase: connectivity has been reached, have to add another vertex 
             ec = self.edge_connectivity_()
             if ec >= self.edge_connectivity: 
                 if l not in self.d: 
                     self.d[l] = set() 
-                return True 
+                    stat = True 
+                if stat: 
+                    return stat 
+
             # subcase: connectivity has not been reached, add new edge
-            else: 
-                ex = self.new_edge() 
+            ex = self.new_edge() 
 
         # case: add new edge 
         return self.new_edge()
