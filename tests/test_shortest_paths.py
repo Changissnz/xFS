@@ -68,10 +68,37 @@ class BDFSCacheClass(unittest.TestCase):
 
         qx,qx2 = bcache.min_paths,dcache.min_paths
 
-        for i in range(15):
+        for i in range(16):
             paths = qx[i]
             paths2 = qx2[i]
             assert paths[0].cost() == paths2[0].cost()
+
+        assert qx[0][0].cost() == 0 
+        assert qx[1][0].cost() == 1 
+        assert qx[2][0].cost() == 1 
+        assert qx[3][0].cost() == 1
+
+        assert qx[4][0].cost() == 2 
+        assert qx[6][0].cost() == 2
+        assert qx[9][0].cost() == 2 
+        assert qx[11][0].cost() == 2
+
+        assert qx[5][0].cost() == 3 
+        assert qx[7][0].cost() == 3 
+        assert qx[12][0].cost() == 3
+        assert qx[15][0].cost() == 3
+        assert qx[8][0].cost() == 3
+ 
+        assert qx[10][0].cost() == 4  
+        assert qx[14][0].cost() == 4 
+
+        assert qx[13][0].cost() == 5
+
+ 
+
+ 
+ 
+
 
 if __name__ == '__main__':
     unittest.main()
