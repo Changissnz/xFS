@@ -21,6 +21,23 @@ class NodePath:
         npath.pweights = pw 
         return npath 
 
+    @staticmethod 
+    def nodepath_set_to_graph(nodepath_set,is_dsg:bool=False): 
+
+        D = defaultdict(set) 
+
+        for npath in nodepath_set:
+            assert type(npath) == NodePath 
+            X = npath.p
+
+            for i in range(len(X) - 1): 
+                x0,x1 = X[i],X[i+1]
+                D[x0] |= {x1} 
+
+                if not is_dsg: 
+                    D[x1] |= {x0} 
+        return D
+
     def __getitem__(self,i):
         if isinstance(i, slice): 
             return self.p.__getitem__(i)    

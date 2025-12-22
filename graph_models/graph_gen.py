@@ -1,6 +1,15 @@
 from .micrograph import * 
 from math import ceil 
 
+    
+"""
+given number of vertices 
+"""
+def max_simple_edges(num_vertices): 
+    if num_vertices in {0,1}:  
+        return 0 
+    return sum([i for i in range(1,num_vertices)])
+
 class GraphGen:
 
     """
@@ -42,7 +51,7 @@ class GraphGen:
         self.d = mg2.dg 
 
     def preproc(self): 
-        medges_ = self.max_simple_edges(self.vertex_degree)
+        medges_ = max_simple_edges(self.vertex_degree)
 
         if self.is_dsg == 0: 
             self.max_edges = medges_
@@ -57,21 +66,13 @@ class GraphGen:
         for i in range(self.vertex_degree): 
             self.d[i] = set() 
         return
-    
-    """
-    given number of vertices 
-    """
-    def max_simple_edges(self,num_vertices): 
-        if num_vertices in {0,1}:  
-            return 0 
-        return sum([i for i in range(1,num_vertices)])
 
     """
     current edge connectivity 
     """
     def edge_connectivity_(self):
 
-        medges_ = self.max_simple_edges(len(self.d))
+        medges_ = max_simple_edges(len(self.d))
         if medges_ == 0: 
             return 2.0 
 
