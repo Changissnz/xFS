@@ -140,7 +140,7 @@ class GraphAnalogAdder:
             lx = min([len(paths_seq),self.gen_subgraph_sp_param[1]])
             if lx == 0: continue 
 
-            selected_paths = prg_choose_n(paths_seq,lx,prg_,is_unique_picker=False)
+            selected_paths = prg_choose_n(paths_seq,lx,prg_,is_unique_picker=True)
             all_selected_paths.extend(selected_paths)
 
         # piece NodePath instances into graph 
@@ -154,8 +154,8 @@ class GraphAnalogAdder:
 
         # gather the subgraph 
         mg = MicroGraph(self.d) 
-        G = mg.subgraph_by_nodeset_(nodeset) 
-        assert len(G.dg) > 0
+        G = mg.subgraph_by_nodeset_(nodeset).dg
+        assert len(G) > 0
 
         # get pos./neg. edge change 
         edge_range = [10**-5,self.gen_subgraph_derivation_ratios[0]]
@@ -171,20 +171,9 @@ class GraphAnalogAdder:
         nneg = -1 if nneg else 1 
         node_change = nneg * node_change 
 
-        # use PRNG to determine order of change: 
-        # node,edge OR edge,node 
-        node_change_first = bool(int(self.prg()) % 2) 
+        return self.graph_derivation(G,node_change,edge_change)
 
-
-
-        vscore,escore = G.ve_score()
-
-        # delete the
-
-
-        return -1 
-
-    #------------------------------------------------------------------------------------
+    #----------------- accessory methods 
 
     def isotransform_graph(self,G): 
         # make basic isomap for G 
@@ -199,10 +188,88 @@ class GraphAnalogAdder:
         G = MicroGraph.isotransform_MG(mg,isomap).dg  
         return G 
 
-    def graph_derivation(self,g:defaultdict,node_change_ratio,edge_change_ratio,node_change_first:bool):
+    def graph_derivation(self,g:defaultdict,node_change_ratio,edge_change_ratio):
+        def prg_(): return int(self.prg())
 
-        return -1 
+        # node changes first 
+        num_nodes = ceil(len(g) * abs(node_change_ratio)) 
+        if node_change_ratio < 0: num_nodes = -num_nodes
+        
+        old_nodes = sorted(g.keys()) 
+        # case: pos node change  
+        if num_nodes > 0: 
+            new_nodes = [] 
+            for _ in range(num_nodes): 
+                g[self.c] = set() 
+                new_nodes.append(self.c) 
+                self.c += 1 
 
+            # iterate through new nodes and make a single edge w/ the other nodes 
+            for n in new_nodes: 
+                i = int(self.prg()) % len(old_nodes) 
+                n2 = old_nodes[i] 
+
+                g[n2] |= {n}
+
+                if not self.is_dsg: 
+                    g[n] |= {n2} 
+        # case: negative node change 
+        else: 
+            to_delete = prg_choose_n(old_nodes,-num_nodes,prg_,is_unique_picker=True)
+            mg = MicroGraph(g) 
+            g = mg.subgraph_nodeset_exclusion(to_delete).dg 
+
+        mg = MicroGraph(g) 
+        vscore,escore = mg.ve_score()
+        
+        num_edges = None 
+        if edge_change_ratio < 0: 
+            num_edges = ceil(escore * -edge_change_ratio) 
+        else: 
+            # NOTE: directedness of graph matters for this. 
+            rem_edges = max_simple_edges(vscore) - escore 
+            num_edges = ceil(rem_edges * edge_change_ratio) 
+
+        # cases: add or delete edges 
+        stat = edge_change_ratio >= 0 
+
+        for _ in range(num_edges): 
+            self.one_edge_change(g,stat)
+        return g
+
+    def one_edge_change(self,d:defaultdict,add_edge): 
+        def prg_(): return int(self.prg())
+
+        nodes = sorted(d.keys())
+        nodes = prg_seqsort(nodes,prg_) 
+        if add_edge: 
+            for n in nodes: 
+                neighbors = d[n] 
+                new_neighbor_candidates = sorted(set(d.keys()) - neighbors) 
+                if len(new_neighbor_candidates) == 0: continue 
+
+                i = int(self.prg()) % len(new_neighbor_candidates) 
+                neighbor = new_neighbor_candidates[i] 
+
+                d[n] |= {neighbor} 
+
+                if not self.is_dsg:
+                    d[neighbor] |= {n} 
+                return 
+
+        for n in nodes: 
+            neighbors = d[n] 
+            if len(neighbors) == 0: continue 
+
+            neighbors = sorted(neighbors)
+            i = int(self.prg()) % len(neighbors)  
+            neighbor = neighbors[i] 
+
+            d[n] -= {neighbor} 
+
+            if not self.is_dsg: 
+                d[neighbor] -= {n} 
+        return 
 
     def prng_decimal(self,output_range): 
         r0,r1 = abs(self.prg()),abs(self.prg())
