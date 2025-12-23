@@ -23,6 +23,25 @@ def graph__sample_ASCHEME():
         14:{7,15},\
         15:{5,6,14}}) 
 
+def graph__sample_ASCHEME2(): 
+    return defaultdict(set,\
+        {0:{1,2,3},\
+        1:{},\
+        2:{6,9,11},\
+        3:{0},\
+        4:{3,5,9},\
+        5:{4,6,11,15},\
+        6:{2,5,8,15},\
+        7:{6,10,14},\
+        8:{6,12},\
+        9:{2,4,11},\
+        10:{7,8,13},\
+        11:{2,9,12},\
+        12:{8,11},\
+        13:{10},\
+        14:{7},\
+        15:{5,6,14}}) 
+
 class SimpleCounter: 
 
     def __init__(self,x): 
@@ -135,6 +154,69 @@ class AnalogSchemeAuxFile(unittest.TestCase):
 
         assert e0 == 46 
         assert e1 == 28  
+
+    def test__one_edge_change__case_1(self):
+
+        D = graph__sample_ASCHEME()
+        prg = prg__LCG(45,677,-5462,3112) 
+
+        # subcase 1 
+        D2 = deepcopy(D)
+        one_edge_change(D,is_dsg=False,add_edge=True,prg=prg) 
+
+        m2 = MicroGraph(D2) 
+        m1 = MicroGraph(D)  
+
+        v1,e1 = m1.ve_score() 
+        v2,e2 = m2.ve_score() 
+
+        assert e2 == 46 == e1 - 2
+
+        # subcase 2 
+        D3 = deepcopy(D2) 
+        one_edge_change(D2,is_dsg=False,add_edge=False,prg=prg) 
+
+        m3 = MicroGraph(D2) 
+        v3,e3 = m3.ve_score() 
+
+        assert e3 == e2 - 2 == 44 
+        prev = 44
+        for i in range(10): 
+            one_edge_change(D2,is_dsg=False,add_edge=False,prg=prg) 
+            v3,e3 = m3.ve_score() 
+            assert e3 == prev - 2 
+            prev -= 2 
+
+    def test__one_edge_change__case_2(self): 
+
+        D = graph__sample_ASCHEME2()
+        prg = prg__LCG(45,677,-5462,3112) 
+
+        # subcase 1 
+        D2 = deepcopy(D)
+        one_edge_change(D,is_dsg=True,add_edge=True,prg=prg) 
+
+        m2 = MicroGraph(D2) 
+        m1 = MicroGraph(D)  
+
+        v1,e1 = m1.ve_score() 
+        v2,e2 = m2.ve_score() 
+
+        assert e1 == 40 == e2 + 1, "got {}".format(e1)  
+        prev = e1  
+
+        for i in range(10): 
+            one_edge_change(D,is_dsg=True,add_edge=False,prg=prg) 
+            v3,e3 = m1.ve_score() 
+            assert e3 == prev - 1 
+            prev -= 1 
+
+        for i in range(5): 
+            one_edge_change(D,is_dsg=True,add_edge=True,prg=prg) 
+            v3,e3 = m1.ve_score() 
+            assert e3 == prev + 1 
+            prev += 1 
+
 
 if __name__ == '__main__':
     unittest.main()

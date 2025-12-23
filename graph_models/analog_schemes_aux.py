@@ -113,6 +113,7 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
 
         if not is_dsg: 
             d[neighbor] -= {n}  
+        return 
     return 
 
 def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function):
