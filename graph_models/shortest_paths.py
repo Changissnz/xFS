@@ -25,6 +25,8 @@ class BDFSCache(XFSCache):
         self.num_paths_per_node = num_paths_per_node 
 
     def move_one(self): 
+        def prg_(): return int(self.prg())
+
         self.previous_edges.clear() 
 
         if type(self.reference) == type(None): 
@@ -58,7 +60,7 @@ class BDFSCache(XFSCache):
             untravelled = set([node]) 
             
         self.ref_neighbors_travelled[self.reference] |= untravelled
-        untravelled = prg_seqsort(sorted(untravelled),self.prg)
+        untravelled = prg_seqsort(sorted(untravelled),prg_)
 
         self.previous_edges = [(self.reference,n) for n in untravelled] 
 
