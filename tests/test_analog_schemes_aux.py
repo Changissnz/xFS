@@ -217,6 +217,219 @@ class AnalogSchemeAuxFile(unittest.TestCase):
             assert e3 == prev + 1 
             prev += 1 
 
+    # case: undirected graph, 0 new nodes, 0.2 change in edges  
+    def test__graph_derivation__case_1(self): 
+        prg = prg__LCG(4543,6771,-115462,31167) 
+        D = graph__sample_ASCHEME()
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=False,node_change_ratio=0.0,edge_change_ratio=0.2,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        assert mg3.is_supergraph_of(mg1) and not mg1.is_supergraph_of(mg3) 
+
+        _,e1 = mg1.ve_score()
+        _,e3 = mg3.ve_score()
+
+        rem_edges = max_simple_edges(16) / 2 - e1 / 2
+        additional = ceil(rem_edges * 0.2) * 2 
+
+        assert e1 + additional == e3 
+        return
+
+    # case: undirected graph, 0 new nodes, -0.2 change in edges  
+    def test__graph_derivation__case_2(self): 
+        prg = prg__LCG(4543,6771,-115462,31167) 
+        D = graph__sample_ASCHEME()
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=False,node_change_ratio=0.0,edge_change_ratio=-0.2,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        assert mg3.is_subgraph_of(mg1) and not mg1.is_subgraph_of(mg3) 
+
+        _,e1 = mg1.ve_score()
+        _,e3 = mg3.ve_score()
+
+        assert e1 - ceil(e1 * 0.2) == e3 
+        return
+
+    # case: directed graph, 0 new nodes, -0.2 change in edges  
+    def test__graph_derivation__case_3(self): 
+
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=0.0,edge_change_ratio=-0.2,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        _,e1 = mg1.ve_score()
+        _,e3 = mg3.ve_score()
+
+        assert e1 == 39 
+        assert e3 == 39 - ceil(e1 * 0.2)
+
+    # case: directed graph, 0 new nodes, 0.2 change in edges  
+    def test__graph_derivation__case_4(self): 
+
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=0.0,edge_change_ratio=0.2,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        _,e1 = mg1.ve_score()
+        _,e3 = mg3.ve_score()
+
+        assert e1 == 39 
+        assert e3 == 39 + ceil(81 * 0.2)
+
+    # case: directed graph, 0.2 new nodes, 0.2 change in edges  
+    def test__graph_derivation__case_5(self): 
+
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=0.2,edge_change_ratio=0.0,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        v1,e1 = mg1.ve_score()
+        v2,e2 = mg3.ve_score()
+
+        assert ceil(v1 + v1 * 0.2) == v2 
+        assert e2 - (v2-v1) == e1 
+
+    # case: directed graph, -0.2 new nodes, 0.0 change in edges  
+    def test__graph_derivation__case_6(self): 
+
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=-0.2,edge_change_ratio=0.0,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        v1,e1 = mg1.ve_score()
+        v2,e2 = mg3.ve_score()
+
+        assert v1 - ceil(v1 * 0.2) == v2, "got {}->{}".format(v1,v2) 
+
+    # case: directed graph, -0.2 new nodes, 0.5 change in edges  
+    def test__graph_derivation__case_7(self): 
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=-0.2,edge_change_ratio=0.5,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        #assert mg3.is_supergraph_of(mg1) and not mg1.is_supergraph_of(mg3) 
+
+        v1,e1 = mg1.ve_score()
+        v3,e3 = mg3.ve_score()
+
+        assert v1 == 16 and v3 == 12
+
+        assert e1 == 39 and e3 == 43 
+
+    # case: directed graph, 0.5 new nodes, -0.2 change in edges  
+    def test__graph_derivation__case_8(self): 
+        D = graph__sample_ASCHEME2()
+
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        sc = SimpleCounter(len(D))
+        def ctr_function(): return next(sc) 
+
+        mg1 = MicroGraph(deepcopy(D))
+        D2 = graph_derivation(D,is_dsg=True,node_change_ratio=0.5,edge_change_ratio=-0.2,prg=prg,\
+            ctr_function=ctr_function)
+        mg2 = MicroGraph(D2[0]) 
+        isomap = {v:k for k,v in D2[1].items()}
+        mg3 = MicroGraph.isotransform_MG(mg2,isomap) 
+
+        #assert mg3.is_supergraph_of(mg1) and not mg1.is_supergraph_of(mg3) 
+
+        v1,e1 = mg1.ve_score()
+        v3,e3 = mg3.ve_score()
+
+        assert v1 == 16 and v3 == 24
+        assert e1 == 39 and e3 == 37 
+
+    def test__connect_subgraphs__prior_to_current(self): 
+        D = graph__sample_ASCHEME() 
+        D2 = defaultdict(set,{16:set(),17:set(),18:set(),19:set()})
+        sg2sg_conn_ratios = [0.5,0.5] 
+        prg = prg__LCG(4543,6771,-115462,31167) 
+
+        new_sg = connect_subgraphs__prior_to_current(D,D2,\
+            is_dsg=False,sg2sg_conn_ratios=sg2sg_conn_ratios,prg=prg)
+        new_edge_count = sum([len(new_sg[i]) for i in range(16,20)])
+        assert new_edge_count == 15 
+
+        new_sg2 = connect_subgraphs__prior_to_current(D,D2,\
+            is_dsg=False,sg2sg_conn_ratios=sg2sg_conn_ratios,prg=prg)
+        new_edge_count2 = sum([len(new_sg2[i]) for i in range(16,20)])
+        assert new_edge_count2 == 24 
+
+        new_sg3 = connect_subgraphs__prior_to_current(D,D2,\
+            is_dsg=False,sg2sg_conn_ratios=sg2sg_conn_ratios,prg=prg)
+        new_edge_count3 = sum([len(new_sg3[i]) for i in range(16,20)])
+        assert new_edge_count3 == 8 
+
+        new_sg4 = connect_subgraphs__prior_to_current(D,D2,\
+            is_dsg=False,sg2sg_conn_ratios=sg2sg_conn_ratios,prg=prg)
+        new_edge_count4 = sum([len(new_sg4[i]) for i in range(16,20)])
+        assert new_edge_count4 == 22 
 
 if __name__ == '__main__':
     unittest.main()

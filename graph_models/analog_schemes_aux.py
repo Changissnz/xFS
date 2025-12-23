@@ -116,6 +116,7 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
         return 
     return 
 
+# NOTE: new nodes will always be connected to at least 1 node in reference graph `g`.
 def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function):
     def prg_(): return int(prg())
 
@@ -158,8 +159,10 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
     if edge_change_ratio < 0: 
         num_edges = ceil(escore * -edge_change_ratio) 
     else: 
-        # NOTE: directedness of graph matters for this. 
-        rem_edges = max_simple_edges(vscore) - escore 
+        # NOTE: directedness of graph matters for this.
+        rem_edges = max_simple_edges(vscore)
+        rem_edges = int(rem_edges / 2) if not is_dsg else rem_edges 
+        rem_edges -= escore 
         num_edges = ceil(rem_edges * edge_change_ratio) 
 
     # cases: add or delete edges 
@@ -173,7 +176,8 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
 
 #---------------------------------------------- subgraph-to-subgraph connection
 
-
+# NOTE: scheme ensures every node of current_sg connected to at least one node in 
+#       prior_sg 
 def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultdict,\
     is_dsg:bool,sg2sg_conn_ratios,prg): 
 
@@ -183,19 +187,39 @@ def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultd
     def prg_(): return int(prg())
 
     # select prior nodes 
-    r0 = prng_decimal(prg,[10**-5,sg2sg_conn_ratios[0]])
+    rx = sorted([0.08,sg2sg_conn_ratios[0]])
+    r0 = prng_decimal(prg,rx)
     num_nodes = ceil(r0 * len(prior_sg))
     prior_nodes = sorted(prior_sg.keys())
     selected_nodes = prg_choose_n(prior_nodes,num_nodes,prg_,is_unique_picker=True) 
 
     # calculate possible number of edges between prior nodes and current sg 
-    r1 = prng_decimal(prg,[10**-5,sg2sg_conn_ratios[1]])
-    max_edges = len(current_sg) * num_nodes
-    wanted_edges = ceil(r1 * max_edges)
     current_nodes = sorted(current_sg.keys())
 
     # add the two graphs 
     new_sg = (MicroGraph(prior_sg) + MicroGraph(current_sg)).dg 
+
+    # connect the two graphs first, node by node 
+    for c in current_nodes: 
+        n0 = prg_() % len(selected_nodes) 
+        n0 = selected_nodes[n0] 
+
+        if is_dsg: 
+            if prg_() % 2: 
+                new_sg[n0] |= {c}
+            else: 
+                new_sg[c] |= {n0} 
+        else: 
+            new_sg[n0] |= {c} 
+            new_sg[c] |= {n0} 
+
+    rx = sorted([0.08,sg2sg_conn_ratios[1]])
+    r1 = prng_decimal(prg,rx)
+    max_edges = len(current_sg) * num_nodes
+    if not is_dsg: 
+        max_edges = int(max_edges * 2) 
+    max_edges -= len(current_nodes)
+    wanted_edges = ceil(r1 * max_edges)
 
     # make edges between the pair of nodesets  
     for _ in range(max_edges): 
@@ -239,8 +263,6 @@ def check_for_shortest_paths_of_isomorphic_subgraph(supergraph,subgraph,super2su
             stat = False 
             x2 = bdfs.min_paths[p2[-1]] 
             for x2_ in x2: 
-                #print(x2_)
-                #print() 
                 if x2_.p == p2: 
                     stat = True 
                     break 
@@ -248,3 +270,14 @@ def check_for_shortest_paths_of_isomorphic_subgraph(supergraph,subgraph,super2su
 
             if stat: break 
     return count
+
+# simple counter class for new node identifiers
+class SimpleCounter: 
+
+    def __init__(self,x): 
+        self.x = x 
+    
+    def __next__(self):
+        x2 = self.x 
+        self.x += 1 
+        return x2 
