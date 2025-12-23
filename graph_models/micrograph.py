@@ -143,7 +143,7 @@ class MicroGraph:
         es = set()
         for (k,v) in self.dg.items():
             for v_ in v:
-                es = es | {k + "," + v_} 
+                es = es | {str(k) + "," + str(v_)} 
         return es 
 
     def edge_count(self):

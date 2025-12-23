@@ -1,5 +1,8 @@
 from .graph_gen import * 
 from .shortest_paths import * 
+from morebs2.graph_basics import * 
+from morebs2.numerical_generator import prg_choose_n,prg_seqsort,modulo_in_range
+from morebs2.measures import zero_div 
 
 # these five default parameters are used for generation schemes of <GraphAnalogAdder> 
     # min for range of these ratios is 10 ** -5 
@@ -80,13 +83,16 @@ class GraphAnalogAdder:
         self.components = []
 
         for x in gcd.components: 
-            x_ = flatten_setseq(x)
+            x_ = flatten_setseq(x) if type(x) != set else x 
             self.components.append(x_) 
 
         self.nodeset_cache = deepcopy(self.components) 
         self.new_nodesets = [] 
         return 
 
+    """
+    main method 
+    """
     def extend(self):  
         scheme_type = int(self.prg()) % 3 + 1 
         return self.new_subgraph(scheme_type)  
@@ -122,7 +128,10 @@ class GraphAnalogAdder:
         # update the entire graph 
         self.d = (MicroGraph(self.d) + MicroGraph(new_sg_)).dg
 
-        return prior_sg,new_sg_ 
+        if self.verbose: 
+            print("generating subgraph of scheme type #{}".format(scheme_type)) 
+            
+        return prior_sg,new_sg 
 
     #--------------------- connection scheme 
 
@@ -197,7 +206,7 @@ class GraphAnalogAdder:
         bdfs.exec() 
 
         # iterate through each sequence of shortest paths and select 
-        min_paths = bcache.min_paths
+        min_paths = bdfs.min_paths
 
         def prg_(): return int(self.prg())
 
@@ -225,14 +234,14 @@ class GraphAnalogAdder:
 
         # get pos./neg. edge change 
         edge_range = [10**-5,self.gen_subgraph_derivation_ratios[0]]
-        edge_change = prng_decimal(edge_range)
+        edge_change = self.prng_decimal(edge_range)
         eneg = int(self.prg()) % 2
         eneg = -1 if eneg else 1 
         edge_change = eneg * edge_change 
 
         # get pos./neg. node change 
         node_range = [10**-5,self.gen_subgraph_derivation_ratios[1]]
-        node_range = prng_decimal(node_range)
+        node_change = self.prng_decimal(node_range)
         nneg = int(self.prg()) % 2
         nneg = -1 if nneg else 1 
         node_change = nneg * node_change 
@@ -283,12 +292,15 @@ class GraphAnalogAdder:
         # case: negative node change 
         else: 
             to_delete = prg_choose_n(old_nodes,-num_nodes,prg_,is_unique_picker=True)
-            mg = MicroGraph(g) 
-            g = mg.subgraph_nodeset_exclusion(to_delete).dg 
+            mg = MicroGraph(deepcopy(g))  
+            mg.subgraph_nodeset_exclusion(to_delete)
+            g = mg.dg  
 
         mg = MicroGraph(g) 
         vscore,escore = mg.ve_score()
-        
+        if not self.is_dsg: 
+            escore = int(escore / 2) 
+
         num_edges = None 
         if edge_change_ratio < 0: 
             num_edges = ceil(escore * -edge_change_ratio) 
@@ -342,4 +354,4 @@ class GraphAnalogAdder:
         r0,r1 = abs(self.prg()),abs(self.prg())
         rx = sorted([r0,r1]) 
         rx = zero_div(rx[0],rx[1],0.5) 
-        edge_connectivity = modulo_in_range(rx,output_range)
+        return modulo_in_range(rx,output_range)
