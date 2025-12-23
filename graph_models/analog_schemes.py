@@ -66,6 +66,7 @@ class GraphAnalogAdder:
         self.c = max(self.d.keys()) + 1 
         self.preproc()
         self.set_counter_function() 
+        self.gen_scheme_log = [] 
         return 
 
     """
@@ -121,6 +122,7 @@ class GraphAnalogAdder:
         else: 
             new_sg = self.prng_generate_subgraph_derivative(ref_nodeset) 
 
+        self.gen_scheme_log.append(scheme_type)
         # delete the reference nodeset and add the new nodeset
         self.nodeset_cache.pop(index0) 
         new_nodeset = set(new_sg.keys()) 
