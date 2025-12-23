@@ -26,7 +26,7 @@ DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS = [0.2,0.25]
 transforms graph into automorphism of it using counter function 
 `ctr_function`. 
 """
-def isotransform_graph(G,ctr_function): 
+def graph_automorphism(G,ctr_function): 
     # make basic isomap for G 
     isomap = dict() 
     gnodes = sorted(G.keys()) 
@@ -36,7 +36,7 @@ def isotransform_graph(G,ctr_function):
     # isotransform graph to start at current index 
     mg = MicroGraph(G) 
     G = MicroGraph.isotransform_MG(mg,isomap).dg  
-    return G 
+    return G,isomap 
 
 
 #----------------------------------------- for subgraph generation scheme #2
@@ -65,7 +65,7 @@ def shortest_paths_graph_analogue(G,start_node,num_paths_per_node,num_paths_sele
 
     # piece NodePath instances into graph 
     G = NodePath.nodepath_set_to_graph(all_selected_paths) 
-    return isotransform_graph(G,ctr_function) 
+    return graph_automorphism(G,ctr_function) 
 
 #----------------------------------------- for subgraph generation scheme #3
 
@@ -155,8 +155,8 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
     for _ in range(num_edges): 
         one_edge_change(g,is_dsg,stat,prg)
 
-    # isotransform 
-    return isotransform_graph(g,ctr_function) 
+    # automorphism  
+    return graph_automorphism(g,ctr_function) 
 
 #---------------------------------------------------------------------------------------------------------
 
@@ -349,7 +349,7 @@ class GraphAnalogAdder:
 
         return shortest_paths_graph_analogue(G,start_node,\
             self.gen_subgraph_sp_param[0],self.gen_subgraph_sp_param[1],\
-            self.prg,self.ctr_function)
+            self.prg,self.ctr_function)[0] 
 
     #-------------------- generation scheme #3 
 
@@ -375,7 +375,7 @@ class GraphAnalogAdder:
         nneg = -1 if nneg else 1 
         node_change = nneg * node_change 
 
-        return graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function)
+        return graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function)[0]
 
     #----------------- accessory methods 
 
