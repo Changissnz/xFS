@@ -4,6 +4,16 @@ from .analog_schemes_aux import *
 calculates derivatives (analogues) of `starting_graph`. After adding those derivatives 
 to each of the `starting_graph` components, structure calculates analogues of those 
 analogues, and the cycle repeats. 
+
+There are three analogue generation schemes: 
+1. Solely by the variable of `prg` (a pseudo-random number generator). 
+2. Using a reference subgraph S of the running graph `d`, calculates shortest 
+   paths of S and pieces those paths together for an automorphic subgraph A of 
+   S', S' a subgraph of S. 
+3. Using a reference subgraph S of the running graph `d`, (adds XOR deletes nodes) 
+   AND (adds XOR deletes edges) from S. 
+
+Every generated analogue is added to exactly one reference subgraph of running graph `d`. 
 """
 class GraphAnalogAdder:
 
