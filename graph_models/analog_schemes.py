@@ -26,7 +26,8 @@ class GraphAnalogAdder:
         gen_scheme_subgraph_degree_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DEGREE_RANGE,\
         gen_subgraph_conn_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_CONN_RANGE,
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
-        gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS): 
+        gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
+        verbose=False): 
 
         assert type(is_dsg) == bool 
 
@@ -62,6 +63,7 @@ class GraphAnalogAdder:
         self.gen_subgraph_conn_range = gen_subgraph_conn_range
         self.gen_subgraph_sp_param = gen_subgraph_shortest_paths_parameters
         self.gen_subgraph_derivation_ratios = gen_subgraph_derivation_ratios
+        self.verbose = verbose 
 
         # new node counter 
         self.c = max(self.d.keys()) + 1 
@@ -81,23 +83,87 @@ class GraphAnalogAdder:
             x_ = flatten_setseq(x)
             self.components.append(x_) 
 
+        self.nodeset_cache = deepcopy(self.components) 
         self.new_nodesets = [] 
         return 
 
-    def add_subgraph_to_nodeset(self): 
-        print("ASSHIT")
-        return -1 
+    def extend(self):  
+        scheme_type = int(self.prg()) % 3 + 1 
+        return self.new_subgraph(scheme_type)  
+
+    def new_subgraph(self,scheme_type:int):
+        assert scheme_type in {1,2,3} 
+        if len(self.nodeset_cache) == 0: 
+            self.nodeset_cache.extend(self.new_nodesets) 
+            self.new_nodesets.clear() 
+        assert len(self.nodeset_cache) > 0 
+
+        index0 = int(self.prg()) % len(self.nodeset_cache) 
+        ref_nodeset = self.nodeset_cache[index0] 
+
+        # generate the subgraph 
+        new_sg = None 
+        if scheme_type == 1: 
+            new_sg = self.prng_generate_subgraph() 
+        elif scheme_type == 2: 
+            new_sg = self.prng_generate_shortest_paths_analogue(ref_nodeset)
+        else: 
+            new_sg = self.prng_generate_subgraph_derivative(ref_nodeset) 
+
+        # delete the reference nodeset and add the new nodeset
+        self.nodeset_cache.pop(index0) 
+        new_nodeset = set(new_sg.keys()) 
+        self.new_nodesets.append(new_nodeset) 
+
+        # add the new subgraph to a reference subgraph 
+        prior_sg = MicroGraph(self.d).subgraph_by_nodeset_(ref_nodeset).dg 
+        new_sg_ = self.connect_subgraphs__prior_to_current(prior_sg,new_sg) 
+
+        # update the entire graph 
+        self.d = (MicroGraph(self.d) + MicroGraph(new_sg_)).dg
+
+        return prior_sg,new_sg_ 
 
     #--------------------- connection scheme 
 
-    def connecting_edges_for_subgraph_to_nodeset(self,subgraph:defaultdict,\
-        subgraph_nodeset:set,additive_subgraph:defaultdict,connectivity:float):  
-        print("ASSHIT")
-        return
+    def connect_subgraphs__prior_to_current(self,prior_sg:defaultdict,current_sg:defaultdict): 
+        def prg_(): return int(self.prg())
+
+
+        # select prior nodes 
+        r0 = self.prng_decimal([10**-5,self.sg2sg_conn_ratios[0]])
+        num_nodes = ceil(r0 * len(prior_sg))
+        prior_nodes = sorted(prior_sg.keys())
+        selected_nodes = prg_choose_n(prior_nodes,num_nodes,prg_,is_unique_picker=True) 
+
+        # calculate possible number of edges between prior nodes and current sg 
+        r1 = self.prng_decimal([10**-5,self.sg2sg_conn_ratios[1]])
+        max_edges = len(current_sg) * num_nodes
+        wanted_edges = ceil(r1 * max_edges)
+        current_nodes = sorted(current_sg.keys())
+
+        # add the two graphs 
+        new_sg = (MicroGraph(prior_sg) + MicroGraph(current_sg)).dg 
+
+        # make edges between the pair of nodesets  
+        for _ in range(max_edges): 
+            n0 = prg_() % num_nodes 
+            n1 = prg_() % len(current_nodes) 
+
+            n0 = selected_nodes[n0] 
+            n1 = current_nodes[n1] 
+
+            node_pair = [n0,n1] if prg_() % 2 else [n1,n0] 
+
+            new_sg[node_pair[0]] |= {node_pair[1]} 
+
+            if not self.is_dsg: 
+                new_sg[node_pair[1]] |= {node_pair[0]}  
+        return new_sg 
 
     #--------------------- generation scheme #1 
 
-    def prng_generate_subgraph(self,start_integer:int): 
+    def prng_generate_subgraph(self): 
 
         is_realtime_gen = bool(int(self.prg()) % 2)
         vertex_degree = int(modulo_in_range(self.prg(),self.gen_scheme_subgraph_degree_range))
@@ -209,6 +275,7 @@ class GraphAnalogAdder:
                 i = int(self.prg()) % len(old_nodes) 
                 n2 = old_nodes[i] 
 
+                # NOTE: constant direction of conn. 
                 g[n2] |= {n}
 
                 if not self.is_dsg: 
