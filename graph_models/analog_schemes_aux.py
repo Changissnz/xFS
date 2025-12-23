@@ -52,7 +52,7 @@ def graph_automorphism(G,ctr_function):
 
 #----------------------------------------- for subgraph generation scheme #2
 
-def shortest_paths_graph_analogue(G,start_node,num_paths_per_node,num_paths_selection,prg,ctr_function): 
+def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_paths_selection,prg,ctr_function): 
 
     # calculate shortest paths 
     is_bfs = bool(int(prg()) % 2)
@@ -66,16 +66,17 @@ def shortest_paths_graph_analogue(G,start_node,num_paths_per_node,num_paths_sele
 
     def prg_(): return int(prg())
 
-    all_selected_paths = [] 
-    for paths_seq in min_paths.values():
-        lx = min([len(paths_seq),num_paths_selection])
-        if lx == 0: continue 
+    all_selected_paths = None 
+    min_paths_ = [] 
+    for v in min_paths.values(): min_paths_.extend(v) 
 
-        selected_paths = prg_choose_n(paths_seq,lx,prg_,is_unique_picker=True)
-        all_selected_paths.extend(selected_paths)
+    if num_paths_selection >= len(min_paths_): 
+        all_selected_paths = min_paths_ 
+    else: 
+        all_selected_paths = prg_choose_n(min_paths_,num_paths_selection,prg_,is_unique_picker=True)
 
     # piece NodePath instances into graph 
-    G = NodePath.nodepath_set_to_graph(all_selected_paths) 
+    G = NodePath.nodepath_set_to_graph(all_selected_paths,is_dsg) 
     return graph_automorphism(G,ctr_function) 
 
 #----------------------------------------- for subgraph generation scheme #3
@@ -210,3 +211,39 @@ def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultd
         if not is_dsg: 
             new_sg[node_pair[1]] |= {node_pair[0]}  
     return new_sg 
+
+#------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+
+# method for checking generative scheme #2 
+def check_for_shortest_paths_of_isomorphic_subgraph(supergraph,subgraph,super2sub_nodemap,\
+    num_paths_per_node,prg): 
+    
+    sub2super_nodemap = {v:k for k,v in super2sub_nodemap.items()} 
+
+    # conduct BFS on min keys for each of supergraph,subgraph. 
+    super_key = min(supergraph.keys())
+    sub_key = super2sub_nodemap[super_key] 
+
+    bdfs = BDFSCache(super_key,supergraph,is_bfs=True,num_paths_per_node=num_paths_per_node,prg=prg) 
+    bdfs.exec() 
+    bdfs2 = BDFSCache(sub_key,subgraph,is_bfs=True,num_paths_per_node=num_paths_per_node,prg=prg)  
+    bdfs2.exec()
+
+    count = 0 
+    for k,paths in bdfs2.min_paths.items(): 
+
+        for p in paths: 
+            p2 = [sub2super_nodemap[p_] for p_ in p.p] 
+            stat = False 
+            x2 = bdfs.min_paths[p2[-1]] 
+            for x2_ in x2: 
+                #print(x2_)
+                #print() 
+                if x2_.p == p2: 
+                    stat = True 
+                    break 
+            count += int(stat)
+
+            if stat: break 
+    return count

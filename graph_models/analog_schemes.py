@@ -45,7 +45,8 @@ class GraphAnalogAdder:
 
         assert type(gen_subgraph_shortest_paths_parameters[0]) == type(gen_subgraph_shortest_paths_parameters[1]) \
             == int 
-        assert gen_subgraph_shortest_paths_parameters[0] >= gen_subgraph_shortest_paths_parameters[1] > 0 
+        assert gen_subgraph_shortest_paths_parameters[0] > 0 
+        assert gen_subgraph_shortest_paths_parameters[1] > 0
 
         assert 0.0 <= gen_subgraph_derivation_ratios[0] <= 1.0
         assert 0.0 <= gen_subgraph_derivation_ratios[1] <= 1.0
@@ -171,7 +172,7 @@ class GraphAnalogAdder:
         node_index = int(self.prg()) % len(nodes)
         start_node = nodes.pop(node_index)
 
-        return shortest_paths_graph_analogue(G,start_node,\
+        return shortest_paths_graph_analogue(G,start_node,self.is_dsg,\
             self.gen_subgraph_sp_param[0],self.gen_subgraph_sp_param[1],\
             self.prg,self.ctr_function)[0] 
 

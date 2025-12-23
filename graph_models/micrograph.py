@@ -77,6 +77,19 @@ class MicroGraph:
         mg2.subgraph_nodeset_exclusion(q) 
         return mg2
 
+    def is_subgraph_of(self,mg:MicroGraph): 
+        for k,v in self.dg.items(): 
+            if k not in mg.dg: 
+                return False 
+            v2 = mg.dg[k] 
+            
+            if not v.issubset(v2):  
+                return False 
+        return True 
+
+    def is_supergraph_of(self,mg:MicroGraph): 
+        return mg.is_subgraph_of(self) 
+    
     """
     outputs the MicroGraph of minimal v,e-score based on the variables
     `wanted_nodes` and `wanted_edges`. 
