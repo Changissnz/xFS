@@ -38,7 +38,6 @@ def graph_automorphism(G,ctr_function):
     G = MicroGraph.isotransform_MG(mg,isomap).dg  
     return G,isomap 
 
-
 #----------------------------------------- for subgraph generation scheme #2
 
 def shortest_paths_graph_analogue(G,start_node,num_paths_per_node,num_paths_selection,prg,ctr_function): 
