@@ -14,6 +14,8 @@ There are three analogue generation schemes:
    AND (adds XOR deletes edges) from S. 
 
 Every generated analogue is added to exactly one reference subgraph of running graph `d`. 
+This rule results in all components of the starting graph remaining disconnected with one 
+another, through the course of analogue addition. 
 """
 class GraphAnalogAdder:
 
@@ -23,7 +25,7 @@ class GraphAnalogAdder:
         gen_subgraph_conn_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_CONN_RANGE,
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
         gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
-        verbose=False): 
+        verbose=False,store_isomaps:bool=False): 
 
         assert type(is_dsg) == bool 
 
@@ -51,6 +53,8 @@ class GraphAnalogAdder:
         assert 0.0 <= gen_subgraph_derivation_ratios[0] <= 1.0
         assert 0.0 <= gen_subgraph_derivation_ratios[1] <= 1.0
 
+        assert type(store_isomaps) == bool 
+
         self.d = starting_graph
         self.is_dsg = is_dsg 
         self.prg = prg 
@@ -61,12 +65,14 @@ class GraphAnalogAdder:
         self.gen_subgraph_sp_param = gen_subgraph_shortest_paths_parameters
         self.gen_subgraph_derivation_ratios = gen_subgraph_derivation_ratios
         self.verbose = verbose 
+        self.store_isomaps = store_isomaps
 
         # new node counter 
         self.c = max(self.d.keys()) + 1 
         self.preproc()
         self.set_counter_function() 
         self.gen_scheme_log = [] 
+        self.isomap_log = [] 
         return 
 
     """
@@ -157,7 +163,11 @@ class GraphAnalogAdder:
         gg = GraphGen(self.is_dsg,self.prg,is_realtime_gen,\
             vertex_degree=vertex_degree,edge_connectivity=edge_connectivity)
         gg.full_run() 
-        return graph_automorphism(gg.d,self.ctr_function)[0]
+
+        new_graph,isomap = graph_automorphism(gg.d,self.ctr_function)
+        if self.store_isomaps: 
+            self.isomap_log.append(isomap) 
+        return new_graph 
 
     #-------------------- generation scheme #2 
 
@@ -174,9 +184,13 @@ class GraphAnalogAdder:
         node_index = int(self.prg()) % len(nodes)
         start_node = nodes.pop(node_index)
 
-        return shortest_paths_graph_analogue(G,start_node,self.is_dsg,\
+        new_graph,isomap = shortest_paths_graph_analogue(G,start_node,self.is_dsg,\
             self.gen_subgraph_sp_param[0],self.gen_subgraph_sp_param[1],\
-            self.prg,self.ctr_function)[0] 
+            self.prg,self.ctr_function)
+
+        if self.store_isomaps: 
+            self.isomap_log.append(isomap) 
+        return new_graph 
 
     #-------------------- generation scheme #3 
 
@@ -202,4 +216,8 @@ class GraphAnalogAdder:
         nneg = -1 if nneg else 1 
         node_change = nneg * node_change 
 
-        return graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function)[0]
+        new_graph,isomap = graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function)
+
+        if self.store_isomaps: 
+            self.isomap_log.append(isomap) 
+        return new_graph 
