@@ -164,9 +164,7 @@ class GraphAnalogAdder:
             vertex_degree=vertex_degree,edge_connectivity=edge_connectivity)
         gg.full_run() 
 
-        new_graph,isomap = graph_automorphism(gg.d,self.ctr_function)
-        if self.store_isomaps: 
-            self.isomap_log.append(isomap) 
+        new_graph,_ = graph_automorphism(gg.d,self.ctr_function)
         return new_graph 
 
     #-------------------- generation scheme #2 
