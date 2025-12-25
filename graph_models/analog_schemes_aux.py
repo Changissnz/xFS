@@ -3,6 +3,7 @@ auxiliary methods for file<analog_schemes>.
 Focused on graph derivation. 
 """
 
+from .tree_gen import * 
 from .graph_gen import * 
 from .shortest_paths import * 
 from morebs2.graph_basics import * 
@@ -270,14 +271,3 @@ def check_for_shortest_paths_of_isomorphic_subgraph(supergraph,subgraph,super2su
 
             if stat: break 
     return count
-
-# simple counter class for new node identifiers
-class SimpleCounter: 
-
-    def __init__(self,x): 
-        self.x = x 
-    
-    def __next__(self):
-        x2 = self.x 
-        self.x += 1 
-        return x2 
