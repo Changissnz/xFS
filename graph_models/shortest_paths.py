@@ -1,5 +1,6 @@
 from .node_path import * 
 from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort
+from morebs2.graph_basics import is_undirected_graph
 from types import MethodType,FunctionType
 
 """
@@ -23,6 +24,49 @@ class BDFSCache(XFSCache):
 
         self.min_paths[self.reference] = [NodePath(self.reference)] 
         self.num_paths_per_node = num_paths_per_node 
+
+    """
+    return: 
+    - (source node, target node) -> path|distance between them 
+    - components, list of sets 
+    """
+    @staticmethod 
+    def BFS_full(G:defaultdict,return_type="distance",prg=None):  
+        assert return_type in {"distance","paths"} 
+
+        if type(prg) == type(None): 
+            prg = default_std_Python_prng()
+
+        is_directed = is_undirected_graph(G) 
+
+        paths_info = {} 
+        components = [] 
+
+        def one_bfs(start_node):
+            bc = BDFSCache(start_node,G,is_bfs=True,prg=prg,\
+                edge_cost_function=lambda u,v:1,num_paths_per_node=1)
+            bc.exec() 
+
+            for k,paths in bc.min_paths.items():
+                q = paths[0] 
+                if return_type == "distance": 
+                    q = q.cost() 
+
+                paths_info[(start_node,k)] = q 
+                if not is_directed: 
+                    if return_type == "paths": 
+                        paths_info[(k,start_node)] = q.invert() 
+                    else: 
+                        paths_info[(k,start_node)] = q 
+
+            component = set(bc.min_paths.keys()) | {start_node} 
+            if component not in components: 
+                components.append(component) 
+
+        nodeset = sorted(G.keys())
+        for s in nodeset: 
+            one_bfs(s) 
+        return paths_info, components
 
     def move_one(self): 
         def prg_(): return int(self.prg())
