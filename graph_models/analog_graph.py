@@ -1,7 +1,7 @@
 from .analog_schemes_aux import * 
 from .radial_subgraph import * 
 
-DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS = [1,3] 
+DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE = [1,3] 
 
 # NOTE: duplicate code? 
 def dict_diff(ref_dict, other_dict): 
@@ -19,17 +19,17 @@ def dict_diff(ref_dict, other_dict):
 # TODO: test this. 
 class AnalogGraph: 
 
-    def __init__(self,reference_graph,isomap,prg,isomorphic_subgraph_radius=DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS):  
+    def __init__(self,reference_graph,isomap,prg,isomorphic_subgraph_radius_range=DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE):  
         assert type(reference_graph) == defaultdict 
         assert type(isomap) == dict
         assert type(prg) in {MethodType,FunctionType} 
-        assert is_valid_range(isomorphic_subgraph_radius,True,False)
+        assert is_valid_range(isomorphic_subgraph_radius_range,True,False)
 
         self.reference_graph = reference_graph 
         # node of reference graph -> node of another graph
         self.isomap = isomap 
         self.prg = prg 
-        self.iso_sg_radius = isomorphic_subgraph_radius
+        self.iso_sg_radius_range = isomorphic_subgraph_radius_range
         self.preproc() 
         return 
 
@@ -80,7 +80,7 @@ class AnalogGraph:
         return node_analogy
 
     def subgraph_for_node(self,n): 
-        radius = modulo_in_range(int(self.prg()),self.iso_sg_radius)
+        radius = modulo_in_range(int(self.prg()),self.iso_sg_radius_range)
         return self.sg_rad_fetcher.subgraph(n,radius)
 
     @staticmethod 

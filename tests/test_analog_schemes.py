@@ -83,7 +83,19 @@ class GraphAnalogAdderClass(unittest.TestCase):
         gaa.extend()
         assert gaa.gen_scheme_log == [3, 2, 2,1] 
 
+    """
+    inconclusive test; does not check if subgraphs [2]+[3] are actually trees. 
+    """
+    def test__GraphAnalogAdder_extend__case2(self): 
+        DX = graph__sample_2COMP() 
+        lx = prg__LCG(55,3,19,212) 
+        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree"},store_isomaps=True)
 
+        for _ in range(5): 
+            gaa.extend() 
+
+        assert gaa.gen_scheme_log == [2, 2, 1, 1, 2], "got {}".format(gaa.gen_scheme_log)
+        return 
 
 if __name__ == '__main__':
     unittest.main()

@@ -28,7 +28,7 @@ class AnalogGraphClass(unittest.TestCase):
     def test__AnalogGraph__draw_analogy_to__case1(self):
         ref_graph,G2,isomap,prg = analog_info__sample_VUN() 
         ag = AnalogGraph(reference_graph=ref_graph,isomap=isomap,prg=prg,\
-            isomorphic_subgraph_radius=DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS)
+            isomorphic_subgraph_radius_range=DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE)
 
         diffs = [] 
         for _ in range(10): 
@@ -37,9 +37,7 @@ class AnalogGraphClass(unittest.TestCase):
             diffs.append(d) 
 
         assert diffs == [8, 6, 7, 6, 6, 6, 5, 5, 4, 4]
-
         return 
-
 
 if __name__ == '__main__':
     unittest.main()

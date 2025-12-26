@@ -25,7 +25,7 @@ class GraphAnalogAdder:
         gen_subgraph_conn_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_CONN_RANGE,
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
         gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
-        verbose=False,store_isomaps:bool=False): 
+        gen_scheme_one_types = {"random"},verbose=False,store_isomaps:bool=False): 
 
         assert type(is_dsg) == bool 
 
@@ -52,6 +52,7 @@ class GraphAnalogAdder:
 
         assert 0.0 <= gen_subgraph_derivation_ratios[0] <= 1.0
         assert 0.0 <= gen_subgraph_derivation_ratios[1] <= 1.0
+        assert len(gen_scheme_one_types) > 0 and gen_scheme_one_types.issubset({"random","tree"}) 
 
         assert type(store_isomaps) == bool 
 
@@ -64,6 +65,7 @@ class GraphAnalogAdder:
         self.gen_subgraph_conn_range = gen_subgraph_conn_range
         self.gen_subgraph_sp_param = gen_subgraph_shortest_paths_parameters
         self.gen_subgraph_derivation_ratios = gen_subgraph_derivation_ratios
+        self.gen_scheme_one_types = sorted(gen_scheme_one_types) 
         self.verbose = verbose 
         self.store_isomaps = store_isomaps
 
@@ -155,6 +157,24 @@ class GraphAnalogAdder:
     #--------------------- generation scheme #1 
 
     def prng_generate_subgraph(self): 
+        index = int(self.prg()) % len(self.gen_scheme_one_types) 
+        scheme_one = self.gen_scheme_one_types[index] 
+
+        if scheme_one == "tree": 
+            return self.prng_generate_subgraph__tree()
+        return self.prng_generate_subgraph__random() 
+
+    # TODO: not demonstrated yet. 
+    def prng_generate_subgraph__tree(self): 
+        vertex_degree = int(modulo_in_range(self.prg(),self.gen_scheme_subgraph_degree_range))
+        tg = TreeGen(starting_nodeset = {0},is_dsg=self.is_dsg,prg=self.prg,branching_range=DEFAULT_TREE_BRANCHING_RANGE)
+
+        while tg.node_count < vertex_degree: 
+            next(tg)
+        new_graph,_ = graph_automorphism(tg.d,self.ctr_function)
+        return new_graph 
+
+    def prng_generate_subgraph__random(self): 
 
         is_realtime_gen = bool(int(self.prg()) % 2)
         vertex_degree = int(modulo_in_range(self.prg(),self.gen_scheme_subgraph_degree_range))
