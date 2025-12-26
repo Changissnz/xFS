@@ -126,8 +126,12 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
     def test__NodeObjectiveNavigator__make_choice__case3(self): 
         G,prg = graph__sample_NONAVOID() 
 
+        avoid_nodeset = {3,4,5}
+        take_nodeset = set() 
+        objective_nodeset = {100,105,115}
+
         # case: absolute_avoid == False 
-        non = NodeObjectiveNavigator(0,{3,4,5},set(),{100,105,115},prg) 
+        non = NodeObjectiveNavigator(0,avoid_nodeset,take_nodeset,objective_nodeset,prg) 
         non.receive_context(G) 
 
         for _ in range(20): 
@@ -135,7 +139,8 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
         assert non.path_log == [0, 4, 7, 4, 6, 4, 8, 4, 6, 4, 7, 4, 0, 3, 0, 5, 12, 17, 12, 14, 12]
 
         # case: absolute_avoid == True 
-        non2 = NodeObjectiveNavigator(0,{3,4,5},set(),{100,105,115},prg,absolute_avoid=True)
+        non2 = NodeObjectiveNavigator(0,avoid_nodeset,take_nodeset,objective_nodeset,prg,\
+            absolute_avoid=True)
         non2.receive_context(G) 
         for _ in range(10): 
             non2.make_choice()
