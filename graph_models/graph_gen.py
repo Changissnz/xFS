@@ -3,7 +3,7 @@ from math import ceil
 
     
 """
-given number of vertices 
+given number of vertices for simple,undirected graph 
 """
 def max_simple_edges(num_vertices): 
     if num_vertices in {0,1}:  

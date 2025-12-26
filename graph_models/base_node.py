@@ -33,3 +33,75 @@ class BaseNode:
         for i,x in enumerate(self.nextset): 
             if x.identifier == identifier: return i 
         return -1 
+
+
+# TODO: test 
+class NodeObjectiveNavigator:
+
+    def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg): 
+        assert type(avoid_nodeset) == type(take_nodeset) == type(objective_nodeset) 
+        assert len(avoid_nodeset.intersection(take_nodeset)) == 0 
+        assert len(take_nodeset.intersection(objective_nodeset)) == 0 
+        assert len(avoid_nodeset.intersection(objective_nodeset)) == 0 
+
+        self.encountered = {loc: 1}
+        self.loc = loc 
+        self.avoid = avoid_nodeset
+        # preferred nodes to take in intermediary travel 
+        self.take = take_nodeset
+        self.objectives = objective_nodeset
+        self.context = None 
+        return
+
+    def receive_context(self,sg:defaultdict): 
+        assert type(sg) == defaultdict 
+        assert self.loc in sg 
+        self.context = sg 
+        return
+
+    """
+    moves one edge distance 
+    """
+    def make_choice(self):
+        x = self.next_move()
+        if type(x) == type(None): 
+            return None 
+
+        self.loc = x 
+        return x 
+
+    def next_move(self):
+
+        q = self.sg[self.loc] 
+        if len(q) == 0: 
+            return 
+
+        # case: go to objective node 
+        o = self.objectives.intersection(q)
+        if len(o) > 0: 
+            o = sorted(o) 
+            i = int(self.prg()) % len(o) 
+            return o[i]
+
+        q = q - set(self.encountered.keys()) - self.avoid
+
+        # case: all nodes in vicinity have been traveled on. 
+        #       take the least frequently travelled. 
+        if len(q) == 0: 
+            # rank neighbors from least to most traveled 
+            neighbors = self.sg[loc] 
+            neighbors = sorted([(n,self.encountered[n]) for n in neighbors])
+            neighbors = prg_seqsort_ties(neighbors,self.prg,lambda x:x[1])
+            return neighbors[0][0] 
+
+        # case: take a preferred node 
+        ix = self.take.intersection(q) 
+        if len(ix) != 0: 
+            ix = sorted(ix) 
+            i = int(self.prg()) % len(ix) 
+            return ix[i] 
+
+        # case: take an arbitrary node
+        q = sorted(q) 
+        i = int(self.prg()) % len(q) 
+        return q[i] 
