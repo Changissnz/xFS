@@ -38,19 +38,28 @@ class BaseNode:
 
 
 # TODO: test 
+"""
+a navigator for a graph, provided by parameter to method<receive_context>. 
+Navigator prioritizes travelling on nodes of `take_nodeset`, deprioritizes 
+travelling on nodes of `avoid_nodeset`, and attempts to converge to node 
+location in `objective_nodeset`. 
+"""
 class NodeObjectiveNavigator:
 
-    def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,path_log_length=float('inf')): 
+    def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,path_log_length=float('inf'),\
+        absolute_avoid:bool=False): 
         assert type(avoid_nodeset) == type(take_nodeset) == type(objective_nodeset) 
         assert len(avoid_nodeset.intersection(take_nodeset)) == 0 
         assert len(take_nodeset.intersection(objective_nodeset)) == 0 
         assert len(avoid_nodeset.intersection(objective_nodeset)) == 0 
+        assert type(absolute_avoid) == bool 
 
         self.path_log_length = path_log_length
         self.encountered = defaultdict(int,{loc: 1}) 
         self.path_log = [loc]  
         self.loc = loc 
         self.avoid = avoid_nodeset
+        self.absolute_avoid = absolute_avoid
         # preferred nodes to take in intermediary travel 
         self.take = take_nodeset
         self.objectives = objective_nodeset
@@ -91,15 +100,29 @@ class NodeObjectiveNavigator:
             return o[i]
 
         q = q - set(self.encountered.keys()) - self.avoid
-
+        
         # case: all nodes in vicinity have been traveled on. 
         #       take the least frequently travelled. 
         if len(q) == 0: 
             # rank neighbors from least to most traveled 
-            neighbors = self.context[self.loc] 
-            neighbors = sorted([(n,self.encountered[n]) for n in neighbors])
-            neighbors = prg_seqsort_ties(neighbors,self.prg,lambda x:x[1])
-            return neighbors[0][0] 
+            neighbors = sorted(self.context[self.loc])
+
+            # partition neighbors into non-avoid and avoid 
+            non_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.avoid] 
+
+            if self.absolute_avoid: 
+                avoid = [] 
+            else: 
+                avoid = [(n,self.encountered[n]) for n in neighbors if n in self.avoid] 
+            
+            if len(non_avoid) > 0: 
+                non_avoid = prg_seqsort_ties(non_avoid,self.prg,lambda x:x[1]) 
+            if len(avoid) > 0: 
+                avoid = prg_seqsort_ties(avoid,self.prg,lambda x:x[1]) 
+            
+            non_avoid.extend(avoid)
+            if len(non_avoid) == 0: return None 
+            return non_avoid[0][0]  
 
         # case: take a preferred node 
         ix = self.take.intersection(q) 

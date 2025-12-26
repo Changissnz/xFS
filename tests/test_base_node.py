@@ -37,6 +37,17 @@ def graph__sample_NONOPON():
     D = gaa.d 
     return D,prg,prg2 
 
+def graph__sample_NONAVOID(): 
+    prg = prg__LCG(51,321,-5656,9131) 
+
+    tg = TreeGen(starting_nodeset = {0,1,2},is_dsg=False,prg=prg,branching_range=DEFAULT_TREE_BRANCHING_RANGE)
+
+    for _ in range(8): 
+        next(tg) 
+
+    G = graph_to_one_component(tg.d,prg)
+    return G,prg 
+
 """
 py -m tests.test_base_node
 """
@@ -60,12 +71,12 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
         while non.loc not in {100,105,115}: 
             non.make_choice()
             i0 += 1 
-        assert i0 == 44 
+        assert i0 == 30, "got {}".format(i0)
 
         while i0 < 100: 
             non.make_choice() 
             i0 += 1 
-        assert non.loc == 115
+        assert non.loc == 100, "got {}".format(non.loc)
         return 
 
     """
@@ -107,6 +118,29 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
         #print("PATH: ",non2.path_log)
         assert len(non2.path_log) == 8 
         assert non2.path_log[-1] == 100
+
+    """
+    demonstrates navigator decisions in cases of no choice but to 
+    take a node marked for avoidance. 
+    """
+    def test__NodeObjectiveNavigator__make_choice__case3(self): 
+        G,prg = graph__sample_NONAVOID() 
+
+        # case: absolute_avoid == False 
+        non = NodeObjectiveNavigator(0,{3,4,5},set(),{100,105,115},prg) 
+        non.receive_context(G) 
+
+        for _ in range(20): 
+            non.make_choice() 
+        assert non.path_log == [0, 4, 7, 4, 6, 4, 8, 4, 6, 4, 7, 4, 0, 3, 0, 5, 12, 17, 12, 14, 12]
+
+        # case: absolute_avoid == True 
+        non2 = NodeObjectiveNavigator(0,{3,4,5},set(),{100,105,115},prg,absolute_avoid=True)
+        non2.receive_context(G) 
+        for _ in range(10): 
+            non2.make_choice()
+
+        assert non2.path_log == [0] 
 
 
 
