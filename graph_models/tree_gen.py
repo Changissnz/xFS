@@ -1,5 +1,9 @@
 from .micrograph import * 
+from morebs2.matrix_methods import is_valid_range 
+from morebs2.numerical_generator import modulo_in_range
+from morebs2.graph_basics import is_undirected_graph
 from math import ceil 
+from types import MethodType,FunctionType
 
 DEFAULT_TREE_BRANCHING_RANGE = [1,8] 
 
@@ -55,6 +59,7 @@ class TreeGen:
         if not self.is_dsg: 
             for l in leaves: self.d[l] |= {leaf_node} 
         self.node_count += num_new_leaves
+        self.leaves.extend(leaves) 
         return 
     
 

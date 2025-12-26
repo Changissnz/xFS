@@ -4,6 +4,12 @@ used to calculate radial subgraphs of a reference graph
 from .shortest_paths import * 
 
 # TODO: test 
+"""
+calculates one shortest path per connected node pair, done 
+during preprocessing method. After distances of connected 
+node pairs have been ascertained, able to quickly fetch 
+subgraphs of radius r around any node n in `reference_graph`. 
+"""
 class RadialSubgraphFetcher:
 
     def __init__(self,reference_graph:defaultdict): 
