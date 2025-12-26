@@ -1,6 +1,20 @@
 from .analog_schemes_aux import * 
+from .radial_subgraph import * 
 
-DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS = [2,6] 
+DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS = [1,3] 
+
+# NOTE: duplicate code? 
+def dict_diff(ref_dict, other_dict): 
+    c = 0 
+    for k,v in ref_dict.items(): 
+        if k not in other_dict: 
+            c += 1 
+            continue 
+        v2 = other_dict[k] 
+        if v != v2: 
+            c += 1 
+    return c 
+
 
 # TODO: test this. 
 class AnalogGraph: 
@@ -12,6 +26,7 @@ class AnalogGraph:
         assert is_valid_range(isomorphic_subgraph_radius,True,False)
 
         self.reference_graph = reference_graph 
+        # node of reference graph -> node of another graph
         self.isomap = isomap 
         self.prg = prg 
         self.iso_sg_radius = isomorphic_subgraph_radius
@@ -22,10 +37,10 @@ class AnalogGraph:
         self.sg_rad_fetcher = RadialSubgraphFetcher(self.reference_graph)
         return
 
-    def draw_analogy_to(self,ag:AnalogGraph,exact_node_mapping_ratio:float): 
-        assert type(ag) == AnalogGraph
+    def draw_analogy_to(self,G,exact_node_mapping_ratio:float): 
+        assert type(G) == defaultdict
         assert 0.0 <= exact_node_mapping_ratio <= 1.0 
-        assert AnalogGraph.graph_is_analogical(self.reference_graph,ag.reference_graph,self.isomap) 
+        assert AnalogGraph.graph_is_analogical(self.reference_graph,G,self.isomap) 
         candidates = sorted(self.isomap.keys()) 
         
         def prg_(): return int(self.prg())
@@ -44,16 +59,24 @@ class AnalogGraph:
 
             # calculate the isomorphisms
             mg = MicroGraph(ref_sg) 
-            mg2 = MicroGraph(ag)
+            mg2 = MicroGraph(G)
+
             Q = mg2.subgraph_isomorphism(mg,all_iso=True,size_limit=200,search_candidate_limit=None) 
+            if len(Q) == 0: return None 
 
             # choose an isomorphism 
             index = int(self.prg()) % len(Q) 
             isomorphism = Q[index] 
-            return isomorphism[n] 
+            isomorphism = {v:k for k,v in isomorphism} 
+
+            if n not in isomorphism: return None 
+            return isomorphism[n]
 
         for k in self.isomap.keys(): 
-            node_analogy[k] = analogical_node(k)
+            x = analogical_node(k)
+            if type(x) != type(None): 
+                node_analogy[k] = x 
+
         return node_analogy
 
     def subgraph_for_node(self,n): 
@@ -64,7 +87,7 @@ class AnalogGraph:
     def graph_is_analogical(ref_graph,analogy_graph,isomap): 
         for k,v in isomap.items(): 
             if k not in ref_graph: return False 
-            if k not in analogy_graph: return False 
+            if v not in analogy_graph: return False 
         return True 
 
 class AnalogGraphGroup: 
@@ -78,5 +101,3 @@ class AnalogGraphGroup:
         self.analog_graphs = analog_graphs 
         self.isomaps = isomaps 
         return
-
-    
