@@ -37,7 +37,7 @@ class BDFSCache(XFSCache):
         if type(prg) == type(None): 
             prg = default_std_Python_prng()
 
-        is_directed = is_undirected_graph(G) 
+        is_directed = not is_undirected_graph(G) 
 
         paths_info = {} 
         components = [] 
