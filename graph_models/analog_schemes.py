@@ -139,6 +139,9 @@ class GraphAnalogAdder:
         else: 
             new_sg = self.prng_generate_subgraph_derivative(ref_nodeset) 
 
+        # case: empty graph 
+        if len(new_sg) == 0: return 
+
         self.gen_scheme_log.append(scheme_type)
         # delete the reference nodeset and add the new nodeset
         self.nodeset_cache.pop(index0) 

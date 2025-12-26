@@ -1,5 +1,6 @@
 from .micrograph import * 
 from math import ceil 
+from morebs2.graph_basics import * 
 
     
 """
@@ -9,6 +10,37 @@ def max_simple_edges(num_vertices):
     if num_vertices in {0,1}:  
         return 0 
     return sum([i for i in range(1,num_vertices)])
+
+"""
+draws the minumum number of edges for a graph, directed 
+or undirected, to be one component (all nodes are connected). 
+"""
+def graph_to_one_component(G:defaultdict,prg): 
+
+    gx = GraphComponentDecomposition(G) 
+    gx.decompose() 
+
+    if gx.is_directed: 
+        components = [sorted(flatten_setseq(c)) for c in gx.components] 
+    else: 
+        components = [sorted(c) for c in gx.components]
+
+    i = 0 
+    l = len(components) - 1 
+    print("connecting {} components".format(l + 1)) 
+    for j in range(l): 
+        c0 = components[j] 
+        c1 = components[j+1] 
+
+        i0 = int(prg()) % len(c0)
+        i1 = int(prg()) % len(c1) 
+
+        n0,n1 = c0[i0],c1[i1]
+
+        G[n0] |= {n1} 
+        if not gx.is_directed: 
+            G[n1] |= {n0}  
+    return G 
 
 """
 generates a graph,directed or not, according to given 

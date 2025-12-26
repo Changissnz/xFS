@@ -1,4 +1,6 @@
 import numpy as np 
+from collections import defaultdict 
+from morebs2.numerical_generator import prg_seqsort_ties
 
 # TODO: test 
 class BaseNode: 
@@ -38,19 +40,23 @@ class BaseNode:
 # TODO: test 
 class NodeObjectiveNavigator:
 
-    def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg): 
+    def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,path_log_length=float('inf')): 
         assert type(avoid_nodeset) == type(take_nodeset) == type(objective_nodeset) 
         assert len(avoid_nodeset.intersection(take_nodeset)) == 0 
         assert len(take_nodeset.intersection(objective_nodeset)) == 0 
         assert len(avoid_nodeset.intersection(objective_nodeset)) == 0 
 
-        self.encountered = {loc: 1}
+        self.path_log_length = path_log_length
+        self.encountered = defaultdict(int,{loc: 1}) 
+        self.path_log = [loc]  
         self.loc = loc 
         self.avoid = avoid_nodeset
         # preferred nodes to take in intermediary travel 
         self.take = take_nodeset
         self.objectives = objective_nodeset
+        self.prg = prg 
         self.context = None 
+        self.c = 0 
         return
 
     def receive_context(self,sg:defaultdict): 
@@ -68,11 +74,12 @@ class NodeObjectiveNavigator:
             return None 
 
         self.loc = x 
+        self.update_travel_log()
         return x 
 
     def next_move(self):
 
-        q = self.sg[self.loc] 
+        q = self.context[self.loc] 
         if len(q) == 0: 
             return 
 
@@ -89,7 +96,7 @@ class NodeObjectiveNavigator:
         #       take the least frequently travelled. 
         if len(q) == 0: 
             # rank neighbors from least to most traveled 
-            neighbors = self.sg[loc] 
+            neighbors = self.context[self.loc] 
             neighbors = sorted([(n,self.encountered[n]) for n in neighbors])
             neighbors = prg_seqsort_ties(neighbors,self.prg,lambda x:x[1])
             return neighbors[0][0] 
@@ -105,3 +112,15 @@ class NodeObjectiveNavigator:
         q = sorted(q) 
         i = int(self.prg()) % len(q) 
         return q[i] 
+
+    def update_travel_log(self):
+        self.encountered[self.loc] += 1 
+        self.path_log.append(self.loc) 
+
+        lx = self.path_log_length - len(self.path_log) 
+
+        while lx < 0: 
+            self.path_log.pop(0) 
+            lx += 1 
+
+        self.c += 1 

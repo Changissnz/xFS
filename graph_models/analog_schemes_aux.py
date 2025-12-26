@@ -6,7 +6,6 @@ Focused on graph derivation.
 from .tree_gen import * 
 from .graph_gen import * 
 from .shortest_paths import * 
-from morebs2.graph_basics import * 
 from morebs2.numerical_generator import prg_choose_n,prg_seqsort,modulo_in_range
 from morebs2.measures import zero_div 
 
