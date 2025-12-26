@@ -95,7 +95,22 @@ class GraphAnalogAdderClass(unittest.TestCase):
             gaa.extend() 
 
         assert gaa.gen_scheme_log == [2, 2, 1, 1, 2], "got {}".format(gaa.gen_scheme_log)
+        assert len(gaa.subgraph_nodeset_log) == 7
         return 
+
+    """
+    tests for disconnected subgraphs 
+    """
+    def test__GraphAnalogAdder__extend__case3(self): 
+        
+        DX = graph__sample_2COMP() 
+        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree","random"},connect_components=False,store_isomaps=True)
+        for _ in range(5): 
+            gaa.extend() 
+
+        gxx = GraphComponentDecomposition(gaa.d)
+        gxx.decompose() 
+        assert len(gxx.components) == 7 
 
 if __name__ == '__main__':
     unittest.main()

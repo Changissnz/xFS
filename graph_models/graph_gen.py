@@ -10,6 +10,10 @@ def max_simple_edges(num_vertices):
         return 0 
     return sum([i for i in range(1,num_vertices)])
 
+"""
+generates a graph,directed or not, according to given 
+parameters `vertex_degree` and `edge_connectivity`. 
+"""
 class GraphGen:
 
     """

@@ -13,9 +13,13 @@ There are three analogue generation schemes:
 3. Using a reference subgraph S of the running graph `d`, (adds XOR deletes nodes) 
    AND (adds XOR deletes edges) from S. 
 
+CASE: connect_components == True 
 Every generated analogue is added to exactly one reference subgraph of running graph `d`. 
 This rule results in all components of the starting graph remaining disconnected with one 
 another, through the course of analogue addition. 
+
+CASE: connect_components == False 
+Every generated analogue is a disconnected subgraph of running graph `d`. 
 """
 class GraphAnalogAdder:
 
@@ -25,7 +29,7 @@ class GraphAnalogAdder:
         gen_subgraph_conn_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_CONN_RANGE,
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
         gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
-        gen_scheme_one_types = {"random"},verbose=False,store_isomaps:bool=False): 
+        gen_scheme_one_types = {"random"},connect_components:bool=True,verbose=False,store_isomaps:bool=False): 
 
         assert type(is_dsg) == bool 
 
@@ -53,7 +57,7 @@ class GraphAnalogAdder:
         assert 0.0 <= gen_subgraph_derivation_ratios[0] <= 1.0
         assert 0.0 <= gen_subgraph_derivation_ratios[1] <= 1.0
         assert len(gen_scheme_one_types) > 0 and gen_scheme_one_types.issubset({"random","tree"}) 
-
+        assert type(connect_components) == bool 
         assert type(store_isomaps) == bool 
 
         self.d = starting_graph
@@ -66,13 +70,15 @@ class GraphAnalogAdder:
         self.gen_subgraph_sp_param = gen_subgraph_shortest_paths_parameters
         self.gen_subgraph_derivation_ratios = gen_subgraph_derivation_ratios
         self.gen_scheme_one_types = sorted(gen_scheme_one_types) 
+        self.connect_components = connect_components
         self.verbose = verbose 
         self.store_isomaps = store_isomaps
 
         # new node counter 
         self.c = max(self.d.keys()) + 1 
         self.preproc()
-        self.set_counter_function() 
+        self.set_counter_function()
+
         self.gen_scheme_log = [] 
         self.isomap_log = [] 
         return 
@@ -92,6 +98,9 @@ class GraphAnalogAdder:
 
         self.nodeset_cache = deepcopy(self.components) 
         self.new_nodesets = [] 
+        
+        if self.store_isomaps: 
+            self.subgraph_nodeset_log = deepcopy(self.components) 
         return 
 
     def set_counter_function(self): 
@@ -138,14 +147,21 @@ class GraphAnalogAdder:
 
         # add the new subgraph to a reference subgraph 
         prior_sg = MicroGraph(self.d).subgraph_by_nodeset_(ref_nodeset).dg 
-        new_sg_ = self.connect_subgraphs__prior_to_current(prior_sg,new_sg) 
+
+        if self.connect_components: 
+            new_sg_ = self.connect_subgraphs__prior_to_current(prior_sg,new_sg) 
+        else: 
+            new_sg_ = new_sg 
 
         # update the entire graph 
         self.d = (MicroGraph(self.d) + MicroGraph(new_sg_)).dg
 
         if self.verbose: 
             print("generating subgraph of scheme type #{}".format(scheme_type)) 
-            
+        
+        if self.store_isomaps:
+            nodeset = set(new_sg.keys()) 
+            self.subgraph_nodeset_log.append(nodeset) 
         return prior_sg,new_sg 
 
     #--------------------- connection scheme 
