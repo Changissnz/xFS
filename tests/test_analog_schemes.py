@@ -35,7 +35,7 @@ def graph__sample_2COMP():
     isomap = {k:ctr_function() for k in keys2} 
     D2 = MicroGraph.isotransform_MG(MicroGraph(D2),isomap).dg
 
-    return (MicroGraph(D) + MicroGraph(D2)).dg
+    return (MicroGraph(D) + MicroGraph(D2)).dg,prg 
 
 """
 py -m tests.test_analog_schemes
@@ -49,7 +49,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
     one of the three generative schemes. 
     """
     def test__GraphAnalogAdder_extend__case1(self):
-        DX = graph__sample_2COMP() 
+        DX,_ = graph__sample_2COMP() 
         lx = prg__LCG(551,-13,199,2341) 
  
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx)
@@ -87,7 +87,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
     inconclusive test; does not check if subgraphs [2]+[3] are actually trees. 
     """
     def test__GraphAnalogAdder_extend__case2(self): 
-        DX = graph__sample_2COMP() 
+        DX,_ = graph__sample_2COMP() 
         lx = prg__LCG(55,3,19,212) 
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree"},store_isomaps=True)
 
@@ -103,7 +103,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
     """
     def test__GraphAnalogAdder__extend__case3(self): 
         
-        DX = graph__sample_2COMP() 
+        DX,lx = graph__sample_2COMP() 
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree","random"},connect_components=False,store_isomaps=True)
         for _ in range(5): 
             gaa.extend() 
@@ -111,6 +111,25 @@ class GraphAnalogAdderClass(unittest.TestCase):
         gxx = GraphComponentDecomposition(gaa.d)
         gxx.decompose() 
         assert len(gxx.components) == 7 
+
+    """
+    tests for correct number of isomaps and correct number of 
+    subgraph nodesets from prng reproduction. 
+    """
+    def test__GraphAnalogAdder__prng_reproduction(self): 
+        DX,lx = graph__sample_2COMP() 
+
+        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,\
+            gen_subgraph_shortest_paths_parameters=[10,3],\
+            gen_scheme_one_types={"tree","random"},connect_components=False,every_subgraph_is_connected=True,\
+            store_isomaps=True)
+
+        for _ in range(7):   
+            gaa.extend() 
+
+        gaa2,_ = gaa.prng_reproduction()
+
+        assert len(gaa2.isomap_log) == len(gaa2.subgraph_nodeset_log) / 2 
 
 if __name__ == '__main__':
     unittest.main()

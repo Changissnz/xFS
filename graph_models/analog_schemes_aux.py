@@ -63,7 +63,6 @@ def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_pat
 
     # iterate through each sequence of shortest paths and select 
     min_paths = bdfs.min_paths
-
     def prg_(): return int(prg())
 
     all_selected_paths = None 
