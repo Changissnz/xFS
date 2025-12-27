@@ -130,6 +130,9 @@ def average_distance(nodeset,ref_node,nodepair_path_info):
         q.append(c) 
     return np.mean(q) 
 
+"""
+determines which nodeset 1 XOR 2 is closer in average distance to `ref_node`
+"""
 def closer_nodeset_to_node(nodeset1,nodeset2,ref_node,nodepair_path_info,prg=None):
 
     if type(prg) == type(None): 
@@ -153,6 +156,9 @@ def closer_nodeset_to_node(nodeset1,nodeset2,ref_node,nodepair_path_info,prg=Non
         return nodeset1 
     return nodeset2 
 
+"""
+ranks nodes of `candidate_nodeseq` from least to greatest average distance to `ref_nodeset`. 
+"""
 def ranked_node_distances_from_nodeset(ref_nodeset,candidate_nodeseq,nodepair_path_info,prg=None):
 
     if len(ref_nodeset) == 0 or len(candidate_nodeseq) == 0: return None 
