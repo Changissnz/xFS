@@ -4,7 +4,10 @@ from graph_models.analog_schemes import *
 HTE_THREAT_TYPES = {"contra","constant"}
 HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN = [1,13]
 
-# TODO: test.  
+# TODO: test. 
+"""
+Threat object for Hidden Threat Exposure problem. 
+"""
 class HTEThreat:
 
     def __init__(self,node_idn,activation_lifespan,derivative_type): 
@@ -28,7 +31,7 @@ class HTEThreat:
         self.other_threat_locs = other_threat_locs
         return
 
-    def activate(self): 
+    def activate(self,navigator_path_info,other_threat_locs): 
         if self.fin_stat: 
             return False 
 
@@ -36,9 +39,50 @@ class HTEThreat:
             self.fin_stat = True 
             return False 
 
-        print("TODO") 
+        self.c += 1 
+        self.load_navigator_path_info(navigator_path_info,other_threat_locs) 
 
-# TODO: test.  
+        if self.derivative_type == "contra": 
+            return self.contra_location()
+        return self.node_idn 
+
+    def contra_location(self): 
+        assert self.derivative_type == "contra" 
+
+        # case: no navigator path info provided. 
+        if len(self.navigator_path_info) == 0: 
+            return self.node_idn 
+        
+        # case: choose a node on the subpath of 
+        #       `navigator_path_info`, with tail 
+        #       at `node_idn` 
+
+        #   subcase: `node_idn` not in `navigator_path_info`, 
+        #             due to bug. Stay at `node_idn``
+        subpath = self.subpath_to_loc() 
+        if type(subpath) == type(None): 
+            return self.node_idn 
+
+        X = sorted(set(subpath) - self.other_threat_locs - {self.node_idn})  
+        if len(X) == 0: 
+            return self.node_idn 
+
+        i = int(self.prg()) % len(X) 
+        return X[i] 
+
+    def subpath_to_loc(self): 
+        # calculates the first subpath to node location 
+        if self.node_idn not in self.navigator_path_info: 
+            return None 
+        
+        subpath_index = self.navigator_path_info.index(self.node_idn)
+        return self.navigator_path_info[:subpath_index + 1] 
+
+
+# TODO: test. 
+"""
+Surface (setting) for Hidden Threat Exposure problem. 
+""" 
 class HTESurface: 
 
     def __init__(self,base_graph:defaultdict,entry_points:set,objective_points:set,threat_map):  
