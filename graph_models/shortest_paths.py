@@ -1,7 +1,176 @@
 from .node_path import * 
-from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort
+from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort,prg_seqsort_ties
 from morebs2.graph_basics import is_undirected_graph
 from types import MethodType,FunctionType
+
+#---------------------------------------- functions related to node eccentricities 
+#---------------------------------------- NOTE: could be refactored
+
+# TODO: relocate
+"""
+nodepair_path_info := defaultdict, (source node,target node) -> NodePath 
+"""
+def node_eccentricity_ranking(nodepair_path_info,prg=None):  
+
+    if type(prg) == type(None): 
+        prg = default_std_Python_prng() 
+    assert type(prg) in {MethodType,FunctionType}  
+    def prg_(): return int(prg())
+
+    DX = defaultdict(float) 
+    for k,v in nodepair_path_info.items(): 
+        assert type(k) == tuple and len(k) == 2 
+        assert type(v) == NodePath 
+
+        n0,n1 = k 
+        q = v.cost()
+
+        dx = DX[n0] 
+        if q > dx:
+            DX[n0] = q 
+
+    ecc_list = [(k,v) for k,v in DX.items()] 
+    ecc_list = prg_seqsort_ties(ecc_list,prg_,vf=lambda x:x[1]) 
+    return [n[0] for n in ecc_list]
+
+"""
+"""
+def peripheral_node_partition(G,part1_size,part2_size,prg,nodepair_path_info=None):   
+    assert type(G) == defaultdict 
+    assert is_undirected_graph(G) 
+    assert part1_size + part2_size <= len(G) 
+    assert part1_size > 0 and part2_size > 0 
+    assert type(prg) in {MethodType,FunctionType} 
+
+    if type(nodepair_path_info) == type(None):
+        nodepair_path_info,components = BDFSCache.BFS_full(G,return_type="paths",prg=prg)  
+        assert len(components) == 1
+
+    ranked_by_ecc = node_eccentricity_ranking(nodepair_path_info,prg=prg)
+    part1 = set() 
+    part2 = set() 
+    stat1,stat2 = True,True 
+
+    while stat1 and stat2: 
+        stat1,stat2 = len(part1) < part1_size,len(part2) < part2_size 
+
+        # case: add pair of nodes
+        if stat1 and stat2: 
+            n0 = ranked_by_ecc.pop(0)  
+            partx = closer_nodeset_to_node(part1,part2,n0,nodepair_path_info,prg=prg) 
+            partx2 = part2 if partx == part1 else part1 
+            
+            partx |= {n0}
+
+            i = most_distant_node_to_node(n0,ranked_by_ecc,nodepair_path_info,\
+                return_type="index",prg=prg) 
+            n1 = ranked_by_ecc.pop(i) 
+            print("farthest to {}: {}".format(n0,n1))
+            partx2 |= {n1} 
+
+        # case: add remaining nodes to part2 XOR part1 
+        elif stat1 or stat2:
+            if stat2: 
+                partx,partx2,partx2_size = part1,part2,part2_size 
+            else: 
+                partx,partx2,partx2_size = part2,part1,part1_size 
+
+            cx = ranked_node_distances_from_nodeset(partx,ranked_by_ecc,nodepair_path_info,prg) 
+            rem_nodes = partx2_size - len(partx2) 
+            new_nodes = cx[-rem_nodes:]
+            new_nodes = [c[0] for c in new_nodes] 
+            partx2 |= set(new_nodes)
+        else: 
+            continue 
+    return part1,part2  
+
+# aux method for <peripheral_node_partition>
+def most_distant_node_to_node(ref_node,candidate_nodeseq,nodepair_path_info,\
+    return_type="index",prg=None): 
+
+    assert return_type in {"index","node"} 
+    if type(prg) == type(None): 
+        prg = default_std_Python_prng() 
+    assert type(prg) in {MethodType,FunctionType}
+
+    # get the relevant node pairs 
+    relevant_nodepairs = [(ref_node,c) for c in candidate_nodeseq] 
+
+    most_distant_node,max_distance,j = None,0,-1 
+    for (i,pair) in enumerate(relevant_nodepairs):
+        #? 
+        if pair not in nodepair_path_info: continue 
+
+        p = nodepair_path_info[pair]
+        c = p.cost() if type(p) == NodePath else p
+
+        if c == max_distance: 
+            if int(prg()) % 2: 
+                most_distant_node = pair[1]
+                max_distance = c 
+                j = i 
+        elif c > max_distance: 
+            most_distant_node = pair[1]
+            max_distance = c 
+            j = i 
+    
+    if return_type == "index": return j 
+    return most_distant_node
+
+def average_distance(nodeset,ref_node,nodepair_path_info):
+    if len(nodeset) == 0: return float('inf')
+
+    q = [] 
+    for n in nodeset: 
+        if (ref_node,n) not in nodepair_path_info: 
+            continue 
+
+        p = nodepair_path_info[(ref_node,n)]         
+        c = p.cost() if type(p) == NodePath else p 
+        q.append(c) 
+    return np.mean(q) 
+
+def closer_nodeset_to_node(nodeset1,nodeset2,ref_node,nodepair_path_info,prg=None):
+
+    if type(prg) == type(None): 
+        prg = default_std_Python_prng() 
+    assert type(prg) in {MethodType,FunctionType}
+
+    if len(nodeset1) == 0: 
+        return nodeset1 
+    
+    if len(nodeset2) == 0: 
+        return nodeset2 
+
+    D1 = average_distance(nodeset1,ref_node,nodepair_path_info) 
+    D2 = average_distance(nodeset2,ref_node,nodepair_path_info)   
+
+    if D1 == D2: 
+        if int(prg()) % 2: return nodeset1 
+        return nodeset2 
+    
+    if D1 < D2: 
+        return nodeset1 
+    return nodeset2 
+
+def ranked_node_distances_from_nodeset(ref_nodeset,candidate_nodeseq,nodepair_path_info,prg=None):
+
+    if len(ref_nodeset) == 0 or len(candidate_nodeseq) == 0: return None 
+
+    if type(prg) == type(None): 
+        prg = default_std_Python_prng() 
+    assert type(prg) in {MethodType,FunctionType}
+    def prg_(): return int(prg())
+
+    cx = [] 
+    for c in candidate_nodeseq: 
+        dx = average_distance(ref_nodeset,c,nodepair_path_info) 
+        cx.append((c,dx)) 
+
+    cx = prg_seqsort_ties(cx,prg,lambda x:x[1])
+    return cx 
+
+#-------------------------------------------------------------------------------------------------
 
 """
 designed for use with bigger graphs (> 50 nodes).

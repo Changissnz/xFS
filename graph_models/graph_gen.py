@@ -1,7 +1,6 @@
 from .micrograph import * 
 from math import ceil 
 from morebs2.graph_basics import * 
-
     
 """
 given number of vertices for simple,undirected graph 
@@ -11,6 +10,7 @@ def max_simple_edges(num_vertices):
         return 0 
     return sum([i for i in range(1,num_vertices)])
 
+# TODO: relocate this.
 """
 draws the minumum number of edges for a graph, directed 
 or undirected, to be one component (all nodes are connected). 
@@ -42,6 +42,19 @@ def graph_to_one_component(G:defaultdict,prg):
             G[n1] |= {n0}  
     return G 
 
+# TODO: relocate this.
+def undirected_graph_to_directed_graph(d): 
+    assert type(d) in {defaultdict,dict}
+
+    for k,v in d.items(): 
+        for v_ in v: 
+            if v_ not in d: 
+                d[v_] = {k}
+                continue 
+            d[v_] |= {k} 
+    return d 
+
+#
 """
 generates a graph,directed or not, according to given 
 parameters `vertex_degree` and `edge_connectivity`. 
