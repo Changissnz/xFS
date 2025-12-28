@@ -187,6 +187,7 @@ class HTESurface:
                 continue 
             if tpoint in new_obj_points: continue 
             threat_map[tpoint] = v.reproduce() 
+            threat_map[tpoint].node_idn = tpoint 
         return new_entry_points,new_obj_points,threat_map 
 
     # TODO: test. 
