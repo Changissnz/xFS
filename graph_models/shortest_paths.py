@@ -9,6 +9,9 @@ from types import MethodType,FunctionType
 # TODO: relocate
 """
 nodepair_path_info := defaultdict, (source node,target node) -> NodePath 
+
+return:
+- list, nodes ranked from least to greatest eccentricity
 """
 def node_eccentricity_ranking(nodepair_path_info,prg=None):  
 
@@ -47,7 +50,7 @@ def peripheral_node_partition(G,part1_size,part2_size,prg,nodepair_path_info=Non
         nodepair_path_info,components = BDFSCache.BFS_full(G,return_type="paths",prg=prg)  
         assert len(components) == 1
 
-    ranked_by_ecc = node_eccentricity_ranking(nodepair_path_info,prg=prg)
+    ranked_by_ecc = node_eccentricity_ranking(nodepair_path_info,prg=prg)[::-1]
     part1 = set() 
     part2 = set() 
     stat1,stat2 = True,True 

@@ -116,7 +116,11 @@ class BDFSCacheClass(unittest.TestCase):
         for p in P0: 
             for p_ in P1: 
                 distances.append(X0[(p,p_)].cost()) 
-        assert 4 <= min(distances) < max(distances) <= 5 
+        #print("DISTANCES")
+        #print(distances) 
+        assert distances == [7, 7, 8, 8, 8, 8, 7, 7, 7, 7, 8, 8, 8, 8, 7, \
+            7, 7, 7, 8, 8, 8, 8, 7, 7, 7, 7, 8, 8, 8, 8, 7, 7, 7, 7, 8, 8, \
+            8, 8, 7, 7]
         return
 
  
