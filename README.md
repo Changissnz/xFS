@@ -6,3 +6,7 @@ developed by me only in conjunction with my research efforts. Technicalities in 
 hardware and those projects' code implementation have pressured me to cease their 
 further development.
 
+Here is a list of graph problems in the project: 
+- Respondent Network Bot (Alpha)
+- Hidden Threat Exposure (Work in progress) 
+- Slander Net (Work in progress) 
