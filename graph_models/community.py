@@ -1,4 +1,5 @@
 from .radial_subgraph import * 
+from morebs2.graph_basics import flatten_setseq
 
 # TODO: test this. 
 """
@@ -52,11 +53,12 @@ class RadialGraphCommunities:
 
         ref_node = self.node_ordering.pop(0)[0] 
 
-        nodeset = set(self.rsf.subgraph(ref_node,self.radius).keys())
+        nodeset = set(self.rsf.subgraph(ref_node,self.max_radius).keys())
 
         accounted_nodes = set(flatten_setseq(self.community_nodesets))
         nodeset = nodeset - accounted_nodes
 
+        i = 0 
         while i < len(self.node_ordering): 
             n = self.node_ordering[i][0]
             if n in nodeset: 
