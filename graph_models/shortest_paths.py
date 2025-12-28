@@ -13,11 +13,12 @@ nodepair_path_info := defaultdict, (source node,target node) -> NodePath
 return:
 - list, nodes ranked from least to greatest eccentricity
 """
-def node_eccentricity_ranking(nodepair_path_info,prg=None):  
+def node_eccentricity_ranking(nodepair_path_info,prg=None,return_type="node"):  
 
     if type(prg) == type(None): 
         prg = default_std_Python_prng() 
     assert type(prg) in {MethodType,FunctionType}  
+    assert return_type in {"node","all"}
     def prg_(): return int(prg())
 
     DX = defaultdict(float) 
@@ -34,6 +35,8 @@ def node_eccentricity_ranking(nodepair_path_info,prg=None):
 
     ecc_list = [(k,v) for k,v in DX.items()] 
     ecc_list = prg_seqsort_ties(ecc_list,prg_,vf=lambda x:x[1]) 
+    
+    if return_type == "all": return ecc_list 
     return [n[0] for n in ecc_list]
 
 # TODO: add more tests. 
