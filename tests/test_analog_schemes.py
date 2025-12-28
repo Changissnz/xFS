@@ -89,7 +89,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
     def test__GraphAnalogAdder_extend__case2(self): 
         DX,_ = graph__sample_2COMP() 
         lx = prg__LCG(55,3,19,212) 
-        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree"},store_isomaps=True)
+        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_zero_types={"tree"},store_isomaps=True)
 
         for _ in range(5): 
             gaa.extend() 
@@ -104,7 +104,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
     def test__GraphAnalogAdder__extend__case3(self): 
         
         DX,lx = graph__sample_2COMP() 
-        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_one_types={"tree","random"},connect_components=False,store_isomaps=True)
+        gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_zero_types={"tree","random"},connect_components=False,store_isomaps=True)
         for _ in range(5): 
             gaa.extend() 
 
@@ -121,7 +121,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
 
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,\
             gen_subgraph_shortest_paths_parameters=[10,3],\
-            gen_scheme_one_types={"tree","random"},connect_components=False,every_subgraph_is_connected=True,\
+            gen_scheme_zero_types={"tree","random"},connect_components=False,every_subgraph_is_connected=True,\
             store_isomaps=True)
 
         for _ in range(7):   

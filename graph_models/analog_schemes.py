@@ -32,7 +32,7 @@ class GraphAnalogAdder:
         gen_subgraph_conn_range = DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_CONN_RANGE,
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
         gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
-        gen_scheme_one_types = {"random"},connect_components:bool=True,\
+        gen_scheme_zero_types = {"random"},connect_components:bool=True,\
         every_subgraph_is_connected:bool=False,gen_scheme_types=[0,1,2],verbose=False,store_isomaps:bool=False): 
 
         assert type(is_dsg) == bool 
@@ -60,7 +60,7 @@ class GraphAnalogAdder:
 
         assert 0.0 <= gen_subgraph_derivation_ratios[0] <= 1.0
         assert 0.0 <= gen_subgraph_derivation_ratios[1] <= 1.0
-        assert len(gen_scheme_one_types) > 0 and gen_scheme_one_types.issubset({"random","tree"}) 
+        assert len(gen_scheme_zero_types) > 0 and gen_scheme_zero_types.issubset({"random","tree"}) 
         assert type(connect_components) == bool 
         assert type(every_subgraph_is_connected) == bool 
         assert set(gen_scheme_types).issubset({0,1,2}) and type(gen_scheme_types) == list 
@@ -75,7 +75,7 @@ class GraphAnalogAdder:
         self.gen_subgraph_conn_range = gen_subgraph_conn_range
         self.gen_subgraph_sp_param = gen_subgraph_shortest_paths_parameters
         self.gen_subgraph_derivation_ratios = gen_subgraph_derivation_ratios
-        self.gen_scheme_one_types = sorted(gen_scheme_one_types) 
+        self.gen_scheme_zero_types = sorted(gen_scheme_zero_types) 
         self.connect_components = connect_components
         self.every_subgraph_is_connected = every_subgraph_is_connected
         self.gen_scheme_types = gen_scheme_types
@@ -188,8 +188,8 @@ class GraphAnalogAdder:
     #--------------------- generation scheme #1 
 
     def prng_generate_subgraph(self): 
-        index = int(self.prg()) % len(self.gen_scheme_one_types) 
-        scheme_one = self.gen_scheme_one_types[index] 
+        index = int(self.prg()) % len(self.gen_scheme_zero_types) 
+        scheme_one = self.gen_scheme_zero_types[index] 
 
         if scheme_one == "tree": 
             return self.prng_generate_subgraph__tree()
@@ -302,7 +302,7 @@ class GraphAnalogAdder:
             gen_subgraph_conn_range = self.gen_subgraph_conn_range,\
             gen_subgraph_shortest_paths_parameters=self.gen_subgraph_sp_param,\
             gen_subgraph_derivation_ratios=self.gen_subgraph_derivation_ratios,\
-            gen_scheme_one_types = set(self.gen_scheme_one_types),\
+            gen_scheme_zero_types = set(self.gen_scheme_zero_types),\
             connect_components = self.connect_components,\
             every_subgraph_is_connected=self.every_subgraph_is_connected,\
             gen_scheme_types=[1,2],verbose=False,store_isomaps=True)  

@@ -43,7 +43,7 @@ def graph_to_one_component(G:defaultdict,prg):
     return G 
 
 # TODO: relocate this.
-def directed_graph_to_undirected_graph(d): 
+def directed_to_undirected_graph(d): 
     assert type(d) in {defaultdict,dict}
 
     for k,v in d.items(): 

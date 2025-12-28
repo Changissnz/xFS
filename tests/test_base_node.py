@@ -30,7 +30,7 @@ def graph__sample_NONOPON():
 
     DX = (MicroGraph(G1) + MicroGraph(G2)).dg 
 
-    gaa = GraphAnalogAdder(DX,is_dsg=False,prg=prg,gen_scheme_one_types={"tree","random"},connect_components=True,store_isomaps=True)
+    gaa = GraphAnalogAdder(DX,is_dsg=False,prg=prg,gen_scheme_zero_types={"tree","random"},connect_components=True,store_isomaps=True)
     for _ in range(5): 
         gaa.extend() 
 
