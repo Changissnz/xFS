@@ -13,5 +13,6 @@ class HTEBot:
         self.hte_navigator = hte_navigator
         return 
 
-    
-    
+    def __next__(self): 
+
+        return -1 

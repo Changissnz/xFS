@@ -1,4 +1,5 @@
 from graph_models.graph_gen import * 
+from graph_models.tree_gen import * 
 from graph_models.shortest_paths import * 
 from morebs2.numerical_generator import prg__LCG
 import unittest
@@ -94,11 +95,30 @@ class BDFSCacheClass(unittest.TestCase):
 
         assert qx[13][0].cost() == 5
 
- 
+    """
+    demonstrates maximal distance between two nodesets of a partition
+    """
+    def test__peripheral_node_partition__case_1(self):
+
+        prg = prg__LCG(63,131,567,-878) 
+
+        tg = TreeGen(starting_nodeset = {0,1,2},is_dsg=False,prg=prg,branching_range=DEFAULT_TREE_BRANCHING_RANGE)
+
+        for _ in range(8): 
+            next(tg) 
+
+        G = graph_to_one_component(tg.d,prg)
+        X0,X1 = BDFSCache.BFS_full(G,return_type="paths",prg=prg) 
+
+        P0,P1 = peripheral_node_partition(G,part1_size=5,part2_size=8,prg=prg,nodepair_path_info=X0) 
+
+        distances = [] 
+        for p in P0: 
+            for p_ in P1: 
+                distances.append(X0[(p,p_)].cost()) 
+        assert 4 <= min(distances) < max(distances) <= 5 
+        return
 
  
- 
-
-
 if __name__ == '__main__':
     unittest.main()
