@@ -3,7 +3,7 @@ from graph_models.dfs import *
 import unittest
 
 """
-python -m tests.test_dfs
+py -m tests.test_dfs
 """
 class DFSCacheClass(unittest.TestCase):
 

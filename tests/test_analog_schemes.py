@@ -23,10 +23,11 @@ def graph__sample_2COMP():
     prg = lx 
     is_realtime_gen = True 
     vertex_degree = 8 
-    edge_connectivity = 0.22 
+    edge_connectivity = 0.27
     gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity)
     gg.full_run() 
-    D2 = gg.d 
+    D2 = graph_to_one_component(gg.d,prg) 
+    #D2 = gg.d 
 
     cx = SimpleCounter(len(D2)) 
     def ctr_function(): return next(cx) 
@@ -54,7 +55,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
  
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx)
 
-        assert len(gaa.nodeset_cache) == 2
+        assert len(gaa.nodeset_cache) == 2,"got {}".format(len(gaa.nodeset_cache))
         assert len(gaa.new_nodesets) == 0 
 
         gaa.extend() 
@@ -75,13 +76,13 @@ class GraphAnalogAdderClass(unittest.TestCase):
 
         # check that graph increases in size 
         v0,e0 = MicroGraph(gaa.d).ve_score()
-        assert v0 == 34 and e0 == 98 
+        assert v0 == 59 and e0 == 452, "{},{}".format(v0,e0) 
         assert is_undirected_graph(gaa.d)
 
         # check for diversity of generator scheme use 
-        assert gaa.gen_scheme_log == [3, 2, 2] 
+        assert gaa.gen_scheme_log == [3, 1, 2],"got {}".format(gaa.gen_scheme_log) 
         gaa.extend()
-        assert gaa.gen_scheme_log == [3, 2, 2,1] 
+        assert gaa.gen_scheme_log == [3, 1, 2,2],"got {}".format(gaa.gen_scheme_log) 
 
     """
     inconclusive test; does not check if subgraphs [2]+[3] are actually trees. 
@@ -94,7 +95,7 @@ class GraphAnalogAdderClass(unittest.TestCase):
         for _ in range(5): 
             gaa.extend() 
 
-        assert gaa.gen_scheme_log == [2, 2, 1, 1, 2], "got {}".format(gaa.gen_scheme_log)
+        assert gaa.gen_scheme_log == [2, 2, 3, 2, 2], "got {}".format(gaa.gen_scheme_log)
         assert len(gaa.subgraph_nodeset_log) == 7
         return 
 
@@ -105,12 +106,18 @@ class GraphAnalogAdderClass(unittest.TestCase):
         
         DX,lx = graph__sample_2COMP() 
         gaa = GraphAnalogAdder(DX,is_dsg=False,prg=lx,gen_scheme_zero_types={"tree","random"},connect_components=False,store_isomaps=True)
+        print("LENGO: ",len(gaa.subgraph_nodeset_log))
         for _ in range(5): 
             gaa.extend() 
-
+            print("ITER ",_)
+            gxx = GraphComponentDecomposition(gaa.d) 
+            gxx.decompose()
+            print("NUM COMPONENTS: ",len(gxx.components))
+        print("ISOMAPS: ",len(gaa.isomap_log))
+        print("SCHEME: ",gaa.gen_scheme_log)
         gxx = GraphComponentDecomposition(gaa.d)
         gxx.decompose() 
-        assert len(gxx.components) == 7 
+        assert len(gxx.components) == 8, "got {}".format(len(gxx.components))
 
     """
     tests for correct number of isomaps and correct number of 

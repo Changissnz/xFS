@@ -90,7 +90,7 @@ Surface (setting) for Hidden Threat Exposure problem.
 class HTESurface: 
 
     def __init__(self,base_graph:defaultdict,entry_points:set,objective_points:set,threat_map,\
-        surface_derivation_radius_ratio_range=HTE_SURFACE_DERIVATION_RADIUS_RATIO_RANGE):
+        surface_derivation_radius_ratio_range=HTE_SURFACE_DERIVATION_RADIUS_RATIO_RANGE,prg=None):
 
         assert type(base_graph) == defaultdict
         assert type(entry_points) == set 
@@ -99,18 +99,41 @@ class HTESurface:
         assert set(threat_map.keys()).intersection(objective_points) == set() 
         assert 0. < surface_derivation_radius_ratio_range[0] <= surface_derivation_radius_ratio_range[1]\
             <= 1. 
+        if type(prg) == type(None): 
+            prg = default_std_Python_prng() 
+        assert type(prg) in {MethodType,FunctionType}
+
         self.base_graph = base_graph 
         self.is_directed = not is_undirected_graph(self.base_graph)
         self.entry_points = entry_points
         self.objective_points = objective_points 
         self.threat_map = threat_map 
         self.surface_derivation_radius_ratio_range = surface_derivation_radius_ratio_range
+        self.prg = prg 
+        self.preproc() 
+
+    def preproc(self): 
+        self.rsf = RadialSubgraphFetcher(self.base_graph,prg=self.prg,return_type="paths")  
+        return 
+
+    def __str__(self): 
+        S = "entry points\n" + str(self.entry_points)
+        S += "\n" + "objective points\n" + str(self.objective_points) 
+        S += "\n" + "threat points\n" + str(sorted(self.threat_map.keys())) 
+        return S 
+
+    def threat_node_identifiers(self,derivative_types = HTE_THREAT_TYPES): 
+        N = set() 
+        for k,v in self.threat_map.items(): 
+            if v.derivative_type in derivative_types: 
+                N |= {k} 
+        return N 
 
     # TODO: test. 
     def prng_reproduction(self):
         # find community by radius 
         radius_ratio = modulo_in_range(self.prg(),self.surface_derivation_radius_ratio_range)
-        rs = RadialGraphCommunities(self.base_graph,self.prg,radius_ratio) 
+        rs = RadialGraphCommunities(self.base_graph,self.prg,radius_ratio,self.rsf) 
         rs.exec()
 
         # gather communities into disjoint subgraphs
@@ -133,7 +156,8 @@ class HTESurface:
         new_nodeset = gaa.nodeset_cache[-lx:] 
         new_nodeset = flatten_setseq(new_nodeset) 
         sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
-    
+        sg = graph_to_one_component(sg,self.prg)
+
         return HTESurface(sg,new_entry_points,new_obj_points,threat_map,\
         surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range)
 
@@ -192,25 +216,25 @@ class HTESurface:
 
     # TODO: test. 
     @staticmethod 
-    def generate_instance(base_graph,num_entry_points,num_objective_points,threat_ratio,\ 
-        threat_lifespan_range,threat_mobility_ratio,threat_nodes_include_entry_points:bool,\
+    def generate_instance(base_graph,num_entry_points,num_objective_points,threat_ratio,\
+        threat_mobility_ratio,threat_nodes_include_entry_points:bool,\
         prg,activation_lifespan_range=HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN): 
         
         def prg_(): return int(prg()) 
         assert num_entry_points + num_objective_points < len(base_graph)
 
         # determine the entry and objective points 
-        X0,X1 = BDFSCache.BFS_full(G,return_type="distance",prg=prg) 
+        X0,X1 = BDFSCache.BFS_full(base_graph,return_type="distance",prg=prg) 
         assert len(X1) == 1, "connected graph required" 
 
         stat = is_undirected_graph(base_graph) 
-        bg = base_graph if not stat else undirected_graph_to_directed_graph(deepcopy(base_graph))
+        bg = base_graph if not stat else directed_to_undirected_graph(deepcopy(base_graph))
         entry_points,objective_points = peripheral_node_partition(bg,\
             part1_size=num_entry_points,part2_size=num_objective_points,prg=prg,\
             nodepair_path_info=X0) 
 
         # assign threats 
-        x = set() if not threat_nodes_include_entry_points else entry_points
+        x = set() if threat_nodes_include_entry_points else entry_points
         threat_candidates = sorted(set(base_graph.keys()) - x - objective_points)
         num_threats = threat_ratio * len(threat_candidates)
         threat_nodes = prg_choose_n(threat_candidates,num_threats,prg_,is_unique_picker=True) 
@@ -223,11 +247,11 @@ class HTESurface:
         threat_map = dict() 
         for m in mobile_threats: 
             activation_lifespan = modulo_in_range(int(prg()),activation_lifespan_range)
-            htd = HTEThreatDerivation(m,activation_lifespan,"contra") 
+            htd = HTEThreat(m,activation_lifespan,"contra") 
             threat_map[m] = htd 
 
         for m in threat_nodes:  
             activation_lifespan = modulo_in_range(int(prg()),activation_lifespan_range)
-            htd = HTEThreatDerivation(m,activation_lifespan,"constant") 
+            htd = HTEThreat(m,activation_lifespan,"constant") 
             threat_map[m] = htd 
         return HTESurface(base_graph,entry_points,objective_points,threat_map) 

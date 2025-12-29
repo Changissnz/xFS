@@ -24,10 +24,9 @@ def node_eccentricity_ranking(nodepair_path_info,prg=None,return_type="node"):
     DX = defaultdict(float) 
     for k,v in nodepair_path_info.items(): 
         assert type(k) == tuple and len(k) == 2 
-        assert type(v) == NodePath 
 
         n0,n1 = k 
-        q = v.cost()
+        q = v.cost() if type(v) == NodePath else v 
 
         dx = DX[n0] 
         if q > dx:
@@ -72,7 +71,7 @@ def peripheral_node_partition(G,part1_size,part2_size,prg,nodepair_path_info=Non
             i = most_distant_node_to_node(n0,ranked_by_ecc,nodepair_path_info,\
                 return_type="index",prg=prg) 
             n1 = ranked_by_ecc.pop(i) 
-            print("farthest to {}: {}".format(n0,n1))
+            ##print("farthest to {}: {}".format(n0,n1))
             partx2 |= {n1} 
 
         # case: add remaining nodes to part2 XOR part1 

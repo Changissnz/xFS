@@ -5,7 +5,7 @@ import unittest
 
 ### lone file test 
 """
-python -m tests.test_bool_rules 
+py -m tests.test_bool_rules 
 """
 ###
 class BoolExprCNFGeneratorClass(unittest.TestCase):

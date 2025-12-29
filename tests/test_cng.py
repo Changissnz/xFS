@@ -2,7 +2,7 @@ from quant.cng import *
 import unittest 
 
 """
-python -m tests.test_cng 
+py -m tests.test_cng 
 """
 class CLCGClass(unittest.TestCase):
 

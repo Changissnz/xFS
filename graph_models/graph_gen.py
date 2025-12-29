@@ -14,8 +14,10 @@ def max_simple_edges(num_vertices):
 """
 draws the minumum number of edges for a graph, directed 
 or undirected, to be one component (all nodes are connected). 
+Selection of unconnected node pairs for edges done by PRNG 
+`prg`. 
 """
-def graph_to_one_component(G:defaultdict,prg): 
+def graph_to_one_component(G:defaultdict,prg,verbose=False): 
 
     gx = GraphComponentDecomposition(G) 
     gx.decompose() 
@@ -27,7 +29,7 @@ def graph_to_one_component(G:defaultdict,prg):
 
     i = 0 
     l = len(components) - 1 
-    print("connecting {} components".format(l + 1)) 
+    if verbose: print("connecting {} components".format(l + 1)) 
     for j in range(l): 
         c0 = components[j] 
         c1 = components[j+1] 
@@ -83,22 +85,6 @@ class GraphGen:
         self.preproc() 
         return
 
-    def to_file(self,fp): 
-        dict_to_file(self.d,fp)
-
-    # TODO: test 
-    def isotransform(self,start_integer):
-        x = dict() 
-        R1 = [i for i in range(self.vertex_degree)]
-        R2 = [i for i in range(start_integer,start_integer + self.vertex_degree)] 
-        
-        for (i,j) in zip(R1,R2): 
-            x[i] = j 
-        
-        mg = MicroGraph(self.d) 
-        mg2 = MicroGraph.isotransform_MG(mg,x)
-        self.d = mg2.dg 
-
     def preproc(self): 
         medges_ = max_simple_edges(self.vertex_degree)
 
@@ -117,28 +103,8 @@ class GraphGen:
         return
 
     """
-    current edge connectivity 
+    main method
     """
-    def edge_connectivity_(self):
-
-        medges_ = max_simple_edges(len(self.d))
-        if medges_ == 0: 
-            return 2.0 
-
-        medges_ = medges_ * 2 if self.is_dsg else medges_ 
-        return self.current_edge_degree_() / medges_ 
-
-
-    def current_edge_degree_(self): 
-        c = 0 
-        for k,v in self.d.items(): 
-            c += len(v) 
-        
-        if self.is_dsg: 
-            return c 
-
-        return int(c / 2)
-
     def full_run(self): 
         while not self.finstat: 
             self.__next__() 
@@ -151,15 +117,26 @@ class GraphGen:
             stat = self.new__realtime() 
         else: 
             stat = self.new_edge()
-        self.finstat = not stat 
+        self.finstat = not stat# and len(self.d) == self.vertex_degree
         return not self.finstat 
 
     def new__realtime(self): 
         # case: maybe add another vertex if vertex capacity not reached
         l = len(self.d)
         if l < self.vertex_degree: 
+            #   an easier function to know 
+            """
+            self.d[l] = set() 
+
+            q = int(self.prg()) % 2 
+            if self.edge_connectivity_() < self.edge_connectivity and q: 
+
+                return self.new_edge() 
+            return True 
+            """
 
             # subcase: empty vertices 
+            #"""
             if l == 0: 
                 self.d[l] = set() 
                 return True 
@@ -174,7 +151,7 @@ class GraphGen:
                     stat = True 
                 if stat: 
                     return stat 
-
+            
             stat = False 
             # subcase: connectivity has been reached, have to add another vertex 
             ec = self.edge_connectivity_()
@@ -183,8 +160,9 @@ class GraphGen:
                     self.d[l] = set() 
                     stat = True 
                 if stat: 
-                    return stat 
+                    return stat             
             return self.new_edge() 
+            #"""
 
         # case: add new edge 
         return self.new_edge()
@@ -202,16 +180,54 @@ class GraphGen:
                 continue 
 
             n2 = sorted(n2)
-            nx = int(self.prg()) % len(n2) 
-            nx = n2[nx] 
-            self.d[n] |= {nx} 
+            nq = int(self.prg()) % len(n2) 
+            nq = n2[nq] 
+            self.d[n] |= {nq} 
             if not self.is_dsg: 
-                self.d[nx] |= {n} 
+                self.d[nq] |= {n} 
 
             self.current_edge_degree += 1 
             break 
         return True 
 
     def available_endnodes_for_node(self,n):
-        rx = set([i for i in range(self.vertex_degree)]) - {n} 
+        rx = set([i for i in range(len(self.d))]) - {n} 
         return rx - self.d[n]
+
+    """
+    current edge connectivity 
+    """
+    def edge_connectivity_(self):
+
+        medges_ = max_simple_edges(len(self.d))
+        if medges_ == 0: 
+            return 2.0 
+
+        medges_ = medges_ * 2 if self.is_dsg else medges_ 
+        return self.current_edge_degree_() / medges_ 
+
+    def current_edge_degree_(self): 
+        c = 0 
+        for k,v in self.d.items(): 
+            c += len(v) 
+        
+        if self.is_dsg: 
+            return c 
+
+        return int(c / 2)
+
+    # TODO: test 
+    def isotransform(self,start_integer):
+        x = dict() 
+        R1 = [i for i in range(self.vertex_degree)]
+        R2 = [i for i in range(start_integer,start_integer + self.vertex_degree)] 
+        
+        for (i,j) in zip(R1,R2): 
+            x[i] = j 
+        
+        mg = MicroGraph(self.d) 
+        mg2 = MicroGraph.isotransform_MG(mg,x)
+        self.d = mg2.dg 
+
+    def to_file(self,fp): 
+        dict_to_file(self.d,fp)

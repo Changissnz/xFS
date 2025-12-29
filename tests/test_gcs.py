@@ -4,7 +4,7 @@ import unittest
 
 ### lone file test 
 """
-python -m tests.test_gcs
+py -m tests.test_gcs
 """
 ###
 class GCSContainerClass(unittest.TestCase):

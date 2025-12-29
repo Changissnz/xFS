@@ -26,7 +26,8 @@ class HTENavigator(NodeObjectiveNavigator):
     
     def receive_context(self,graph_visual:defaultdict): 
         assert self.loc in graph_visual
-        
+
+        super().receive_context(graph_visual)          
         self.visual_of_graph = (MicroGraph(self.visual_of_graph) + \
             MicroGraph(graph_visual)).dg
 

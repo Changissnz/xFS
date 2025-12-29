@@ -4,7 +4,7 @@ import unittest
 
 
 """
-python -m tests.test_expr_tree
+py -m tests.test_expr_tree
 """
 class ExprTreeClass(unittest.TestCase):
 

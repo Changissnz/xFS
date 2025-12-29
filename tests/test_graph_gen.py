@@ -25,7 +25,7 @@ class GraphGenClass(unittest.TestCase):
         assert len(gg.d) == 0 
         gg.full_run() 
         assert gg.current_edge_degree == 33 
-        assert gg.max_simple_edges(12) == 66 
+        assert max_simple_edges(12) == 66 
 
         # case 2 
         ##print("22")
@@ -104,7 +104,18 @@ class GraphGenClass(unittest.TestCase):
         gg.full_run() 
         D = gg.d 
 
-        assert gg.current_edge_degree == ceil(edge_connectivity * gg.max_simple_edges(20)) 
+        assert gg.current_edge_degree == ceil(edge_connectivity * max_simple_edges(20)) 
+
+    def test__GraphGen__full_run__case_4(self): 
+        is_dsg = False 
+        prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+        is_realtime_gen = True 
+        vertex_degree = 30 
+        edge_connectivity = 0.1#0.175 
+        gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity) 
+        gg.full_run() 
+        assert abs(gg.edge_connectivity_() - 0.1) < 2 * 10 ** -2 
+        assert len(gg.d) == vertex_degree
 
 if __name__ == '__main__':
     unittest.main()

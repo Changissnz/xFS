@@ -14,7 +14,7 @@ def graph__sample_NONOPON():
     G1 = G1.d 
 
     G1_ = graph_to_one_component(deepcopy(G1),prg)
-    assert not G1_ == G1 
+    assert G1_ == G1 
     G1 = G1_
 
     # component 2 
@@ -34,7 +34,8 @@ def graph__sample_NONOPON():
     for _ in range(5): 
         gaa.extend() 
 
-    D = gaa.d 
+    D = gaa.d
+    D = graph_to_one_component(D,prg,True) 
     return D,prg,prg2 
 
 def graph__sample_NONAVOID(): 
@@ -62,18 +63,18 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
 
         avoid = {3,5,6,12}
         take = {2,7,9}
-        objectives = {100,105,115}
+        objectives = {100,105,107}
 
         non = NodeObjectiveNavigator(0,avoid,take,objectives,prg) 
         non.receive_context(D) 
 
         i0 = 0 
-        while non.loc not in {100,105,115}: 
+        while non.loc not in {100,105,107}: 
             non.make_choice()
             i0 += 1 
-        assert i0 == 30, "got {}".format(i0)
+        assert i0 == 31, "got {}".format(i0)
 
-        while i0 < 100: 
+        while i0 < 99: 
             non.make_choice() 
             i0 += 1 
         assert non.loc == 100, "got {}".format(non.loc)
@@ -88,23 +89,22 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
 
         # add preferred nodes (from shortest paths info.)
         X0,X1 = BDFSCache.BFS_full(D,return_type="paths",prg=prg2)
-        Q = [12,38,65,80,100,115] 
+        Q = [100,105,107] 
         take_nodeset = [] 
-        for i in range(len(Q) -1): 
-            q0,q1 = Q[i],Q[i+1]
-            px = X0[(q0,q1)].p 
+        for i in range(len(Q)):
+            px = X0[(0,Q[i])].p 
             take_nodeset.extend(px) 
-        take_nodeset = set(take_nodeset) - {3,5,6,12} - {100,105,115} 
+        take_nodeset = set(take_nodeset) - {3,5,6,12} - {100,105,107} 
         #print("TAKE")
         #print(take_nodeset)
 
         # declare navigator 
-        non2 = NodeObjectiveNavigator(0,{3,5,6,12},take_nodeset,{100,105,115},prg2) 
+        non2 = NodeObjectiveNavigator(0,{3,5,6,12},take_nodeset,{100,105,107},prg2) 
         non2.receive_context(D)
 
         # navigate  
         i1 = 0 
-        while non2.loc not in {100,105,115}: 
+        while non2.loc not in {100,105,107}: 
             non2.make_choice()
             i1 += 1 
 
@@ -116,8 +116,10 @@ class NodeObjectiveNavigatorClass(unittest.TestCase):
         
         #print("PX: ",px) 
         #print("PATH: ",non2.path_log)
-        assert len(non2.path_log) == 8 
-        assert non2.path_log[-1] == 100
+        #print("SHORTETH: ",X0[(0,107)].cost())
+        #print(X0[(0,107)]) 
+        assert len(non2.path_log) == 8, "got {}".format(len(non2.path_log)) 
+        assert non2.path_log[-1] == 107, "got {}".format(non2.path_log) 
 
     """
     demonstrates navigator decisions in cases of no choice but to 

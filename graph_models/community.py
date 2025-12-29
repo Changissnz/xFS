@@ -9,7 +9,7 @@ shortest paths. Differs from the Louvain/Leiden algorithms.
 """
 class RadialGraphCommunities: 
 
-    def __init__(self,d:defaultdict,prg,max_radius): 
+    def __init__(self,d:defaultdict,prg,max_radius,rsf=None): 
         if type(max_radius) == float: 
             assert 0 < max_radius <= 1. 
         else: 
@@ -17,7 +17,13 @@ class RadialGraphCommunities:
             assert max_radius > 0 
         assert len(d) > 0 
 
-        self.rsf = RadialSubgraphFetcher(d,prg,return_type="paths")
+        if type(rsf) == type(None): 
+            self.rsf = RadialSubgraphFetcher(d,prg,return_type="paths")
+        else: 
+            assert type(rsf) == RadialSubgraphFetcher
+            assert rsf.reference_graph == d 
+            self.rsf = rsf 
+
         self.prg = prg 
         self.max_radius = max_radius 
         self.order_nodes()
@@ -67,3 +73,6 @@ class RadialGraphCommunities:
             i += 1 
         self.community_nodesets.append(nodeset) 
         return nodeset
+
+    def subgraph(self,node,radius): 
+        return self.rsf.subgraph(node,radius) 
