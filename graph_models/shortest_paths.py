@@ -212,7 +212,7 @@ class BDFSCache(XFSCache):
     - components, list of sets 
     """
     @staticmethod 
-    def BFS_full(G:defaultdict,return_type="distance",prg=None):  
+    def BFS_full(G:defaultdict,return_type="distance",prg=None,verbose=False):  
         assert return_type in {"distance","paths"} 
 
         if type(prg) == type(None): 
@@ -224,6 +224,7 @@ class BDFSCache(XFSCache):
         components = [] 
 
         def one_bfs(start_node):
+            if verbose: print("breadth-first search from node ",start_node) 
             bc = BDFSCache(start_node,G,is_bfs=True,prg=prg,\
                 edge_cost_function=lambda u,v:1,num_paths_per_node=1)
             bc.exec() 

@@ -1,11 +1,18 @@
 from .radial_subgraph import * 
 from morebs2.graph_basics import flatten_setseq
+from math import ceil 
 
 # TODO: test this. 
 """
 an algorithm to calculate arbitrary communities, based on 
 eccentricity measures that are, in turn, calculated from 
 shortest paths. Differs from the Louvain/Leiden algorithms.  
+
+Algorithm first calculates shortest paths between every 
+node pair, by a classic breadth-first search approach. 
+Algorithm then proceeds to grouping nodes, in the ordering 
+of greatest to least node eccentricity. Not suitable for 
+larger graphs (> 500 nodes). 
 """
 class RadialGraphCommunities: 
 
@@ -22,6 +29,7 @@ class RadialGraphCommunities:
         else: 
             assert type(rsf) == RadialSubgraphFetcher
             assert rsf.reference_graph == d 
+            assert rsf.return_type == "paths"
             self.rsf = rsf 
 
         self.prg = prg 
@@ -36,7 +44,7 @@ class RadialGraphCommunities:
             self.prg,return_type="all")[::-1]
         
         if type(self.max_radius) == float: 
-            qx = self.node_ordering[0][1].cost() 
+            qx = self.node_ordering[0][1]
             self.max_radius = ceil(self.max_radius * qx)
         return 
 

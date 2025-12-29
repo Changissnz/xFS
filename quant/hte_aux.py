@@ -1,5 +1,6 @@
 from graph_models.analog_graph import * 
 from graph_models.analog_schemes import * 
+from graph_models.community import * 
 
 HTE_THREAT_TYPES = {"contra","constant"}
 HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN = [1,13]
@@ -97,6 +98,7 @@ class HTESurface:
         assert type(objective_points) == set 
         assert type(threat_map) == dict 
         assert set(threat_map.keys()).intersection(objective_points) == set() 
+        assert is_valid_range(surface_derivation_radius_ratio_range,False,False)
         assert 0. < surface_derivation_radius_ratio_range[0] <= surface_derivation_radius_ratio_range[1]\
             <= 1. 
         if type(prg) == type(None): 
@@ -117,7 +119,9 @@ class HTESurface:
         return 
 
     def __str__(self): 
-        S = "entry points\n" + str(self.entry_points)
+        S = "total # of points:\t" + str(len(self.base_graph)) + "\n"
+        #S += "GRAPH" + str(self.base_graph) + "\n" 
+        S += "entry points\n" + str(self.entry_points)
         S += "\n" + "objective points\n" + str(self.objective_points) 
         S += "\n" + "threat points\n" + str(sorted(self.threat_map.keys())) 
         return S 
@@ -130,40 +134,60 @@ class HTESurface:
         return N 
 
     # TODO: test. 
-    def prng_reproduction(self):
+    def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,15]):
         # find community by radius 
         radius_ratio = modulo_in_range(self.prg(),self.surface_derivation_radius_ratio_range)
-        rs = RadialGraphCommunities(self.base_graph,self.prg,radius_ratio,self.rsf) 
+        rs = RadialGraphCommunities(self.base_graph,self.prg,0.5,self.rsf) 
         rs.exec()
 
         # gather communities into disjoint subgraphs
-        mg = MicroGraph(self.base_graph)
+        mg = MicroGraph(deepcopy(self.base_graph))
         mg_ = MicroGraph(defaultdict(set,{})) 
         for cns in rs.community_nodesets: 
             sg = mg.subgraph_by_nodeset_(cns) 
             mg_ = mg_ + sg 
         
-        # 
+        print("MGX")
+        print(mg_.dg) 
+
+        # make analogical subgraphs 
         lx = len(rs.community_nodesets)
         gaa = GraphAnalogAdder(mg_.dg,is_dsg=self.is_directed,prg=self.prg,\
-            gen_subgraph_shortest_paths_parameters=[10,6],gen_scheme_types=[1,2],\
-            store_isomaps=True) 
+            gen_subgraph_shortest_paths_parameters=gen_subgraph_shortest_paths_parameters,\
+            gen_scheme_types=[1,2],connect_components=False,store_isomaps=True) 
 
+        ##print("IS DSG: ",self.is_directed)
+        ##print(lx, " XX: ",len(gaa.nodeset_cache))
+        ##print("BASEKEYS: ",len(self.base_graph.keys()))
+        ##print("COMM:\n",rs.community_nodesets,"")
         for _ in range(lx): 
             gaa.extend() 
-        new_entry_points,new_obj_points,threat_map = self.prng_reproduction__assign_nodesets(gaa,lx)
 
-        new_nodeset = gaa.nodeset_cache[-lx:] 
+        # assign entry,obj, and threat points 
+        new_entry_points,new_obj_points,threat_map = self.prng_reproduction__assign_nodesets(gaa)
+
+        ##new_nodeset = gaa.nodeset_cache[-lx:] 
+        new_nodeset = gaa.subgraph_nodeset_log[-lx:]
+
+        print("NEW NODESET ",lx)
+        print(new_nodeset) 
+        ##print("LX: ",lx,len(gaa.nodeset_cache))
+
         new_nodeset = flatten_setseq(new_nodeset) 
         sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
         sg = graph_to_one_component(sg,self.prg)
 
+        #if type(new_graph_node_ratio) == type(None): 
         return HTESurface(sg,new_entry_points,new_obj_points,threat_map,\
-        surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range)
+        surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range,\
+        prg=self.prg) 
+
+        #assert new_graph_node_ratio >= 1.0 
+        #self.base_graph)
 
     # TODO: test 
     # NOTE: method should be used only by method<prng_reproduction>
-    def prng_reproduction__assign_nodesets(self,gaa): 
+    def prng_reproduction__assign_nodesets(self,gaa,verbose=False): 
 
         def find_point_in_isomap(p): 
             for isomap in gaa.isomap_log: 
@@ -177,14 +201,14 @@ class HTESurface:
         for epoint in self.entry_points:
             equivalent = find_point_in_isomap(epoint)
             if type(equivalent) == type(None): 
-                print("no equivalent for entry {}".format(epoint))
+                if verbose: print("no equivalent for entry {}".format(epoint))
                 continue 
             new_entry_points |= {equivalent}
 
         for opoint in self.objective_points:
             equivalent = find_point_in_isomap(opoint) 
             if type(equivalent) == type(None): 
-                print("no equivalent for objective {}".format(opoint))
+                if verbose: print("no equivalent for objective {}".format(opoint))
                 continue 
             new_obj_points |= {equivalent}
         
@@ -192,12 +216,12 @@ class HTESurface:
 
         # ensure at least one entry point and one objective point 
         if len(new_entry_points) == 0: 
-            index = int(self.prg()) % ks 
+            index = int(self.prg()) % len(ks) 
             epoint = ks[index] 
             new_entry_points |= {epoint} 
         
         if len(new_obj_points) == 0: 
-            index = int(self.prg()) % ks 
+            index = int(self.prg()) % len(ks)
             opoint = ks[index] 
             new_obj_points |= {opoint} 
 
@@ -207,7 +231,7 @@ class HTESurface:
         for k,v in self.threat_map.items(): 
             tpoint = find_point_in_isomap(k) 
             if type(tpoint) == type(None): 
-                print("no equivalent for threat {}".format(tpoint))
+                if verbose: print("no equivalent for threat {}".format(tpoint))
                 continue 
             if tpoint in new_obj_points: continue 
             threat_map[tpoint] = v.reproduce() 
@@ -218,7 +242,8 @@ class HTESurface:
     @staticmethod 
     def generate_instance(base_graph,num_entry_points,num_objective_points,threat_ratio,\
         threat_mobility_ratio,threat_nodes_include_entry_points:bool,\
-        prg,activation_lifespan_range=HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN): 
+        prg,surface_derivation_radius_ratio_range= HTE_SURFACE_DERIVATION_RADIUS_RATIO_RANGE,\
+        activation_lifespan_range=HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN): 
         
         def prg_(): return int(prg()) 
         assert num_entry_points + num_objective_points < len(base_graph)
@@ -254,4 +279,6 @@ class HTESurface:
             activation_lifespan = modulo_in_range(int(prg()),activation_lifespan_range)
             htd = HTEThreat(m,activation_lifespan,"constant") 
             threat_map[m] = htd 
-        return HTESurface(base_graph,entry_points,objective_points,threat_map) 
+        return HTESurface(base_graph,entry_points,objective_points,threat_map,\
+            surface_derivation_radius_ratio_range=surface_derivation_radius_ratio_range,\
+            prg=prg)  
