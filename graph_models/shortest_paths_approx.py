@@ -3,6 +3,12 @@ from .micrograph import *
 from morebs2.graph_basics import flatten_setseq
 
 # TODO: work in progress. More testing needed. 
+"""
+Approximates shortest paths for graphs. Useful for finding paths between connected 
+nodes in large graphs (>= 1000 nodes).  
+
+NOTE: designed for only undirected graphs
+"""
 class ShortestPathsApproximator: 
 
     def __init__(self,G:defaultdict,is_dfs:bool,max_subgraph_radius,prg,max_periphery=50,\
@@ -15,7 +21,7 @@ class ShortestPathsApproximator:
         assert type(prg) in {MethodType,FunctionType}
 
         self.G = G 
-        self.is_dsg = not is_undirected_graph(self.G) 
+        ##assert not is_undirected_graph(self.G) 
         self.is_dfs = is_dfs 
         self.max_subgraph_radius = max_subgraph_radius 
         self.prg = prg 
