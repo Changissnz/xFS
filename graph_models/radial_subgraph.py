@@ -24,6 +24,24 @@ class RadialSubgraphFetcher:
         self.prg = prg 
         self.preproc() 
 
+    @staticmethod
+    def load_preprocessed(reference_graph:defaultdict,prg,return_type,paths_info,\
+        components): 
+
+        for k,v in paths_info.items():
+            assert k in reference_graph  
+            if return_type == "distance":
+                assert is_number(v)
+                continue 
+            assert type(v) == NodePath
+        assert type(components) in {type(None),list} 
+
+        rsf = RadialSubgraphFetcher(defaultdict(set),prg,return_type) 
+        rsf.reference_graph = reference_graph
+        rsf.paths_info = paths_info  
+        rsf.components = components 
+        return rsf 
+
     def preproc(self): 
         self.paths_info,self.components = \
             BDFSCache.BFS_full(self.reference_graph,\

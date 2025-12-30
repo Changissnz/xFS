@@ -81,6 +81,21 @@ class NodePath:
         stat2 = self.pweights == npath.pweights
         return stat1 and stat2 
 
+    def add_path(self,p): 
+        if len(p) == 0: 
+            return 
+            
+        if len(self) == 0: 
+            self = deepcopy(p) 
+            return 
+
+        assert self.tail() == p.head() 
+        self.p.extend(p.p[1:]) 
+        self.pweights.extend(p.pweights)  
+
+    def head(self):
+        return self.p[0] 
+
     def tail(self):
         return self.p[-1]
 

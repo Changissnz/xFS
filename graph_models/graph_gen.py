@@ -67,7 +67,7 @@ class GraphGen:
     is_realtime_gen := ?vertices not declared at start? 
     """
     def __init__(self,is_dsg,prg,is_realtime_gen:bool,\
-        vertex_degree=None,edge_connectivity=None):
+        vertex_degree=None,edge_connectivity=None,verbose=False):
 
         assert is_dsg in {0,1}
         assert type(is_realtime_gen) == bool 
@@ -79,7 +79,8 @@ class GraphGen:
         self.is_realtime_gen = is_realtime_gen
         self.vertex_degree = vertex_degree
         self.edge_connectivity = edge_connectivity
-
+        self.verbose = verbose 
+        
         self.finstat = False 
         self.d = defaultdict(set)  
         self.preproc() 
@@ -107,6 +108,8 @@ class GraphGen:
     """
     def full_run(self): 
         while not self.finstat: 
+            if self.verbose:
+                print("degree {} conn {}".format(len(self.d),self.current_edge_degree))
             self.__next__() 
         
     def __next__(self): 
@@ -124,7 +127,7 @@ class GraphGen:
         # case: maybe add another vertex if vertex capacity not reached
         l = len(self.d)
         if l < self.vertex_degree: 
-            #   an easier function to know 
+            #   an easier function to understand  
             """
             self.d[l] = set() 
 

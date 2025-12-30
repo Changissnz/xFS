@@ -28,13 +28,14 @@ def node_eccentricity_ranking(nodepair_path_info,prg=None,return_type="node"):
         n0,n1 = k 
         q = v.cost() if type(v) == NodePath else v 
 
-        dx = DX[n0] 
-        if q > dx:
+        if q > DX[n0]:
             DX[n0] = q 
+        if q > DX[n1]: 
+            DX[n1] = q 
 
     ecc_list = [(k,v) for k,v in DX.items()] 
     ecc_list = prg_seqsort_ties(ecc_list,prg_,vf=lambda x:x[1]) 
-    
+
     if return_type == "all": return ecc_list 
     return [n[0] for n in ecc_list]
 
@@ -190,7 +191,7 @@ designed for use with bigger graphs (> 50 nodes).
 class BDFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,is_bfs:bool=True,prg=None,\
-        edge_cost_function=lambda u,v:1,num_paths_per_node=10): 
+        edge_cost_function=lambda u,v:1,num_paths_per_node=10,max_search_radius=float('inf')):  
 
         super().__init__(start_node,d,edge_cost_function,None)
 
@@ -201,10 +202,14 @@ class BDFSCache(XFSCache):
             prg = default_std_Python_prng()
 
         assert type(prg) in {MethodType,FunctionType} 
+        assert type(num_paths_per_node) == int and num_paths_per_node > 0 
+        assert type(max_search_radius) in {int,float} and max_search_radius > 0. 
+
         self.prg = prg 
 
         self.min_paths[self.reference] = [NodePath(self.reference)] 
         self.num_paths_per_node = num_paths_per_node 
+        self.max_search_radius = max_search_radius
 
     """
     return: 
@@ -212,7 +217,8 @@ class BDFSCache(XFSCache):
     - components, list of sets 
     """
     @staticmethod 
-    def BFS_full(G:defaultdict,return_type="distance",prg=None,verbose=False):  
+    def BFS_full(G:defaultdict,return_type="distance",prg=None,max_search_radius=float('inf'),\
+        verbose=False):  
         assert return_type in {"distance","paths"} 
 
         if type(prg) == type(None): 
@@ -226,7 +232,7 @@ class BDFSCache(XFSCache):
         def one_bfs(start_node):
             if verbose: print("breadth-first search from node ",start_node) 
             bc = BDFSCache(start_node,G,is_bfs=True,prg=prg,\
-                edge_cost_function=lambda u,v:1,num_paths_per_node=1)
+                edge_cost_function=lambda u,v:1,num_paths_per_node=1,max_search_radius=max_search_radius)
             bc.exec() 
 
             for k,paths in bc.min_paths.items():
@@ -271,19 +277,29 @@ class BDFSCache(XFSCache):
             return True 
 
         if self.is_bfs: 
+            max_distance_reached = [] 
             for n in untravelled: 
                 new_paths = self.add_node_to_prev_min_paths(self.reference,n)
-                self.insert_new_paths(n,new_paths)
-            untravelled = set(untravelled)
+                stat_vec = self.insert_new_paths(n,new_paths)
+                ##print("LEN ",stat_vec,len(new_paths))
+
+                if len(stat_vec) > 0 and True not in stat_vec: 
+                    max_distance_reached.append(n)
+
+            untravelled = set(untravelled) - set(max_distance_reached)
         else: 
             # choose a node 
             ni = int(self.prg()) % len(untravelled)
             node = untravelled.pop(ni)
 
             new_paths = self.add_node_to_prev_min_paths(self.reference,node) 
-            self.insert_new_paths(node,new_paths) 
+            stat_vec = self.insert_new_paths(node,new_paths) 
+            ##print("LEN2: ",stat_vec)
 
-            untravelled = set([node]) 
+            if len(stat_vec) > 0 and True not in stat_vec: 
+                untravelled = set() 
+            else: 
+                untravelled = set([node]) 
             
         self.ref_neighbors_travelled[self.reference] |= untravelled
         untravelled = prg_seqsort(sorted(untravelled),prg_)
@@ -293,7 +309,11 @@ class BDFSCache(XFSCache):
         self.reference_varcache.extend(untravelled) 
 
         if self.is_bfs: 
-            self.reference = self.reference_varcache.pop(0)
+            if len(self.reference_varcache) > 0: 
+                self.reference = self.reference_varcache.pop(0)
+            else: 
+
+                return False 
 
         return True 
 
@@ -315,6 +335,8 @@ class BDFSCache(XFSCache):
 
         def insert_one(path): 
             cost = path.cost() 
+            if cost > self.max_search_radius: 
+                return False 
 
             # iterate through paths of node to sort it 
             node_paths = self.min_paths[node] 
@@ -322,15 +344,17 @@ class BDFSCache(XFSCache):
                 cost2 = p.cost() 
                 if cost <= cost2: 
                     node_paths.insert(j,path)  
-                    return 
+                    return True 
             
             node_paths.insert(len(node_paths),path) 
-            return 
+            return True 
 
+        stat_vec = [] 
         for p in new_paths:
-            insert_one(p) 
-    
+            stat = insert_one(p) 
+            stat_vec.append(stat) 
+
         node_paths = self.min_paths[node] 
         while len(node_paths) > self.num_paths_per_node: 
             node_paths.pop(-1)
-        return 
+        return stat_vec 
