@@ -209,7 +209,7 @@ class ShortestPathsApproximator:
     approximation of shortest path using intermediary subgraph-to-subgraph 
     tracing. 
     """ 
-    def deduce_subgraph_path(self,source,target): 
+    def deduce_path(self,source,target): 
         KS = prg_seqsort(sorted(self.G.keys() - {source,target}),\
             self.prg)
         

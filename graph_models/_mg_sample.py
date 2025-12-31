@@ -297,3 +297,21 @@ def base_graph_sample_F():
     D[0] |= {7} 
     return D 
 
+#---------------------------------- used for testing calculations 
+#                                   related to shortest paths. 
+
+def base_graph_sample_G(): 
+
+    return defaultdict(set,{\
+        0:{1,2},\
+        1:{0,3},\
+        2:{0,3},\
+        3:{1,2,4},\
+        4:{3,5,6},\
+        5:{4,7},\
+        6:{4,7},\
+        7:{5,6,8},\
+        8:{7,9,10},\
+        9:{8,11},\
+        10:{8,11},\
+        11:{9,10}})
