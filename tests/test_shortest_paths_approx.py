@@ -56,9 +56,35 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
             assert p.cost() <= R 
 
     """
+    small graph, 3 components, small subgraph radius=1 for approximator 
+    """
+    def test__ShortestPathsApproximator__paths__case2(self):
+
+        D = base_graph_sample_G()
+        D[3] -= {4}
+        D[4] -= {3} 
+
+        D[7] -= {8}
+        D[8] -= {7}
+
+        prg = prg__LCG(57,112,-336,1001.4)
+        R = 1
+        spa = ShortestPathsApproximator(D,is_dfs=False,max_subgraph_radius=R,prg=prg,verbose=False)
+        spa.exec() 
+
+        X = spa.paths(0,5)
+        assert len(X) == 0 
+
+        X2 = spa.paths(8,5)
+        assert len(X2) == 0 
+
+        X3 = spa.paths(4,7)
+        assert len(X3) > 0
+
+    """
     small graph, small subgraph radius=2 for approximator 
     """
-    def test__ShortestPathsApproximator__paths__case2(self): 
+    def test__ShortestPathsApproximator__paths__case3(self): 
 
         D = base_graph_sample_G()
         R2 = 2 
@@ -94,7 +120,7 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
     Demonstrates shortest path deduction for 160 nodes with 
     node=553. 
     """
-    def test__ShortestPathsApproximator__paths__case3(self): 
+    def test__ShortestPathsApproximator__paths__case4(self): 
         D = generated_graph_sample_1000()
         print("generated D of size=",len(D)) 
 
@@ -123,9 +149,9 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
     Demonstrates shortest path deduction for 236 nodes with 
     node=553. 
     """
-    def test__ShortestPathsApproximator__paths__case3(self): 
+    def test__ShortestPathsApproximator__paths__case5(self): 
 
-        D = generated_graph_sample_1000()#10000,10**-5)  
+        D = generated_graph_sample_1000()
         print("generated D of size=",len(D)) 
 
         prg = prg__LCG(0,1,3,10000)
