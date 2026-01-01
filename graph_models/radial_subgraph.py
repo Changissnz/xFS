@@ -12,7 +12,7 @@ subgraphs of radius r around any node n in `reference_graph`.
 """
 class RadialSubgraphFetcher:
 
-    def __init__(self,reference_graph:defaultdict,prg=None,return_type="distance"): 
+    def __init__(self,reference_graph:defaultdict,prg=None,return_type="distance",edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2): 
         assert type(reference_graph) == defaultdict 
 
         if type(prg) == type(None): 
@@ -29,7 +29,7 @@ class RadialSubgraphFetcher:
         components): 
 
         for k,v in paths_info.items():
-            assert k in reference_graph  
+            assert k[0] in reference_graph and k[1] in reference_graph
             if return_type == "distance":
                 assert is_number(v)
                 continue 

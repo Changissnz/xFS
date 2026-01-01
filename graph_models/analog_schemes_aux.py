@@ -5,7 +5,7 @@ Focused on graph derivation.
 
 from .tree_gen import * 
 from .graph_gen import * 
-from .shortest_paths import * 
+from .shortest_paths_approx import * 
 from morebs2.numerical_generator import prg_choose_n,prg_seqsort,modulo_in_range
 from morebs2.measures import zero_div 
 
@@ -55,19 +55,24 @@ def graph_automorphism(G,ctr_function):
 def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_paths_selection,prg,ctr_function): 
 
     # calculate shortest paths 
-    is_bfs = bool(int(prg()) % 2)
-    bdfs = BDFSCache(start_node,G,is_bfs=is_bfs,prg=prg,\
-        edge_cost_function=lambda u,v:1,\
-        num_paths_per_node=num_paths_per_node) 
-    bdfs.exec() 
+    if len(G) <= 75: 
+        is_bfs = bool(int(prg()) % 2)
+        bdfs = BDFSCache(start_node,G,is_bfs=is_bfs,prg=prg,\
+            edge_cost_function=lambda u,v:1,\
+            num_paths_per_node=num_paths_per_node) 
+        bdfs.exec() 
+        min_paths = bdfs.min_paths
+        min_paths_ = [] 
+        for v in min_paths.values(): min_paths_.extend(v) 
+    else: 
+        spa = ShortestPathsApproximator.default_shortest_paths_search(G,prg) 
+        min_paths = spa.nodepair_path_info
+        min_paths_ = list(min_paths.values())
 
     # iterate through each sequence of shortest paths and select 
-    min_paths = bdfs.min_paths
     def prg_(): return int(prg())
 
     all_selected_paths = None 
-    min_paths_ = [] 
-    for v in min_paths.values(): min_paths_.extend(v) 
 
     if num_paths_selection >= len(min_paths_): 
         all_selected_paths = min_paths_ 

@@ -234,3 +234,19 @@ class GraphGen:
 
     def to_file(self,fp): 
         dict_to_file(self.d,fp)
+
+#-----------------------------------------------------------------------------------------
+
+from morebs2.numerical_generator import prg__LCG
+
+def base_graph_sample_FU(): 
+    is_dsg = False 
+    prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+    is_realtime_gen = True 
+    vertex_degree = 250 
+    edge_connectivity = 0.22#0.175 
+    gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity) 
+    gg.full_run() 
+
+    D4 = graph_to_one_component(deepcopy(gg.d),prg)
+    return D4 

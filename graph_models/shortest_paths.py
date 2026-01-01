@@ -135,6 +135,7 @@ def average_distance(nodeset,ref_node,nodepair_path_info):
         p = nodepair_path_info[(ref_node,n)]         
         c = p.cost() if type(p) == NodePath else p 
         q.append(c) 
+    if len(q) == 0: return float('inf') 
     return np.mean(q) 
 
 """

@@ -1,6 +1,7 @@
 from graph_models.analog_graph import * 
 from graph_models.analog_schemes import * 
 from graph_models.community import * 
+from graph_models.shortest_paths_approx import * 
 
 HTE_THREAT_TYPES = {"contra","constant"}
 HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN = [1,13]
@@ -105,18 +106,15 @@ class HTESurface:
             prg = default_std_Python_prng() 
         assert type(prg) in {MethodType,FunctionType}
 
+        ## NOTE: graph should be undirected
         self.base_graph = base_graph 
-        self.is_directed = not is_undirected_graph(self.base_graph)
+        #assert is_undirected_graph(self.base_graph)
         self.entry_points = entry_points
         self.objective_points = objective_points 
         self.threat_map = threat_map 
         self.surface_derivation_radius_ratio_range = surface_derivation_radius_ratio_range
         self.prg = prg 
-        self.preproc() 
 
-    def preproc(self): 
-        self.rsf = RadialSubgraphFetcher(self.base_graph,prg=self.prg,return_type="paths")  
-        return 
 
     def __str__(self): 
         S = "total # of points:\t" + str(len(self.base_graph)) + "\n"
@@ -133,57 +131,40 @@ class HTESurface:
                 N |= {k} 
         return N 
 
-    # TODO: test. 
+    # NOTE: this reproduction scheme tends to produce graphs of smaller node size 
+    #       than original. 
     def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,15]):
+
         # find community by radius 
-        radius_ratio = modulo_in_range(self.prg(),self.surface_derivation_radius_ratio_range)
-        rs = RadialGraphCommunities(self.base_graph,self.prg,0.5,self.rsf) 
-        rs.exec()
+        communities = ReinforcementCommunityFinder.partition_into_n_communities(\
+            self.base_graph,4,self.prg,max_reassignment=False,verbose=False)
 
         # gather communities into disjoint subgraphs
         mg = MicroGraph(deepcopy(self.base_graph))
         mg_ = MicroGraph(defaultdict(set,{})) 
-        for cns in rs.community_nodesets: 
+        for cns in communities: 
             sg = mg.subgraph_by_nodeset_(cns) 
-            mg_ = mg_ + sg 
-        
-        print("MGX")
-        print(mg_.dg) 
+            mg_ = mg_ + sg  
 
         # make analogical subgraphs 
-        lx = len(rs.community_nodesets)
-        gaa = GraphAnalogAdder(mg_.dg,is_dsg=self.is_directed,prg=self.prg,\
+        lx = len(communities) 
+        gaa = GraphAnalogAdder(mg_.dg,is_dsg=False,prg=self.prg,\
             gen_subgraph_shortest_paths_parameters=gen_subgraph_shortest_paths_parameters,\
             gen_scheme_types=[1,2],connect_components=False,store_isomaps=True) 
 
-        ##print("IS DSG: ",self.is_directed)
-        ##print(lx, " XX: ",len(gaa.nodeset_cache))
-        ##print("BASEKEYS: ",len(self.base_graph.keys()))
-        ##print("COMM:\n",rs.community_nodesets,"")
-        for _ in range(lx): 
-            gaa.extend() 
+        for i in range(lx): gaa.extend() 
 
         # assign entry,obj, and threat points 
         new_entry_points,new_obj_points,threat_map = self.prng_reproduction__assign_nodesets(gaa)
-
-        ##new_nodeset = gaa.nodeset_cache[-lx:] 
         new_nodeset = gaa.subgraph_nodeset_log[-lx:]
-
-        print("NEW NODESET ",lx)
-        print(new_nodeset) 
-        ##print("LX: ",lx,len(gaa.nodeset_cache))
 
         new_nodeset = flatten_setseq(new_nodeset) 
         sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
         sg = graph_to_one_component(sg,self.prg)
 
-        #if type(new_graph_node_ratio) == type(None): 
         return HTESurface(sg,new_entry_points,new_obj_points,threat_map,\
         surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range,\
         prg=self.prg) 
-
-        #assert new_graph_node_ratio >= 1.0 
-        #self.base_graph)
 
     # TODO: test 
     # NOTE: method should be used only by method<prng_reproduction>
@@ -238,7 +219,8 @@ class HTESurface:
             threat_map[tpoint].node_idn = tpoint 
         return new_entry_points,new_obj_points,threat_map 
 
-    # TODO: test. 
+    # TODO: test.
+    # NOTE:  
     @staticmethod 
     def generate_instance(base_graph,num_entry_points,num_objective_points,threat_ratio,\
         threat_mobility_ratio,threat_nodes_include_entry_points:bool,\
@@ -246,17 +228,20 @@ class HTESurface:
         activation_lifespan_range=HTE_THREAT_DEFAULT_ACTIVATION_LIFESPAN): 
         
         def prg_(): return int(prg()) 
+        
         assert num_entry_points + num_objective_points < len(base_graph)
 
-        # determine the entry and objective points 
-        X0,X1 = BDFSCache.BFS_full(base_graph,return_type="distance",prg=prg) 
-        assert len(X1) == 1, "connected graph required" 
+        x1 = deepcopy(base_graph)
+        gd = GraphComponentDecomposition(x1)
+        gd.decompose() 
+        assert x1 == base_graph
+        assert len(gd.components) == 1 and not gd.is_directed, "connected undirected graph required" 
 
-        stat = is_undirected_graph(base_graph) 
-        bg = base_graph if not stat else directed_to_undirected_graph(deepcopy(base_graph))
-        entry_points,objective_points = peripheral_node_partition(bg,\
+        # determine the entry and objective points 
+        spa = ShortestPathsApproximator.default_shortest_paths_search(base_graph,prg) 
+        entry_points,objective_points = peripheral_node_partition(base_graph,\
             part1_size=num_entry_points,part2_size=num_objective_points,prg=prg,\
-            nodepair_path_info=X0) 
+            nodepair_path_info=spa.nodepair_path_info)  
 
         # assign threats 
         x = set() if threat_nodes_include_entry_points else entry_points
@@ -279,6 +264,8 @@ class HTESurface:
             activation_lifespan = modulo_in_range(int(prg()),activation_lifespan_range)
             htd = HTEThreat(m,activation_lifespan,"constant") 
             threat_map[m] = htd 
+
+        
         return HTESurface(base_graph,entry_points,objective_points,threat_map,\
             surface_derivation_radius_ratio_range=surface_derivation_radius_ratio_range,\
             prg=prg)  

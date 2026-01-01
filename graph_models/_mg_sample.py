@@ -315,3 +315,17 @@ def base_graph_sample_G():
         9:{8,11},\
         10:{8,11},\
         11:{9,10}})
+
+"""
+graph is example from Wikipedia article, "Louvain method" (12/31/2025). 
+"""
+def base_graph_sample_H(): 
+
+    return defaultdict(set,\
+        {0: {1,2,6},\
+        1: {0,2,4},\
+        2: {0,1,4},\
+        3: {5,6},\
+        4: {1,2,5},\
+        5: {3,4,6},\
+        6: {0,3,5}}) 

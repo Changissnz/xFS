@@ -1,6 +1,7 @@
 from .shortest_paths import * 
 from .micrograph import * 
 from morebs2.graph_basics import flatten_setseq
+from math import ceil 
 
 # TODO: work in progress. More testing needed. 
 """
@@ -12,13 +13,14 @@ NOTE: designed for only undirected graphs
 class ShortestPathsApproximator: 
 
     def __init__(self,G:defaultdict,is_dfs:bool,max_subgraph_radius,prg,max_periphery=50,\
-        verbose=False): 
+        edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False): 
         assert type(G) == defaultdict 
         assert type(is_dfs) == bool 
         assert max_subgraph_radius > 0
         if type(prg) == type(None): 
             prg = default_std_Python_prng() 
         assert type(prg) in {MethodType,FunctionType}
+        assert type(edge_cost_function) in {MethodType,FunctionType}
 
         self.G = G 
         ##assert not is_undirected_graph(self.G) 
@@ -26,6 +28,7 @@ class ShortestPathsApproximator:
         self.max_subgraph_radius = max_subgraph_radius 
         self.prg = prg 
         self.max_periphery = max_periphery
+        self.edge_cost_function = edge_cost_function
         self.verbose = verbose 
         self.subgraph_nodeset_map = defaultdict(set) 
 
@@ -54,6 +57,30 @@ class ShortestPathsApproximator:
         # subgraph idn -> parent subgraph idn 
         self.subgraph_parent_map = dict()
         return
+
+    @staticmethod 
+    def default_shortest_paths_search(G,prg): 
+        assert type(G) == defaultdict 
+        l = len(G)  
+
+        R = None 
+        if l <= 100: 
+            R = 2 
+        if l <= 1000: 
+            R = 5 
+        if l <= 10000:
+            R = 50 
+        else: 
+            R = 122 
+
+        spa = ShortestPathsApproximator(G,is_dfs=bool(int(prg())%2),max_subgraph_radius=R,prg=prg)
+        spa.exec() 
+        spa.add_12000_new_paths() 
+        return spa 
+
+    def add_12000_new_paths(self): 
+        for i in range(12): 
+            self.add_new_paths_to_info(1000) 
 
     """
     main method #1 
@@ -157,7 +184,8 @@ class ShortestPathsApproximator:
         D = mg.dg 
 
         bdfs = BDFSCache(ref_node,D,is_bfs=not self.is_dfs,\
-            prg=self.prg,num_paths_per_node=1,max_search_radius=self.max_subgraph_radius) 
+            prg=self.prg,edge_cost_function=self.edge_cost_function,num_paths_per_node=1,\
+            max_search_radius=self.max_subgraph_radius) 
         bdfs.exec() 
 
         Q = bdfs.min_paths
@@ -310,3 +338,38 @@ class ShortestPathsApproximator:
 
         p.add_path(self.nodepair_path_info[(h0,target)]) 
         return p 
+
+    def add_new_paths_to_info(self,max_num_paths):  
+        nodes = prg_seqsort(sorted(self.G.keys()),self.prg)  
+
+        q = ceil(max_num_paths * 0.1) 
+        c = 0 
+
+        for n in nodes:  
+            if c >= max_num_paths: break 
+            c_ = min([max_num_paths,c + q]) 
+            num_paths = c_ - c 
+            new_paths = self.add_new_paths_to_info_(n,num_paths)
+            c += new_paths 
+        return 
+
+    def add_new_paths_to_info_(self,n,max_num_paths): 
+        c = 0 
+        for x in self.G: 
+            if c >= max_num_paths: 
+                break 
+            if (n,x) not in self.nodepair_path_info: 
+                p = self.paths(n,x) 
+                if len(p) != 0:
+                    qi = np.argmin([p_.cost() for p_ in p]) 
+                    self.nodepair_path_info[(n,x)] = p[qi]
+                    c += 1 
+                    continue 
+                
+                p = self.deduce_path(n,x) 
+                if len(p) != 0:
+                    qi = np.argmin([p_.cost() for p_ in p]) 
+                    self.nodepair_path_info[(n,x)] = p[qi]
+                    c += 1 
+                    continue 
+        return c 

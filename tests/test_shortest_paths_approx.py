@@ -173,6 +173,17 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
             PX = spa.deduce_path(553,p) 
             assert len(PX) > 0 
 
+        n0,n1 = 5,27 
+        q = len(spa.nodepair_path_info)
+        spa.add_new_paths_to_info(n0)
+
+        q2 = len(spa.nodepair_path_info)
+        assert q2 - q == n0 
+
+        spa.add_new_paths_to_info(n1) 
+        q3 = len(spa.nodepair_path_info)
+        assert q3 - q2 == n1 
+
     """
     shows runtime of calculation for generated graph of 10000 nodes and 
     approximator of max subgraph radius=10. 

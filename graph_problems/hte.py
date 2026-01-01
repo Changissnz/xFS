@@ -14,7 +14,7 @@ Hidden Threat Exposure explores the issues of hidden
 threats (mines) from a connectionist perspective (traversing through 
 a network), in addition to the problem of selecting nodes that are not 
 threats for travel over. The use of cycling variants, as part of 
-trial-and-error discovery, in traversal decisions Hidden Threat Exposure
+trial-and-error discovery, in Hidden Threat Exposure traversal decisions
 are a kind of machine-learning technique. 
 """
 class HTEBot:
