@@ -3,6 +3,7 @@ from graph_models.tree_gen import *
 from graph_models.shortest_paths import * 
 from morebs2.numerical_generator import prg__LCG
 import unittest
+import time 
 
 ### lone file test 
 """
@@ -11,7 +12,7 @@ py -m tests.test_shortest_paths
 ###
 class BDFSCacheClass(unittest.TestCase):
 
-    def test__BDFSCache__full_run__case_1(self):
+    def test__BDFSCache__exec__case_1(self):
 
         lx = prg__LCG(55,3,19,212) 
         is_dsg = 0  
@@ -39,7 +40,7 @@ class BDFSCacheClass(unittest.TestCase):
             assert paths[0].cost() == paths2[0].cost()
             assert paths[-1].cost() == paths2[-1].cost()
 
-    def test__BDFSCache__full_run__case_2(self):
+    def test__BDFSCache__exec__case_2(self):
 
         lx = prg__LCG(55,3,19,212) 
 
@@ -94,6 +95,30 @@ class BDFSCacheClass(unittest.TestCase):
         assert qx[14][0].cost() == 4 
 
         assert qx[13][0].cost() == 5
+
+    """
+    time test for graph of 2500 nodes, using both BFS and DFS. 
+    """
+    def test__BDFSCache__exec__case_3(self): 
+        D4 = base_graph_sample_25N()
+        prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+
+        t = time.time() 
+        bdfs = BDFSCache(start_node=5,d=D4,is_bfs=True,prg=prg,\
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
+                num_paths_per_node=1,max_search_radius=5,verbose=False)  
+        bdfs.exec() 
+        print("exec time for BFS on 2500 nodes: ",time.time() - t) 
+
+        # case 2 
+        t = time.time() 
+        bdfs = BDFSCache(start_node=5,d=D4,is_bfs=False,prg=prg,\
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
+                num_paths_per_node=1,max_search_radius=5,verbose=False)  
+        bdfs.exec() 
+        print("exec time for DFS on 2500 nodes: ",time.time() - t) 
+        return 
+
 
     """
     demonstrates maximal distance between two nodesets of a partition

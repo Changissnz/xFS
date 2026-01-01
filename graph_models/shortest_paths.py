@@ -192,7 +192,8 @@ designed for use with bigger graphs (> 50 nodes).
 class BDFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,is_bfs:bool=True,prg=None,\
-        edge_cost_function=lambda u,v:1,num_paths_per_node=10,max_search_radius=float('inf')):  
+        edge_cost_function=lambda u,v:1,num_paths_per_node=10,max_search_radius=float('inf'),\
+        verbose=False):  
 
         super().__init__(start_node,d,edge_cost_function,None)
 
@@ -211,6 +212,7 @@ class BDFSCache(XFSCache):
         self.min_paths[self.reference] = [NodePath(self.reference)] 
         self.num_paths_per_node = num_paths_per_node 
         self.max_search_radius = max_search_radius
+        self.verbose = verbose 
 
     """
     return: 
@@ -219,7 +221,7 @@ class BDFSCache(XFSCache):
     """
     @staticmethod 
     def BFS_full(G:defaultdict,return_type="distance",prg=None,max_search_radius=float('inf'),\
-        verbose=False):  
+        edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False):  
         assert return_type in {"distance","paths"} 
 
         if type(prg) == type(None): 
@@ -233,7 +235,8 @@ class BDFSCache(XFSCache):
         def one_bfs(start_node):
             if verbose: print("breadth-first search from node ",start_node) 
             bc = BDFSCache(start_node,G,is_bfs=True,prg=prg,\
-                edge_cost_function=lambda u,v:1,num_paths_per_node=1,max_search_radius=max_search_radius)
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,num_paths_per_node=1,\
+                max_search_radius=max_search_radius,verbose=verbose)
             bc.exec() 
 
             for k,paths in bc.min_paths.items():
@@ -264,6 +267,8 @@ class BDFSCache(XFSCache):
 
         if type(self.reference) == type(None): 
             return False 
+
+        if self.verbose: print("queue length: ",len(self.reference_varcache))
 
         # get untravelled nodes 
         untravelled = self.d[self.reference] - self.ref_neighbors_travelled[self.reference] 
@@ -309,12 +314,19 @@ class BDFSCache(XFSCache):
 
         self.reference_varcache.extend(untravelled) 
 
+        if self.verbose: 
+            print("ref {}, edges travelled {}".format(self.reference,len(untravelled)))
+
         if self.is_bfs: 
             if len(self.reference_varcache) > 0: 
                 self.reference = self.reference_varcache.pop(0)
             else: 
-
                 return False 
+        else: 
+            if len(untravelled) == 0: 
+                if len(self.reference_varcache) == 0: 
+                    return False 
+                self.reference = self.reference_varcache.pop(-1) 
 
         return True 
 

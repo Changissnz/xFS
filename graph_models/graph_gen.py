@@ -250,3 +250,14 @@ def base_graph_sample_FU():
 
     D4 = graph_to_one_component(deepcopy(gg.d),prg)
     return D4 
+
+def base_graph_sample_25N(): 
+    is_dsg = False 
+    prg = prg__LCG(15.6,653.44,-2174.1174,22199.5) 
+    is_realtime_gen = True 
+    vertex_degree = 2500 
+    edge_connectivity = 0.0022#0.175 
+    gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity,verbose=False) 
+    gg.full_run() 
+    D4 = graph_to_one_component(deepcopy(gg.d),prg)
+    return D4 
