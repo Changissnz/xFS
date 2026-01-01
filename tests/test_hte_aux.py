@@ -98,5 +98,36 @@ class HTESurfaceClass(unittest.TestCase):
 
         print("total runtime: ",time.time() - t) 
 
+    def test__HTESurface__generate__case_4(self): 
+
+        num_entry_points = 75 
+        num_objective_points = 75 
+        threat_ratio = 0.5
+        threat_mobility_ratio = 0.25 
+        threat_nodes_include_entry_points = True 
+
+        D = base_graph_sample_25N()
+
+        prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+
+        print("GENERATING")
+        htes = HTESurface.generate_instance(D,num_entry_points,num_objective_points,\
+            threat_ratio,threat_mobility_ratio,threat_nodes_include_entry_points,\
+            prg)
+
+        print("10 reproduction rounds")
+        t = time.time() 
+        L = [] 
+        for _ in range(10): 
+            t2 = time.time() 
+            htes2 = htes.prng_reproduction()
+            print("graph of size {} in {} seconds".format(len(htes2.base_graph),\
+                time.time() - t2))  
+            L.append(len(htes2.base_graph))
+            #print(htes2)
+            #print()
+        print("total runtime: ",time.time() - t) 
+        assert L == [94, 2603, 8, 2037, 2400, 2223, 13, 2500, 7, 85]
+
 if __name__ == '__main__':
     unittest.main()

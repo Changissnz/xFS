@@ -124,13 +124,16 @@ class ReinforcementCommunityFinder:
 
     """
     main method #2 
-    
-    method that uses <ReinforcementCommunityFinder> to find exactly n communities out 
+
+    method that uses <ReinforcementCommunityFinder> to find n communities out 
     of graph G, |G| >= n. 
+
+    NOTE: if `fast_part` set to False, then not guaranteed to produce the wanted 
+          number n of communities. 
     """
     @staticmethod 
     def partition_into_n_communities(G,n,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
-        max_reassignment=False,verbose=False): 
+        max_reassignment=False,fast_part:bool=False,verbose=False): 
 
         assert n <= len(G) 
         gd = GraphComponentDecomposition(G) 
@@ -146,10 +149,51 @@ class ReinforcementCommunityFinder:
         if len(rcf.communities) == n: 
             return rcf.communities
 
-        while len(rcf.communities) > n: 
+        if not fast_part: 
             ReinforcementCommunityFinder.community_reduction(rcf,n)
-        return rcf.communities 
+            return rcf.communities 
+         
+        return ReinforcementCommunityFinder.prng_merge_communities(G,\
+            rcf.communities,n,prg) 
 
+    # NOTE: guaranteed to reduce number of communities to `n`, given valid 
+    #       parameter values. 
+    @staticmethod 
+    def prng_merge_communities(G,communities,n,prg):
+        def prg_(): return int(prg())
+
+        if len(communities) <= n: return communities 
+
+        communities = prg_seqsort_ties(communities,prg_,vf=lambda x: len(x)) 
+        cache = [] 
+
+        i0 = 0 
+        while len(communities) > n: 
+            #i0 = prg_() % len(communities) 
+            comm = communities.pop(i0)  
+        
+            neighbors = [G[c] for c in comm] 
+            neighbors = flatten_setseq(neighbors) 
+            stat = False 
+            for (i,c) in enumerate(communities): 
+                if c.intersection(neighbors) != set(): 
+                    c |= comm 
+
+                    j = i+1 
+                    while len(c) > len(communities[j]): 
+                        j += 1 
+                        if j >= len(communities): break 
+                    if j != i + 1: 
+                        communities.insert(j,c) 
+                        communities.pop(i) 
+                    stat = True 
+                    break 
+            
+            if not stat:
+                i0 += 1 
+        return communities
+
+    # NOTE: deficient, not guaranteed to reduce number of communities to n. 
     @staticmethod 
     def community_reduction(rcf,n): 
         if len(rcf.communities) <= n: return 
@@ -169,10 +213,12 @@ class ReinforcementCommunityFinder:
         rcf.force_reassignment = True 
 
         while len(rcf.communities) > n and not rcf.fin_stat: 
+            #print("L: ",len(rcf.node_ordering), len(rcf.communities)) 
             next(rcf) 
          
     def preproc(self): 
-        self.node_ordering = prg_seqsort(sorted(self.G.keys()),self.prg) 
+        def prg_(): return int(self.prg())
+        self.node_ordering = prg_seqsort(sorted(self.G.keys()),prg_) 
         self.communities.clear() 
 
         for n in self.node_ordering:
@@ -254,6 +300,8 @@ class ReinforcementCommunityFinder:
             if S2 > best_score:  
                 better_comm.append((i,S2)) 
                 best_score = S2 
+
+        if self.verbose: print("-- comm size: {}, better={}".format(len(node_comm),len(better_comm)))
         return better_comm
 
     def optional_moving_node__comm_rankings(self,n,current_community,other_communities): 
@@ -312,6 +360,10 @@ class ReinforcementCommunityFinder:
         if self.verbose: 
             print("- reassigning {} from\n{}\nto\n{}".format(n,current_comm,better_comm)) 
 
+        #if self.force_reassignment: 
+        #    better_comm |= current_comm
+        #    current_comm.clear()
+        #else: 
         current_comm -= {n} 
         better_comm |= {n} 
 

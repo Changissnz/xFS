@@ -101,13 +101,23 @@ class ReinforcementCommunityFinderClass(unittest.TestCase):
         num_comm = 10 
         comm = ReinforcementCommunityFinder.partition_into_n_communities(D,num_comm,prg,verbose=False) 
         Q3 = [len(c) for c in comm] 
-        assert Q3 == [56, 5, 2, 66, 79, 12, 1, 9, 11, 9] and sum(Q3) == 250 and len(Q3) == num_comm
+        assert Q3 == [56, 5, 2, 66, 79, 12, 1, 9, 11, 9] and sum(Q3) == 250 and len(Q3) == num_comm, \
+            "got {}".format(Q3)
 
         # case 4
         num_comm = 4 
         comm = ReinforcementCommunityFinder.partition_into_n_communities(D,num_comm,prg,verbose=False) 
         Q4 = [len(c) for c in comm] 
         assert Q4 == [223, 4, 12, 11] and sum(Q3) == 250 and len(Q4) == num_comm,"got {}".format(Q4)
+
+    def test__ReinforcementCommunityFinder__partition_into_n_communities__case2(self): 
+        D = base_graph_sample_25N() 
+        prg = prg__LCG(67,-200,3111,9000.3) 
+        num_comm = 5
+        comm = ReinforcementCommunityFinder.partition_into_n_communities(D,num_comm,prg,fast_part=True,\
+            verbose=False) 
+        Q3 = [len(c) for c in comm] 
+        assert Q3 == [379, 427, 472, 555, 667], "got {}".format(Q3)
 
 
 if __name__ == '__main__':

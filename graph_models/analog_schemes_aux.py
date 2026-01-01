@@ -121,7 +121,8 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
     return 
 
 # NOTE: new nodes will always be connected to at least 1 node in reference graph `g`.
-def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function):
+def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function,\
+    max_edge_changes=float('inf')):
     def prg_(): return int(prg())
 
     # node changes first 
@@ -169,10 +170,10 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
         rem_edges -= escore 
         num_edges = ceil(rem_edges * edge_change_ratio) 
 
+    num_edges = min([num_edges,max_edge_changes])
     # cases: add or delete edges 
     stat = edge_change_ratio >= 0 
-
-    for _ in range(num_edges): 
+    for _ in range(num_edges):
         one_edge_change(g,is_dsg,stat,prg)
 
     # automorphism  

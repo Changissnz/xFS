@@ -33,7 +33,8 @@ class GraphAnalogAdder:
         gen_subgraph_shortest_paths_parameters=DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS,\
         gen_subgraph_derivation_ratios=DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS,\
         gen_scheme_zero_types = {"random"},connect_components:bool=True,\
-        every_subgraph_is_connected:bool=False,gen_scheme_types=[0,1,2],verbose=False,store_isomaps:bool=False): 
+        every_subgraph_is_connected:bool=False,gen_scheme_types=[0,1,2],max_edge_changes=float('inf'),\
+        verbose=False,store_isomaps:bool=False): 
 
         assert type(is_dsg) == bool 
 
@@ -64,6 +65,7 @@ class GraphAnalogAdder:
         assert type(connect_components) == bool 
         assert type(every_subgraph_is_connected) == bool 
         assert set(gen_scheme_types).issubset({0,1,2}) and type(gen_scheme_types) == list 
+        assert max_edge_changes > 0.
         assert type(store_isomaps) == bool 
 
         self.d = starting_graph
@@ -79,6 +81,7 @@ class GraphAnalogAdder:
         self.connect_components = connect_components
         self.every_subgraph_is_connected = every_subgraph_is_connected
         self.gen_scheme_types = gen_scheme_types
+        self.max_edge_changes = max_edge_changes
         self.verbose = verbose 
         self.store_isomaps = store_isomaps
 
@@ -265,7 +268,7 @@ class GraphAnalogAdder:
         nneg = -1 if nneg else 1 
         node_change = nneg * node_change 
 
-        new_graph,isomap = graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function)
+        new_graph,isomap = graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function,self.max_edge_changes)
 
         if self.store_isomaps: 
             self.isomap_log.append(isomap) 
