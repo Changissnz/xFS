@@ -135,7 +135,7 @@ class HTESurface:
     #       than original. 
     def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,15]):
 
-        # find community by radius 
+        # calculate 4 communities  
         communities = ReinforcementCommunityFinder.partition_into_n_communities(\
             self.base_graph,4,self.prg,max_reassignment=False,verbose=False)
 
@@ -145,12 +145,14 @@ class HTESurface:
         for cns in communities: 
             sg = mg.subgraph_by_nodeset_(cns) 
             mg_ = mg_ + sg  
+        assert len(mg_.dg) == len(self.base_graph)
 
         # make analogical subgraphs 
         lx = len(communities) 
         gaa = GraphAnalogAdder(mg_.dg,is_dsg=False,prg=self.prg,\
             gen_subgraph_shortest_paths_parameters=gen_subgraph_shortest_paths_parameters,\
-            gen_scheme_types=[1,2],connect_components=False,store_isomaps=True) 
+            gen_scheme_types=[1,2],connect_components=False,every_subgraph_is_connected=True,\
+            store_isomaps=True) 
 
         for i in range(lx): gaa.extend() 
 
@@ -158,6 +160,7 @@ class HTESurface:
         new_entry_points,new_obj_points,threat_map = self.prng_reproduction__assign_nodesets(gaa)
         new_nodeset = gaa.subgraph_nodeset_log[-lx:]
 
+        # merge analogical subgraphs into one connected graph 
         new_nodeset = flatten_setseq(new_nodeset) 
         sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
         sg = graph_to_one_component(sg,self.prg)
