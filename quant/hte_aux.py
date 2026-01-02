@@ -134,7 +134,6 @@ class HTESurface:
     # NOTE: this reproduction scheme tends to produce graphs of smaller node size 
     #       than original. 
     def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,40]):
-
         # calculate 4 communities  
         communities = ReinforcementCommunityFinder.partition_into_n_communities(\
             self.base_graph,4,self.prg,max_reassignment=False,fast_part=True,verbose=False)
@@ -147,8 +146,10 @@ class HTESurface:
             mg_ = mg_ + MicroGraph(graph_to_one_component(sg.dg,self.prg))
         assert len(mg_.dg) == len(self.base_graph)
 
+        g2 = mg_.dg 
         # make analogical subgraphs 
         lx = len(communities) 
+
         gaa = GraphAnalogAdder(mg_.dg,is_dsg=False,prg=self.prg,\
             gen_subgraph_shortest_paths_parameters=gen_subgraph_shortest_paths_parameters,\
             gen_scheme_types=[1,2],connect_components=False,every_subgraph_is_connected=True,\
@@ -165,9 +166,32 @@ class HTESurface:
         sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
         sg = graph_to_one_component(sg,self.prg)
 
+        cumulative_isolog = dict() 
+        for x in gaa.isomap_log[-lx:]: 
+            cumulative_isolog.update(x) 
+
         return HTESurface(sg,new_entry_points,new_obj_points,threat_map,\
         surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range,\
-        prg=self.prg) 
+        prg=self.prg), cumulative_isolog 
+
+    # NOTE: this reproduction scheme typically bears a graph more similar to the original. 
+    def prng_reproduction_scheme2(self): 
+
+        gaa = GraphAnalogAdder(self.base_graph,is_dsg=False,prg=self.prg,\
+            gen_subgraph_derivation_ratios=[0.2,0],
+            gen_scheme_types=[2],connect_components=False,every_subgraph_is_connected=True,\
+            max_edge_changes=10000,store_isomaps=True,verbose=True)
+        gaa.extend() 
+
+        # assign entry,obj, and threat points 
+        new_entry_points,new_obj_points,threat_map = self.prng_reproduction__assign_nodesets(gaa)
+ 
+        new_nodeset = gaa.subgraph_nodeset_log[-1] 
+        sg = MicroGraph(gaa.d).subgraph_by_nodeset_(new_nodeset).dg 
+        sg = graph_to_one_component(sg,self.prg)
+        return HTESurface(sg,new_entry_points,new_obj_points,threat_map,\
+        surface_derivation_radius_ratio_range=self.surface_derivation_radius_ratio_range,\
+        prg=self.prg), gaa.isomap_log[-1] 
 
     # TODO: test 
     # NOTE: method should be used only by method<prng_reproduction>

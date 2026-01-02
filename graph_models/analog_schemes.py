@@ -255,17 +255,23 @@ class GraphAnalogAdder:
 
         # get pos./neg. edge change 
         edge_range = [10**-5,self.gen_subgraph_derivation_ratios[0]]
-        edge_change = prng_decimal(self.prg,edge_range)
-        eneg = int(self.prg()) % 2
-        eneg = -1 if eneg else 1 
-        edge_change = eneg * edge_change 
+        if edge_range[1] < edge_range[0]: 
+            edge_change = 0 
+        else: 
+            edge_change = prng_decimal(self.prg,edge_range)
+            eneg = int(self.prg()) % 2
+            eneg = -1 if eneg else 1 
+            edge_change = eneg * edge_change 
 
         # get pos./neg. node change 
         node_range = [10**-5,self.gen_subgraph_derivation_ratios[1]]
-        node_change = prng_decimal(self.prg,node_range)
-        nneg = int(self.prg()) % 2
-        nneg = -1 if nneg else 1 
-        node_change = nneg * node_change 
+        if node_range[1] < node_range[0]: 
+            node_change = 0 
+        else: 
+            node_change = prng_decimal(self.prg,node_range)
+            nneg = int(self.prg()) % 2
+            nneg = -1 if nneg else 1 
+            node_change = nneg * node_change 
 
         new_graph,isomap = graph_derivation(G,self.is_dsg,node_change,edge_change,self.prg,self.ctr_function,self.max_edge_changes)
 

@@ -36,7 +36,7 @@ class AnalogGraphClass(unittest.TestCase):
             d = dict_diff(ag.isomap,R2) 
             diffs.append(d) 
 
-        assert diffs == [8, 6, 7, 6, 6, 6, 5, 5, 4, 4]
+        assert diffs == [8, 7, 6, 6, 6, 6, 5, 5, 4, 4],"got {}".format(diffs)
         return 
 
 if __name__ == '__main__':

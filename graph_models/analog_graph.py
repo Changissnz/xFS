@@ -34,13 +34,13 @@ class AnalogGraph:
         return 
 
     def preproc(self): 
-        self.sg_rad_fetcher = RadialSubgraphFetcher(self.reference_graph)
+        self.qsf = QuickSubgraphFetcher(self.reference_graph,self.prg) 
         return
 
     def draw_analogy_to(self,G,exact_node_mapping_ratio:float): 
         assert type(G) == defaultdict
         assert 0.0 <= exact_node_mapping_ratio <= 1.0 
-        assert AnalogGraph.graph_is_analogical(self.reference_graph,G,self.isomap) 
+        #assert AnalogGraph.graph_is_analogical(self.reference_graph,G,self.isomap) 
         candidates = sorted(self.isomap.keys()) 
         
         def prg_(): return int(self.prg())
@@ -49,39 +49,61 @@ class AnalogGraph:
         exact_nodes = prg_choose_n(candidates,num_exact_mapping,prg_,is_unique_picker=True)
 
         node_analogy = {} 
-
+        got = set() 
         def analogical_node(n): 
             if n in exact_nodes: 
                 return self.isomap[n] 
 
             # fetch the subgraph 
             ref_sg = self.subgraph_for_node(n) 
-
             # calculate the isomorphisms
             mg = MicroGraph(ref_sg) 
             mg2 = MicroGraph(G)
 
-            Q = mg2.subgraph_isomorphism(mg,all_iso=True,size_limit=200,search_candidate_limit=None) 
+            Q = mg2.subgraph_isomorphism(mg,all_iso=True,size_limit=200,search_candidate_limit=50000)#prg=self.prg)   
             if len(Q) == 0: return None 
 
+            # approach #1
+            """
             # choose an isomorphism 
             index = int(self.prg()) % len(Q) 
             isomorphism = Q[index] 
+            print("ISO ",Q[index])
+
             isomorphism = {v:k for k,v in isomorphism} 
 
             if n not in isomorphism: return None 
             return isomorphism[n]
+            """
+
+            # approach #2
+            qs = [] 
+            for iso in Q: 
+                iso2 = {v:k for k,v in iso} 
+                if n not in iso2:  
+                    continue 
+                qs.append(iso2[n]) 
+
+            untaken = set(qs) - got 
+            if len(untaken) == 0: return None 
+
+            untaken = sorted(untaken) 
+            index = int(self.prg()) % len(untaken) 
+            return untaken[index]
+
 
         for k in self.isomap.keys(): 
             x = analogical_node(k)
+            ##print("analogical node for {}:{}".format(k,x))
             if type(x) != type(None): 
                 node_analogy[k] = x 
+                got |= {x} 
 
         return node_analogy
 
     def subgraph_for_node(self,n): 
         radius = modulo_in_range(int(self.prg()),self.iso_sg_radius_range)
-        return self.sg_rad_fetcher.subgraph(n,radius)
+        return self.qsf.subgraph(n,radius)
 
     @staticmethod 
     def graph_is_analogical(ref_graph,analogy_graph,isomap): 

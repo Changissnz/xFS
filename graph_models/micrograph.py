@@ -1,5 +1,6 @@
 from collections import defaultdict,deque
 from copy import deepcopy
+from morebs2.numerical_generator import prg_seqsort
 import numpy as np
 import random
 import pickle
@@ -248,15 +249,22 @@ class MicroGraph:
         list<dict, node self -> node other>
       otherwise: 
     """
-    def subgraph_isomorphism(self,mg,all_iso=False,size_limit=None,search_candidate_limit=None):#,include_extra=0):
+    def subgraph_isomorphism(self,mg,all_iso=False,size_limit=None,search_candidate_limit=None,prg=None):#,include_extra=0):
         search_candidates = []
         
+        def prg_(): 
+            if type(prg) == type(None): return 
+            return int(prg()) 
+
         # get the initial candidates for each 
         q = {}
             # rank the nodes of dg from smallest to largest degree
             # element in l := (node, node degree) of mg
         l = [(k,len(v)) for (k,v) in mg.dg.items()]
-        l = sorted(l, key=lambda x: x[1])
+        if type(prg) != type(None): 
+            l = prg_seqsort(l,prg_)
+        else:
+            l = sorted(l, key=lambda x: x[1])
         lx = [l_[1] for l_ in l]
         dl = [l_ for (i,l_) in enumerate(lx) if lx[:i].count(l_) == 0]    
         mg2 = self 
@@ -301,7 +309,10 @@ class MicroGraph:
         """
 
         ## NOTE: SECTION BELOW FOR: ordered search candidates (deterministic)
-        xs = sorted(list(qualifying[l[0][0]]))
+        if type(prg) != type(None): 
+            xs = prg_seqsort(list(qualifying[l[0][0]]),prg_) 
+        else: 
+            xs = sorted(list(qualifying[l[0][0]]))
         for xs_ in xs:
             sl1 = [[xs_,l[0][0]]]
             sl2 = set(mg.dg.keys()) - {l[0][0]}

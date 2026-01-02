@@ -86,7 +86,7 @@ class HTESurfaceClass(unittest.TestCase):
 
         for _ in range(5): 
             q = time.time() 
-            htes2 = htes.prng_reproduction(gen_subgraph_shortest_paths_parameters=[10,15])
+            htes2,_ = htes.prng_reproduction(gen_subgraph_shortest_paths_parameters=[10,15])
             print("\n\t\treproduced")
             print(htes2)
             print() 
@@ -121,7 +121,7 @@ class HTESurfaceClass(unittest.TestCase):
         L = [] 
         for _ in range(10): 
             t2 = time.time() 
-            htes2 = htes.prng_reproduction()
+            htes2,_ = htes.prng_reproduction()
             print("graph of size {} in {} seconds".format(len(htes2.base_graph),\
                 time.time() - t2))  
             L.append(len(htes2.base_graph))
