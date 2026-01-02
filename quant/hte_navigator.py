@@ -1,4 +1,5 @@
 from graph_models.base_node import * 
+from .hte_analog_induction import * 
 
 DEFAULT_HTE_VISUAL_RADIUS = 3 
 
