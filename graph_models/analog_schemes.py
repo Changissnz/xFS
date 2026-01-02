@@ -176,7 +176,6 @@ class GraphAnalogAdder:
 
         if self.verbose: 
             print("generating subgraph of scheme type #{}".format(scheme_type)) 
-        
         if self.store_isomaps:
             nodeset = set(new_sg.keys()) 
             self.subgraph_nodeset_log.append(nodeset) 

@@ -133,7 +133,7 @@ class HTESurface:
 
     # NOTE: this reproduction scheme tends to produce graphs of smaller node size 
     #       than original. 
-    def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,15]):
+    def prng_reproduction(self,gen_subgraph_shortest_paths_parameters=[10,40]):
 
         # calculate 4 communities  
         communities = ReinforcementCommunityFinder.partition_into_n_communities(\
@@ -144,7 +144,7 @@ class HTESurface:
         mg_ = MicroGraph(defaultdict(set,{})) 
         for cns in communities: 
             sg = mg.subgraph_by_nodeset_(cns) 
-            mg_ = mg_ + sg  
+            mg_ = mg_ + MicroGraph(graph_to_one_component(sg.dg,self.prg))
         assert len(mg_.dg) == len(self.base_graph)
 
         # make analogical subgraphs 
@@ -152,7 +152,7 @@ class HTESurface:
         gaa = GraphAnalogAdder(mg_.dg,is_dsg=False,prg=self.prg,\
             gen_subgraph_shortest_paths_parameters=gen_subgraph_shortest_paths_parameters,\
             gen_scheme_types=[1,2],connect_components=False,every_subgraph_is_connected=True,\
-            max_edge_changes=10000,store_isomaps=True)
+            max_edge_changes=10000,store_isomaps=True,verbose=True)
 
         for i in range(lx): gaa.extend() 
 
@@ -234,7 +234,6 @@ class HTESurface:
         
         assert num_entry_points + num_objective_points < len(base_graph)
 
-        print("MK1")
         x1 = deepcopy(base_graph)
         gd = GraphComponentDecomposition(x1)
         gd.decompose() 
@@ -242,13 +241,10 @@ class HTESurface:
         assert len(gd.components) == 1 and not gd.is_directed, "connected undirected graph required" 
 
         # determine the entry and objective points 
-        print("MK2")
         spa = ShortestPathsApproximator.default_shortest_paths_search(base_graph,prg) 
         entry_points,objective_points = peripheral_node_partition(base_graph,\
             part1_size=num_entry_points,part2_size=num_objective_points,prg=prg,\
             nodepair_path_info=spa.nodepair_path_info)  
-
-        print("MK3")
 
         # assign threats 
         x = set() if threat_nodes_include_entry_points else entry_points

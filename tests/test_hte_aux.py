@@ -113,7 +113,8 @@ class HTESurfaceClass(unittest.TestCase):
         print("GENERATING")
         htes = HTESurface.generate_instance(D,num_entry_points,num_objective_points,\
             threat_ratio,threat_mobility_ratio,threat_nodes_include_entry_points,\
-            prg)
+            prg) 
+        htes.verbose = True  
 
         print("10 reproduction rounds")
         t = time.time() 
@@ -127,7 +128,7 @@ class HTESurfaceClass(unittest.TestCase):
             #print(htes2)
             #print()
         print("total runtime: ",time.time() - t) 
-        assert L == [94, 2603, 8, 2037, 2400, 2223, 13, 2500, 7, 85]
+        assert L == [1101,2137,2364,1846,1954,1838,2529,1313,1089,1024], "got {}".format(L) 
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,6 +5,15 @@ from graph_models._mg_sample import \
     base_graph_sample_G,base_graph_sample_H
 import unittest
 
+def assert_connected_communities(G,comm): 
+    for c in comm: 
+        sg = MicroGraph(G).subgraph_by_nodeset_(c) 
+
+        gd = GraphComponentDecomposition(sg.dg)
+        gd.decompose() 
+        assert len(gd.components) == 1,"got {}".format(len(gd.components))
+        print("# of components: ",len(gd.components)) 
+
 """
 py -m tests.test_community
 """

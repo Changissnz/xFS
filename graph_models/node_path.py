@@ -7,7 +7,6 @@ DEFAULT_EDGE_COST_FUNCTION_2 = lambda u,v:1 if u != v else 0
 CUMULATIVE_EDGE_COST_FUNCTION = lambda u,v,c: 1 + c  
 CUMULATIVE_PATH_COST_FUNC = lambda x: len(x) 
 
-
 class NodePath:
 
     def __init__(self,start_node):

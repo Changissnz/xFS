@@ -2,6 +2,15 @@ from .radial_subgraph import *
 from morebs2.graph_basics import *
 from math import ceil 
 
+def graph_component_size(G:defaultdict): 
+    gx = GraphComponentDecomposition(G) 
+    gx.decompose() 
+    return len(gx.components)
+
+def subgraph_component_size(G:defaultdict,subgraph_nodeset:set): 
+    mg = MicroGraph(G).subgraph_by_nodeset_(subgraph_nodeset)
+    return graph_component_size(mg.dg)
+
 # TODO: test this. 
 """
 an algorithm to calculate arbitrary communities, based on 
@@ -168,29 +177,34 @@ class ReinforcementCommunityFinder:
         cache = [] 
 
         i0 = 0 
-        while len(communities) > n: 
-            #i0 = prg_() % len(communities) 
+        while len(communities) > n and i0 < len(communities):  
             comm = communities.pop(i0)  
         
             neighbors = [G[c] for c in comm] 
             neighbors = flatten_setseq(neighbors) 
             stat = False 
             for (i,c) in enumerate(communities): 
-                if c.intersection(neighbors) != set(): 
+                inter = c.intersection(neighbors)
+                if len(inter) > 0:
+                    stat = True  
                     c |= comm 
-
+                    
                     j = i+1 
+                    if j >= len(communities): break 
+
                     while len(c) > len(communities[j]): 
                         j += 1 
                         if j >= len(communities): break 
-                    if j != i + 1: 
+                    
+                    if j != i + 1:
                         communities.insert(j,c) 
-                        communities.pop(i) 
-                    stat = True 
+                        communities.pop(i)         
                     break 
             
             if not stat:
+                communities.insert(i0,comm) 
                 i0 += 1 
+         
         return communities
 
     # NOTE: deficient, not guaranteed to reduce number of communities to n. 
@@ -213,7 +227,6 @@ class ReinforcementCommunityFinder:
         rcf.force_reassignment = True 
 
         while len(rcf.communities) > n and not rcf.fin_stat: 
-            #print("L: ",len(rcf.node_ordering), len(rcf.communities)) 
             next(rcf) 
          
     def preproc(self): 
@@ -366,7 +379,6 @@ class ReinforcementCommunityFinder:
         #else: 
         current_comm -= {n} 
         better_comm |= {n} 
-
         if len(current_comm) == 0: 
             self.communities.pop(current_comm_index) 
         return

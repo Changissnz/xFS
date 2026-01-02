@@ -53,7 +53,6 @@ def graph_automorphism(G,ctr_function):
 #----------------------------------------- for subgraph generation scheme #2
 
 def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_paths_selection,prg,ctr_function): 
-
     # calculate shortest paths 
     if len(G) <= 75: 
         is_bfs = bool(int(prg()) % 2)
