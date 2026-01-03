@@ -43,6 +43,8 @@ a navigator for a graph, provided by parameter to method<receive_context>.
 Navigator prioritizes travelling on nodes of `take_nodeset`, deprioritizes 
 travelling on nodes of `avoid_nodeset`, and attempts to converge to node 
 location in `objective_nodeset`. 
+
+`objective` > `take` > `possible_avoid` > `avoid`. 
 """
 class NodeObjectiveNavigator:
 
@@ -59,6 +61,7 @@ class NodeObjectiveNavigator:
         self.path_log = [loc]  
         self.loc = loc 
         self.avoid = avoid_nodeset
+        self.possible_avoid = set() 
         self.absolute_avoid = absolute_avoid
         # preferred nodes to take in intermediary travel 
         self.take = take_nodeset
@@ -109,6 +112,7 @@ class NodeObjectiveNavigator:
 
             # partition neighbors into non-avoid and avoid 
             non_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.avoid] 
+            possible_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.possible_avoid]
 
             if self.absolute_avoid: 
                 avoid = [] 
@@ -117,9 +121,12 @@ class NodeObjectiveNavigator:
             
             if len(non_avoid) > 0: 
                 non_avoid = prg_seqsort_ties(non_avoid,self.prg,lambda x:x[1]) 
+            if len(possible_avoid) > 0: 
+                possible_avoid = prg_seqsort_ties(possible_avoid,self.prg,lambda x:x[1])
             if len(avoid) > 0: 
                 avoid = prg_seqsort_ties(avoid,self.prg,lambda x:x[1]) 
             
+            non_avoid.extend(possible_avoid)
             non_avoid.extend(avoid)
             if len(non_avoid) == 0: return None 
             return non_avoid[0][0]  
@@ -147,3 +154,7 @@ class NodeObjectiveNavigator:
             lx += 1 
 
         self.c += 1 
+
+    def add_possible_avoid(self,possible_avoid):
+        assert type(possible_avoid) == set  
+        self.possible_avoid |= possible_avoid

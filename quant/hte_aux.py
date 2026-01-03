@@ -38,11 +38,11 @@ class HTEThreat:
 
     def activate(self,navigator_path_info,other_threat_locs): 
         if self.fin_stat: 
-            return False 
+            return 
 
         if self.c >= self.activation_lifespan:
             self.fin_stat = True 
-            return False 
+            return
 
         self.c += 1 
         self.load_navigator_path_info(navigator_path_info,other_threat_locs) 
@@ -115,6 +115,7 @@ class HTESurface:
         self.surface_derivation_radius_ratio_range = surface_derivation_radius_ratio_range
         self.prg = prg 
 
+    #----------------------- methods for information on <HTESurface> 
 
     def __str__(self): 
         S = "total # of points:\t" + str(len(self.base_graph)) + "\n"
@@ -130,6 +131,8 @@ class HTESurface:
             if v.derivative_type in derivative_types: 
                 N |= {k} 
         return N 
+
+    #------------------------ methods for reproduction and generation 
 
     # NOTE: this reproduction scheme tends to produce graphs of smaller node size 
     #       than original. 
@@ -296,3 +299,22 @@ class HTESurface:
         return HTESurface(base_graph,entry_points,objective_points,threat_map,\
             surface_derivation_radius_ratio_range=surface_derivation_radius_ratio_range,\
             prg=prg)  
+
+    #--------------------------------------------------------------------------------------------
+
+    def update_threat_activation(self,threat_idn,navigator_path_info,other_threat_locs): 
+        assert threat_idn in self.threat_map 
+
+        T = self.threat_map[threat_idn] 
+        T2 = T.activate(navigator_path_info,other_threat_locs)
+    
+        # case: nullified threat 
+        if type(T2) == type(None): 
+            return 
+
+        # case: threat relocated 
+        if T2 != threat_idn: 
+            T.node_idn = T2 
+            del self.threat_map[threat_idn] 
+            self.threat_map[T2] = T 
+        return

@@ -35,6 +35,7 @@ class HTENavigator(NodeObjectiveNavigator):
         self.visual_radius = visual_radius
         self.visual_of_graph = defaultdict(set)
         self.fin_stat = False 
+        self.success_stat = False 
         self.hnp = None 
         return
 
@@ -63,5 +64,31 @@ class HTENavigator(NodeObjectiveNavigator):
         if type(self.hnp) = type(None): return 
 
         possible = self.hnp.possible_threats(self.context,self.loc,self.visual_radius)
-        self.avoid |= possible 
+        self.possible_avoid |= possible 
         return possible 
+
+    def made_contact(self): 
+        self.avoid |= {self.loc}
+        self.mark_finish() 
+
+    def mark_finish(self): 
+        self.fin_stat = True 
+
+    def reproduce(self,new_entry_loc): 
+        if not self.fin_stat: 
+            print("cannot reproduce active navigator")
+            return 
+
+        # declare new 
+        hten = HTENavigator(new_entry_loc,self.avoid,self.take,objective_nodeset,self.prg,\
+        path_log_length=float('inf'),absolute_avoid=self.absolute_avoid,\
+        visual_radius=DEFAULT_HTE_VISUAL_RADIUS)
+
+        # if terminated by threat, add possible avoid 
+        if not self.success_stat: 
+            possible_avoid = set(self.context.keys()).intersection(set(self.path_log)) - {self.loc} 
+            hten.add_possible_avoid(possible_avoid) 
+        
+        # add 
+        hten.load_previous_HTE_data(self.visual_of_graph,self.avoid)
+        return hten
