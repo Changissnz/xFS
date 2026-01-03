@@ -20,20 +20,40 @@ are a kind of machine-learning technique.
 class HTEBot:
 
     def __init__(self,hte_surface,hte_navigator):  
-        assert hte_surface == HTESurface
-        assert hte_navigator == HTENavigator
+        assert type(hte_surface) == HTESurface
+        assert type(hte_navigator) in {type(None),HTENavigator} 
+
         self.hte_surf = hte_surface
         self.hte_nav = hte_navigator
 
         self.terminated_navigators = [] 
+
+        self.preproc() 
         return 
 
     #-------------------------------------------------------------------------------------------- 
 
     def preproc(self): 
+        if type(self.hte_nav) == type(None): 
+            entry_points = sorted(self.hte_surf.entry_points) 
+            i = int(self.hte_surf)
+            epoint = self.choose_entry_point_for_navigator() 
+            avoid = set() 
+            take = set() 
+            objectives = deepcopy(self.hte_surf.objectives)
+
+            self.hte_nav = HTENavigator(epoint,avoid,take,objectives,\
+                self.hte_surf.prg,path_log_length=float('inf'),\
+                absolute_avoid=False,visual_radius=DEFAULT_HTE_VISUAL_RADIUS)
+        
         assert self.hte_nav.loc in self.hte_surf.entry_points 
         self.feed_navigator_context() 
         return 
+
+    def run_navigator(self): 
+        while not self.hte_nav.fin_stat: 
+            next(self) 
+        return
 
     def __next__(self): 
         if self.hte_nav.fin_stat: 
@@ -48,6 +68,11 @@ class HTEBot:
             self.hte_nav.made_contact()
             
         self.feed_navigator_context() 
+
+        # case: navigator made contact with objective. 
+        obj_stat = self.hte_nav.loc in self.hte_surf.objectives
+        if obj_stat: 
+            self.hte_nav.made_objective() 
         return
 
     def feed_navigator_context(self): 
@@ -92,11 +117,14 @@ class HTEBot:
     #----------------------------------------------------------------------------------------------
 
     def reproduce_terminated_navigator(self):
-        entry_points = sorted(self.hte_surf.entry_points)
-        i = int(self.prg()) % len(entry_points) 
-        epoint = entry_points[i] 
+        epoint = self.choose_entry_point_for_navigator() 
         hten = self.hte_nav.reproduce(epoint) 
 
         self.terminated_navigators.append(self.hte_nav) 
         self.hte_nav = hten 
         return
+
+    def choose_entry_point_for_navigator(self): 
+        entry_points = sorted(self.hte_surf.entry_points)
+        i = int(self.hte_surf.prg()) % len(entry_points) 
+        return entry_points[i] 

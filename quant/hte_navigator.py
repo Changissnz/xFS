@@ -1,7 +1,7 @@
 from graph_models.base_node import * 
 from .hte_analog_induction import * 
 
-DEFAULT_HTE_VISUAL_RADIUS = 3 
+DEFAULT_HTE_VISUAL_RADIUS = 2 
 
 class HTENavigatorPrediction:
 
@@ -71,6 +71,10 @@ class HTENavigator(NodeObjectiveNavigator):
         self.avoid |= {self.loc}
         self.mark_finish() 
 
+    def made_objective(self): 
+        self.success_stat = True 
+        self.mark_finish()
+
     def mark_finish(self): 
         self.fin_stat = True 
 
@@ -80,9 +84,9 @@ class HTENavigator(NodeObjectiveNavigator):
             return 
 
         # declare new 
-        hten = HTENavigator(new_entry_loc,self.avoid,self.take,objective_nodeset,self.prg,\
-        path_log_length=float('inf'),absolute_avoid=self.absolute_avoid,\
-        visual_radius=DEFAULT_HTE_VISUAL_RADIUS)
+        hten = HTENavigator(new_entry_loc,self.avoid,self.take,self.objectives,\
+            self.prg,path_log_length=float('inf'),absolute_avoid=self.absolute_avoid,\
+            visual_radius=DEFAULT_HTE_VISUAL_RADIUS)
 
         # if terminated by threat, add possible avoid 
         if not self.success_stat: 
