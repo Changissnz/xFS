@@ -8,5 +8,6 @@ further development.
 
 Here is a list of graph problems in the project: 
 - Respondent Network Bot (Alpha)
-- Hidden Threat Exposure (Work in progress) 
-- Slander Net (Work in progress) 
+- Hidden Threat Exposure Bot (Work in progress) 
+- Slander Net Bot (Work in progress) 
+- MK Bot (Work in progress) 

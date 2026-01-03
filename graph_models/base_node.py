@@ -158,3 +158,7 @@ class NodeObjectiveNavigator:
     def add_possible_avoid(self,possible_avoid):
         assert type(possible_avoid) == set  
         self.possible_avoid |= possible_avoid
+
+    def add_take(self,take_nodeset):
+        assert type(take_nodeset) == set  
+        self.take |= take_nodeset

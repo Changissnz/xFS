@@ -4,6 +4,8 @@ Hidden Threat Exposure walkthroughs
 from quant.hte_aux import * 
 from quant.hte_navigator import* 
 
+DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER = 1.0 
+
 """
 Hidden Threat Exposure automaton is related to the 1990's video 
 game, Minesweeper. See this wikipedia article, 
@@ -29,6 +31,7 @@ class HTEBot:
         self.terminated_navigators = [] 
 
         self.preproc() 
+        self.hte_nav.fuel = DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER * len(self.hte_surf.base_graph)
         return 
 
     #-------------------------------------------------------------------------------------------- 
@@ -50,11 +53,11 @@ class HTEBot:
         return 
 
     def run_navigator(self): 
-        if self.verbose: print("-- navigator at {}".format(self.hte_nav.loc))
+        if self.verbose: print("-- navigator at node={}, fuel={}".format(self.hte_nav.loc,self.hte_nav.fuel))
 
         while not self.hte_nav.fin_stat: 
             next(self) 
-            if self.verbose: print("-- navigator at {}".format(self.hte_nav.loc))
+            if self.verbose: print("-- navigator at node={}, fuel={}".format(self.hte_nav.loc,self.hte_nav.fuel))
         if self.verbose: print("-- status: ",self.hte_nav.success_stat)
         return
 
@@ -130,6 +133,7 @@ class HTEBot:
         self.hte_nav = hten 
         self.feed_navigator_context() 
         self.register_threat_contact(self.hte_nav.loc)
+        self.hte_nav.fuel = DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER * len(self.hte_surf.base_graph)
         if self.verbose: print("** reproducing navigator at entry={}".format(self.hte_nav.loc)) 
         return
 

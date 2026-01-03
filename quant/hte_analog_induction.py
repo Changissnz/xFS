@@ -62,7 +62,6 @@ class HTEAnalogInducer:
 
         # get subgraph for next graph 
         center_suspect,radius = self.next_graph_hyp_map[ref_threat_node]  
-        ##assert radius >= 2 
         qsf = QuickSubgraphFetcher(self.next_graph)
         sg_other = qsf.subgraph(center_suspect,radius)
 
@@ -72,7 +71,7 @@ class HTEAnalogInducer:
         sg_ref = qsf2.subgraph(ref_threat_node,r2)
 
         mg,mg2 = MicroGraph(sg_other),MicroGraph(sg_ref) 
-        q = mg.subgraph_isomorphism(mg2,all_iso=True,size_limit=200,search_candidate_limit=None)
+        q = mg.subgraph_isomorphism(mg2,all_iso=True,size_limit=200,search_candidate_limit=1000)
 
         suspect_nodes = set() 
         for q_ in q: 
