@@ -20,7 +20,12 @@ class HTENavigatorPrediction:
 
         possible = set() 
         for t in self.threat_nodes: 
-            possible |= hai.possible_threat_analogs(t) 
+            try: 
+                possible |= hai.possible_threat_analogs(t) 
+            except: 
+                print("NICHT ",t)
+                print(set(self.reference_graph.keys()))
+                pass 
         return possible 
 
 class HTENavigator(NodeObjectiveNavigator): 
@@ -42,7 +47,7 @@ class HTENavigator(NodeObjectiveNavigator):
     def __next__(self): 
         if self.fin_stat: return 
 
-        if self.loc in self.objective_nodeset: 
+        if self.loc in self.objectives: 
             return 
 
         return self.make_choice() 
@@ -50,6 +55,10 @@ class HTENavigator(NodeObjectiveNavigator):
     def load_previous_HTE_data(self,reference_graph,threat_nodes): 
         self.hnp = HTENavigatorPrediction(reference_graph,threat_nodes,self.prg)
     
+    def load_previous_visual_of_graph(self,reference_graph): 
+        assert type(reference_graph) == defaultdict 
+        self.visual_of_graph = reference_graph
+
     def receive_context(self,graph_visual:defaultdict): 
         assert self.loc in graph_visual
 
@@ -61,7 +70,7 @@ class HTENavigator(NodeObjectiveNavigator):
 
     # CAUTION: overcautious? 
     def predict_threats(self): 
-        if type(self.hnp) = type(None): return 
+        if type(self.hnp) == type(None): return 
 
         possible = self.hnp.possible_threats(self.context,self.loc,self.visual_radius)
         self.possible_avoid |= possible 
@@ -78,7 +87,7 @@ class HTENavigator(NodeObjectiveNavigator):
     def mark_finish(self): 
         self.fin_stat = True 
 
-    def reproduce(self,new_entry_loc): 
+    def reproduce(self,new_entry_loc,iso_predict_mode): 
         if not self.fin_stat: 
             print("cannot reproduce active navigator")
             return 
@@ -87,12 +96,14 @@ class HTENavigator(NodeObjectiveNavigator):
         hten = HTENavigator(new_entry_loc,self.avoid,self.take,self.objectives,\
             self.prg,path_log_length=float('inf'),absolute_avoid=self.absolute_avoid,\
             visual_radius=DEFAULT_HTE_VISUAL_RADIUS)
+        hten.load_previous_visual_of_graph(self.visual_of_graph)
+        hten.add_possible_avoid(self.possible_avoid)
 
         # if terminated by threat, add possible avoid 
         if not self.success_stat: 
             possible_avoid = set(self.context.keys()).intersection(set(self.path_log)) - {self.loc} 
             hten.add_possible_avoid(possible_avoid) 
         
-        # add 
-        hten.load_previous_HTE_data(self.visual_of_graph,self.avoid)
+        # add previous HTESurface data if `iso_predict_mode`
+        if iso_predict_mode: hten.load_previous_HTE_data(self.visual_of_graph,self.avoid)
         return hten

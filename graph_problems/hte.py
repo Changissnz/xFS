@@ -19,13 +19,13 @@ are a kind of machine-learning technique.
 """
 class HTEBot:
 
-    def __init__(self,hte_surface,hte_navigator):  
+    def __init__(self,hte_surface,hte_navigator,verbose=False):  
         assert type(hte_surface) == HTESurface
         assert type(hte_navigator) in {type(None),HTENavigator} 
 
         self.hte_surf = hte_surface
         self.hte_nav = hte_navigator
-
+        self.verbose = verbose 
         self.terminated_navigators = [] 
 
         self.preproc() 
@@ -35,12 +35,10 @@ class HTEBot:
 
     def preproc(self): 
         if type(self.hte_nav) == type(None): 
-            entry_points = sorted(self.hte_surf.entry_points) 
-            i = int(self.hte_surf)
             epoint = self.choose_entry_point_for_navigator() 
             avoid = set() 
             take = set() 
-            objectives = deepcopy(self.hte_surf.objectives)
+            objectives = deepcopy(self.hte_surf.objective_points)
 
             self.hte_nav = HTENavigator(epoint,avoid,take,objectives,\
                 self.hte_surf.prg,path_log_length=float('inf'),\
@@ -48,11 +46,16 @@ class HTEBot:
         
         assert self.hte_nav.loc in self.hte_surf.entry_points 
         self.feed_navigator_context() 
+        self.register_threat_contact(self.hte_nav.loc)
         return 
 
     def run_navigator(self): 
+        if self.verbose: print("-- navigator at {}".format(self.hte_nav.loc))
+
         while not self.hte_nav.fin_stat: 
             next(self) 
+            if self.verbose: print("-- navigator at {}".format(self.hte_nav.loc))
+        if self.verbose: print("-- status: ",self.hte_nav.success_stat)
         return
 
     def __next__(self): 
@@ -60,6 +63,8 @@ class HTEBot:
             return 
 
         l = next(self.hte_nav) 
+        self.feed_navigator_context() 
+
         contact_stat = self.register_threat_contact(l) 
 
         # case: navigator made contact with threat. terminate 
@@ -67,10 +72,9 @@ class HTEBot:
         if contact_stat: 
             self.hte_nav.made_contact()
             
-        self.feed_navigator_context() 
 
         # case: navigator made contact with objective. 
-        obj_stat = self.hte_nav.loc in self.hte_surf.objectives
+        obj_stat = self.hte_nav.loc in self.hte_surf.objective_points
         if obj_stat: 
             self.hte_nav.made_objective() 
         return
@@ -117,11 +121,16 @@ class HTEBot:
     #----------------------------------------------------------------------------------------------
 
     def reproduce_terminated_navigator(self):
+        if not self.hte_nav.fin_stat: return 
+
         epoint = self.choose_entry_point_for_navigator() 
-        hten = self.hte_nav.reproduce(epoint) 
+        hten = self.hte_nav.reproduce(epoint,iso_predict_mode=True)  
 
         self.terminated_navigators.append(self.hte_nav) 
         self.hte_nav = hten 
+        self.feed_navigator_context() 
+        self.register_threat_contact(self.hte_nav.loc)
+        if self.verbose: print("** reproducing navigator at entry={}".format(self.hte_nav.loc)) 
         return
 
     def choose_entry_point_for_navigator(self): 

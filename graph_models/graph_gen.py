@@ -261,3 +261,17 @@ def base_graph_sample_25N():
     gg.full_run() 
     D4 = graph_to_one_component(deepcopy(gg.d),prg)
     return D4 
+
+def generated_graph_sample_1000(vertex_degree=1000,edge_connectivity=0.001): 
+    is_dsg = False 
+    prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+    is_realtime_gen = True 
+    #vertex_degree = 1000
+    #edge_connectivity = 0.001
+    
+    gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,edge_connectivity,verbose=False) 
+    gg.full_run() 
+    
+    D = gg.d 
+    D2 = graph_to_one_component(deepcopy(gg.d),prg)
+    return D2 

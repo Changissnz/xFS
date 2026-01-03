@@ -72,8 +72,9 @@ class HTEThreat:
         if len(X) == 0: 
             return self.node_idn 
 
-        i = int(self.prg()) % len(X) 
-        return X[i] 
+        #i = int(self.prg()) % len(X) 
+        #return X[i] 
+        return X[-1] 
 
     def subpath_to_loc(self): 
         # calculates the first subpath to node location 
