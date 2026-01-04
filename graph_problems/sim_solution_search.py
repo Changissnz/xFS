@@ -29,7 +29,8 @@ class SimulationSolutionSearch:
 
         self.active_prng = self.prng_seq.pop(0) 
 
-        self.best = [None,None,None] 
+        self.best = [None,None,None]
+        self.results = []  
         self.fin_stat = False 
         return  
 
@@ -50,6 +51,7 @@ class SimulationSolutionSearch:
         C = deepcopy(self.sim_env2) 
         S = self.simsol_fetch_function(self.sim_env2)
 
+        self.results.append((G,C,S)) 
         if type(self.best[0]) == type(None): 
             self.best = [G,C,S] 
         else: 

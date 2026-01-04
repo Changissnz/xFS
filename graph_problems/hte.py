@@ -33,7 +33,7 @@ four node categories. For a starting node n0 and objective node n1, one <HTENavi
 may take a path P from n0 to n1, but a succeeding <HTENavigator> may not take the same 
 path P despite starting at same node n0. 
 
-If two nodes are of the same classification, the <NodeObjectiveNavigator> prioritizes 
+If two nodes are of the same category, the <NodeObjectiveNavigator> prioritizes 
 the node less frequently travelled, according to its node encounters map,  
     encountered node -> frequency of travel.
 
