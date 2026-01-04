@@ -65,8 +65,9 @@ active after the navigator encounters it, <HTEThreat> will stay at the same node
 constant. If <HTEThreat> is contra, it will attempt to relocate to another node that satisfies 
 the following conditions: 
 - new node location does not have an existing threat on it, 
-- new node location is a node on the path the terminated navigator took to get to the 
-  original threat location. 
+- new node location is a node on an ending subpath the terminated navigator took to get to the 
+  original threat location. The ending subpath is a suffix of the entire path the navigator took, which 
+  may contain duplicate nodes, and is of length equal to the navigator's radius of vision plus one. 
 A contra <HTEThreat> that cannot find a new node location that satisfies these two conditions 
 will stay at the original node location. 
 
