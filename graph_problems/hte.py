@@ -22,14 +22,14 @@ are a kind of machine-learning technique.
 ----------------------------------------------------------------------------
 
 The <HTENavigator> is a subclass of <NodeObjectiveNavigator>, a structure 
-that uses these four node classifications to prioritize which node to travel 
+that uses these four node categories to prioritize which node to travel 
 to during the course of navigation:
 - objective (ideal node to be on)
 - take (a node that the navigator classified as safe to travel over)
 - possible avoid (a node that the navigator classified as a possible threat node)
 - avoid (a node that the navigator classified as a certain threat node).
 <HTENavigator> uses a stochastic process to make decisions revolving around these 
-four node classifications. For a starting node n0 and objective node n1, one <HTENavigator> 
+four node categories. For a starting node n0 and objective node n1, one <HTENavigator> 
 may take a path P from n0 to n1, but a succeeding <HTENavigator> may not take the same 
 path P despite starting at same node n0. 
 

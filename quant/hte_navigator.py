@@ -190,7 +190,6 @@ class HTENavigator(NodeObjectiveNavigator):
             assert type(next_full_context) == tuple and len(next_full_context) == 3
             assert type(next_full_context[0]) == defaultdict 
             assert type(next_full_context[1]) == dict 
-            ##print("PPPPPPPPPPPPPPPPPPPPPPP")
             hten.load_previous_HTE_data(self.visual_of_graph,self.avoid) 
             hten.full_navigator_prediction(next_full_context[0],next_full_context[1])            
 
