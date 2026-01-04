@@ -49,12 +49,12 @@ location in `objective_nodeset`.
 class NodeObjectiveNavigator:
 
     def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,path_log_length=float('inf'),\
-        absolute_avoid:bool=False): 
+        absolute_avoid:bool=False,risk_possible_avoid:bool=False): 
         assert type(avoid_nodeset) == type(take_nodeset) == type(objective_nodeset) 
         assert len(avoid_nodeset.intersection(take_nodeset)) == 0 
         assert len(take_nodeset.intersection(objective_nodeset)) == 0 
         assert len(avoid_nodeset.intersection(objective_nodeset)) == 0 
-        assert type(absolute_avoid) == bool 
+        assert type(absolute_avoid) == bool == type(risk_possible_avoid)
 
         self.path_log_length = path_log_length
         self.encountered = defaultdict(int,{loc: 1}) 
@@ -63,6 +63,8 @@ class NodeObjectiveNavigator:
         self.avoid = avoid_nodeset
         self.possible_avoid = set() 
         self.absolute_avoid = absolute_avoid
+        self.risk_possible_avoid = risk_possible_avoid
+
         # preferred nodes to take in intermediary travel 
         self.take = take_nodeset
         self.objectives = objective_nodeset
@@ -70,6 +72,10 @@ class NodeObjectiveNavigator:
         self.context = None 
         self.c = 0 
         return
+
+    def set_risk_possible_avoid(self,stat:bool): 
+        assert type(stat) == bool 
+        self.risk_possible_avoid = stat 
 
     def receive_context(self,sg:defaultdict): 
         assert type(sg) == defaultdict 
@@ -111,14 +117,14 @@ class NodeObjectiveNavigator:
             neighbors = sorted(self.context[self.loc])
 
             # partition neighbors into non-avoid and avoid 
-            non_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.avoid] 
-            possible_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.possible_avoid]
+            non_avoid = [(n,self.encountered[n]) for n in neighbors if n not in self.avoid]
+            possible_avoid = [(n,self.encountered[n]) for n in neighbors if n in self.possible_avoid]
 
             if self.absolute_avoid: 
                 avoid = [] 
             else: 
                 avoid = [(n,self.encountered[n]) for n in neighbors if n in self.avoid] 
-            
+
             if len(non_avoid) > 0: 
                 non_avoid = prg_seqsort_ties(non_avoid,self.prg,lambda x:x[1]) 
             if len(possible_avoid) > 0: 
@@ -127,6 +133,10 @@ class NodeObjectiveNavigator:
                 avoid = prg_seqsort_ties(avoid,self.prg,lambda x:x[1]) 
             
             non_avoid.extend(possible_avoid)
+            #
+            if len(non_avoid) > 0 and self.risk_possible_avoid: 
+                non_avoid = prg_seqsort_ties(non_avoid,self.prg,lambda x:x[1]) 
+
             non_avoid.extend(avoid)
             if len(non_avoid) == 0: return None 
             return non_avoid[0][0]  

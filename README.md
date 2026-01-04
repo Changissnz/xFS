@@ -6,8 +6,11 @@ developed by me only in conjunction with my research efforts. Technicalities in 
 hardware and those projects' code implementation have pressured me to cease their 
 further development.
 
+## Graph Problems of Interest (in my words)
+
 Here is a list of graph problems in the project: 
 - Respondent Network Bot (Alpha)
 - Hidden Threat Exposure Bot (Work in progress) 
 - Slander Net Bot (Work in progress) 
-- MK Bot (Work in progress) 
+- MK (Mob Killer) Bot (Work in progress) 
+- Homo Frame Bot (Work in progress) 

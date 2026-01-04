@@ -212,7 +212,7 @@ class GraphAnalogAdder:
         is_realtime_gen = bool(int(self.prg()) % 2)
         vertex_degree = int(modulo_in_range(self.prg(),self.gen_scheme_subgraph_degree_range))
  
-        edge_connectivity = prng_decimal(self.prg,self.gen_subgraph_conn_range)
+        edge_connectivity = prg_decimal(self.prg,self.gen_subgraph_conn_range)
         gg = GraphGen(self.is_dsg,self.prg,is_realtime_gen,\
             vertex_degree=vertex_degree,edge_connectivity=edge_connectivity)
         gg.full_run() 
@@ -258,7 +258,7 @@ class GraphAnalogAdder:
         if edge_range[1] < edge_range[0]: 
             edge_change = 0 
         else: 
-            edge_change = prng_decimal(self.prg,edge_range)
+            edge_change = prg_decimal(self.prg,edge_range)
             eneg = int(self.prg()) % 2
             eneg = -1 if eneg else 1 
             edge_change = eneg * edge_change 
@@ -268,7 +268,7 @@ class GraphAnalogAdder:
         if node_range[1] < node_range[0]: 
             node_change = 0 
         else: 
-            node_change = prng_decimal(self.prg,node_range)
+            node_change = prg_decimal(self.prg,node_range)
             nneg = int(self.prg()) % 2
             nneg = -1 if nneg else 1 
             node_change = nneg * node_change 

@@ -6,7 +6,7 @@ Focused on graph derivation.
 from .tree_gen import * 
 from .graph_gen import * 
 from .shortest_paths_approx import * 
-from morebs2.numerical_generator import prg_choose_n,prg_seqsort,modulo_in_range
+from morebs2.numerical_generator import prg_choose_n,prg_seqsort,modulo_in_range,prg_decimal
 from morebs2.measures import zero_div 
 
 # these five default parameters are used for generation schemes of <GraphAnalogAdder> 
@@ -27,12 +27,6 @@ DEFAULT_GRAPH_ANALOG_ADDER_SHORTEST_PATHS_PARAMETERS = [10,3]
 # [1] -> pos./neg. change in nodes to subgraph 
 DEFAULT_GRAPH_ANALOG_ADDER_SUBGRAPH_DERIVATION_RATIOS = [0.2,0.25]
 
-
-def prng_decimal(prg,output_range): 
-    r0,r1 = abs(prg()),abs(prg())
-    rx = sorted([r0,r1]) 
-    rx = zero_div(rx[0],rx[1],0.5) 
-    return modulo_in_range(rx,output_range)
 
 """
 transforms graph into automorphism of it using counter function 
@@ -192,7 +186,7 @@ def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultd
 
     # select prior nodes 
     rx = sorted([0.08,sg2sg_conn_ratios[0]])
-    r0 = prng_decimal(prg,rx)
+    r0 = prg_decimal(prg,rx)
     num_nodes = ceil(r0 * len(prior_sg))
     prior_nodes = sorted(prior_sg.keys())
     selected_nodes = prg_choose_n(prior_nodes,num_nodes,prg_,is_unique_picker=True) 
@@ -218,7 +212,7 @@ def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultd
             new_sg[c] |= {n0} 
 
     rx = sorted([0.08,sg2sg_conn_ratios[1]])
-    r1 = prng_decimal(prg,rx)
+    r1 = prg_decimal(prg,rx)
     max_edges = len(current_sg) * num_nodes
     if not is_dsg: 
         max_edges = int(max_edges * 2) 

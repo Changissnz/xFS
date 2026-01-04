@@ -100,6 +100,8 @@ class HTENavigator(NodeObjectiveNavigator):
         ##if self.loc in self.avoid: 
         ##    self.avoid -= {self.loc} 
 
+        risk_possible_avoid = bool(prg_decimal(self.prg,[0.,1.]) <= self.contra_risk)
+        self.set_risk_possible_avoid(risk_possible_avoid)
         l = self.make_choice() 
         self.fuel -= 1 
         return l 
