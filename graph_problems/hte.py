@@ -113,6 +113,24 @@ class HTEBot:
         self.register_threat_contact(self.hte_nav.loc)
         return 
 
+    """
+    [0] -> navigator_remembers_past_encounters 
+    [1] -> navigator_uses_isomorphic_prediction
+    [2] -> memory_less navigator
+    [3] -> `contra_risk` 
+    """
+    def set_bot_mode(self,fourvec): 
+        assert is_vector(fourvec) and len(fourvec) == 4 
+
+        assert fourvec[0] in {0,1} 
+        assert fourvec[1] in {0,1} 
+        assert fourvec[2] in {0,1} 
+        assert 0.0 <= fourvec[3] <= 1.0  
+        self.navigator_remembers = bool(fourvec[0])
+        self.hte_nav.uses_isomorphic_prediction = bool(fourvec[1]) 
+        self.hte_nav.memory_less = bool(fourvec[2]) 
+        self.hte_nav.contra_risk = fourvec[3] 
+
     #-------------------------------------------- methods for node navigator 
     def run_navigator(self): 
         if self.verbose: print("-- navigator at node={}, fuel={}".format(self.hte_nav.loc,self.hte_nav.fuel))

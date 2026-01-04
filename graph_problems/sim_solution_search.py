@@ -20,11 +20,16 @@ class SimulationSolutionSearch:
         self.sim_env = sim_env 
         # copy of sim_env for mode shift
         self.sim_env2 = deepcopy(self.sim_env) 
+        # f(`sim_env`)
         self.sim_env_run_function = sim_env_run_function
         self.prng_seq = prng_seq 
+        # f(`sim_env`,prng)
         self.sim_env_prng_assignment_function = sim_env_prng_assignment_function
+        # f(`sim_env0`) -> `sim_env1`
         self.sim_mode_shift_function = sim_mode_shift_function
+        # f(`sim_env`) -> solution after running simulation 
         self.simsol_fetch_function = simsol_fetch_function
+        # f(`sim_env0`,`sim_env1`) -> ?sim_env0 is better? 
         self.simsol_cmp_function = simsol_cmp_function
 
         self.active_prng = self.prng_seq.pop(0) 
