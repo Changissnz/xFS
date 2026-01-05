@@ -12,5 +12,6 @@ Here is a list of graph problems in the project:
 - Respondent Network Bot (Alpha)
 - Hidden Threat Exposure Bot (Work in progress) 
 - Slander Net Bot (Work in progress) 
-- MK (Mob Killer) Bot (Work in progress) 
+- MK (Mob/Mass Killer) Bot (Work in progress) 
+- BK (Bull Killer) (Work in progress) 
 - Homo Frame Bot (Work in progress) 

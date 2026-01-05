@@ -1,8 +1,9 @@
 from .hte import * 
+from morebs2.search_space_iterator import * 
 
 def HTE_env_prng_assignment_function(hteb:HTEBot,prg):
     assert type(prg) in {MethodType,FunctionType} 
-    hte.hte_nav.prg = prg  
+    hteb.hte_nav.prg = prg  
     return
 
 '''
@@ -33,6 +34,7 @@ def HTE_env_mode_shift_function__iterator():
             return None 
         return next(ssi) 
 
+    f() 
     return f 
 
 class HTEBotModeShifter: 
@@ -41,22 +43,27 @@ class HTEBotModeShifter:
         self.ssi = HTE_env_mode_shift_function__iterator() 
 
     def shift_HTEBot(self,hteb:HTEBot): 
-        q = next(self.ssi) 
+        q = self.ssi() 
         if type(q) == type(None): return None 
         hteb.set_bot_mode(q)
+        hteb.clear_logs() 
         return hteb
 
-def HTE_env_solution_fetch_function(hteb:HTEBot,num_navigators):  
-    navigators = hteb.terminated_navigators[-num_navigators:] 
-    return [(n.path_log,n.success_stat) for n in navigators]
+def HTE_env_solution_fetch_function_(num_navigators): 
 
-def HTE_env_cmp_solution__type_1(num_navigators=100,success_multiplier= -100.0): 
+    def f(hteb:HTEBot): 
+        navigators = hteb.terminated_navigators[-num_navigators:] 
+        return [(n.path_log,n.success_stat) for n in navigators]
+    
+    return f 
+
+def HTE_env_cmp_solution__type_1_(num_navigators=100,success_multiplier= -100.0): 
 
     assert success_multiplier < 0 
 
     def f(hteb:HTEBot,hteb1:HTEBot):
-        ps0 = HTE_env_solution_fetch_function(hteb,num_navigators) 
-        ps1 = HTE_env_solution_fetch_function(hteb1,num_navigators) 
+        ps0 = HTE_env_solution_fetch_function_(num_navigators)(hteb)
+        ps1 = HTE_env_solution_fetch_function_(num_navigators)(hteb1)
 
         s0,s1 = 0,0
         for p,q in zip(ps0,ps1): 
@@ -70,13 +77,19 @@ def HTE_env_cmp_solution__type_1(num_navigators=100,success_multiplier= -100.0):
 
     return f 
 
-def HTE_env_run(hteb:HTEBot,num_navigators=100):
-    for i in range(num_navigators):  
-        hteb.run_navigator() 
-        hteb.reproduce_terminated_navigator() 
-    
-    hteb.reproduce_surface() 
-    for i in range(num_navigators):  
-        hteb.run_navigator() 
-        hteb.reproduce_terminated_navigator() 
+def HTE_env_run_(num_navigators=100):
+
+    def f(hteb:HTEBot): 
+        for i in range(num_navigators):  
+            hteb.run_navigator() 
+            hteb.reproduce_terminated_navigator() 
+        
+        hteb.reproduce_surface() 
+        for i in range(num_navigators):  
+            hteb.run_navigator() 
+            hteb.reproduce_terminated_navigator() 
+        
+        return 
+
+    return f 
 

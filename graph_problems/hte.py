@@ -2,7 +2,8 @@
 Hidden Threat Exposure walkthroughs  
 """
 from quant.hte_aux import * 
-from quant.hte_navigator import* 
+from quant.hte_navigator import * 
+from morebs2.matrix_methods import * 
 
 DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER = 1.0 
 
@@ -131,6 +132,12 @@ class HTEBot:
         self.hte_nav.memory_less = bool(fourvec[2]) 
         self.hte_nav.contra_risk = fourvec[3] 
 
+    def clear_logs(self): 
+        self.previous_hsurfaces.clear() 
+        self.hsurface_prior_ref.clear() 
+        self.terminated_navigators.clear() 
+        self.hte_surf_prior_ref = None 
+
     #-------------------------------------------- methods for node navigator 
     def run_navigator(self): 
         if self.verbose: print("-- navigator at node={}, fuel={}".format(self.hte_nav.loc,self.hte_nav.fuel))
@@ -220,7 +227,8 @@ class HTEBot:
         self.feed_navigator_context() 
         self.register_threat_contact(self.hte_nav.loc)
         self.hte_nav.fuel = DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER * len(self.hte_surf.base_graph)
-        if self.verbose: print("** reproducing navigator at entry={}".format(self.hte_nav.loc)) 
+        if self.verbose: print("** reproducing navigator {} at entry={}".format(len(self.terminated_navigators),\
+            self.hte_nav.loc)) 
         return
 
     def reproduce_surface(self): 

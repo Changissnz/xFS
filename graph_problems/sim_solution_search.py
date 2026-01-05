@@ -15,7 +15,7 @@ class SimulationSolutionSearch:
     # CAUTION: no error-checking of parameters 
     def __init__(self,sim_env,sim_env_run_function,prng_seq,\
         sim_env_prng_assignment_function,sim_mode_shift_function,\
-        simsol_fetch_function,simsol_cmp_function): 
+        simsol_fetch_function,simsol_cmp_function,verbose=False): 
 
         self.sim_env = sim_env 
         # copy of sim_env for mode shift
@@ -32,11 +32,13 @@ class SimulationSolutionSearch:
         # f(`sim_env0`,`sim_env1`) -> ?sim_env0 is better? 
         self.simsol_cmp_function = simsol_cmp_function
 
+        self.verbose = verbose 
         self.active_prng = self.prng_seq.pop(0) 
 
         self.best = [None,None,None]
         self.results = []  
         self.fin_stat = False 
+        self.i = 0 
         return  
 
     def process_one(self): 
@@ -52,6 +54,7 @@ class SimulationSolutionSearch:
 
         G = self.active_prng 
         C_ = deepcopy(self.sim_env2) 
+        print("\t\tRunning simulation {}".format(self.i))
         self.sim_env_run_function(self.sim_env2)
         C = deepcopy(self.sim_env2) 
         S = self.simsol_fetch_function(self.sim_env2)
@@ -59,22 +62,30 @@ class SimulationSolutionSearch:
         self.results.append((G,C,S)) 
         if type(self.best[0]) == type(None): 
             self.best = [G,C,S] 
+            stat = True 
         else: 
             stat = self.simsol_cmp_function(C,self.best[1]) 
             if stat: 
                 self.best = [G,C,S] 
+
+        if self.verbose: 
+            print("\t\t*** solution is improvement: {}***".format(stat))
         
         # shift to the next environment config 
         C_ = self.sim_mode_shift_function(C_)
 
         # case: no more config, switch prngs 
         if type(C_) == type(None): 
+            if self.verbose: print("\t\tNext PRNG") 
             self.active_prng = None 
             if len(self.prng_seq) > 0:
                 self.active_prng = self.prng_seq.pop(0) 
 
             # reset to original sim_env 
             self.sim_env2 = deepcopy(self.sim_env)
+
+            if self.verbose: print("=/++\\==/++\\=" * 20) 
             return 
 
+        if self.verbose: print("=/++\\==/++\\=" * 20) 
         self.sim_env2 = C_ 
