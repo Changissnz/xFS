@@ -49,13 +49,19 @@ class HTEBotModeShifter:
         hteb.clear_logs() 
         return hteb
 
-def HTE_env_solution_fetch_function(hteb:HTEBot): 
-    navigators = hteb.terminated_navigators 
+def HTE_env_solution_fetch_function(hteb:HTEBot,navigator_range=None):
+    if type(navigator_range) == type(None):  
+        navigators = hteb.terminated_navigators 
+    else: 
+        assert is_valid_range(navigator_range,True,False)
+        n0,n1 = navigator_range[0],navigator_range[1] 
+        navigators = hteb.terminated_navigators[n0:n1] 
+
     ##print("# of navigators: ",len(navigators))
     return [(n.path_log,n.success_stat) for n in navigators]
     
-def HTE_env_cmp_function_type_1_(hteb,success_multiplier=-100.0): 
-    ps0 = HTE_env_solution_fetch_function(hteb)
+def HTE_env_cmp_function_type_1_(hteb,success_multiplier=-100.0,navigator_range=None): 
+    ps0 = HTE_env_solution_fetch_function(hteb,navigator_range) 
     s0 = 0 
 
     for p in ps0: 
@@ -63,6 +69,19 @@ def HTE_env_cmp_function_type_1_(hteb,success_multiplier=-100.0):
         s0 = s0 + (len(p0) + float(p1) * success_multiplier) 
     return s0 
 
+"""
+measurement function of <HTEBot> navigator performance focuses on 
+the differences in performances between every contiguous pair of 
+navigators, respectively for two separate <HTESurfaces>, the former 
+being the source for the isomorphic derivation to the latter. 
+
+For a pair of navigators (N0,N1) with their travel records (P0,P1), 
+        <(path_j,status_j) in sequence P_i>, 
+function<HTE_env_cmp_function_type_1_> is used to calculate the scores  
+of P0 and P1 for differences. 
+
+Output is cumulative sum of [(n-1)=`num_isos`] differences. 
+"""
 def HTE_env_cmp_function_type_2_(hteb,num_isos,success_multiplier=-100.0): 
     assert num_isos > 0 
     ps0 = HTE_env_solution_fetch_function(hteb)
@@ -70,22 +89,30 @@ def HTE_env_cmp_function_type_2_(hteb,num_isos,success_multiplier=-100.0):
 
     part_size = len(ps0) / (num_isos + 1) 
     assert int(part_size) == part_size 
+    part_size = int(part_size)
 
     q = [] 
-    for x in range(num_isos + 1): 
-        q.append(HTE_env_cmp_function_type_1_(hteb,success_multiplier)) 
+    for x in range(num_isos + 1):
+        navigator_range = (x * part_size,(x + 1) * part_size)
+        q.append(HTE_env_cmp_function_type_1_(\
+            hteb,success_multiplier,navigator_range)) 
     
     d = 0 
-    for i in range(len(q)): 
+    for i in range(len(q)-1): 
         d += q[i+1] - q[i] 
     return d 
 
+"""
+function_type := 1|2 
+num_isos := int if `function_type` == 2 else None 
+success_multiplier := negative real number. 
+"""
 def HTE_env_cmp_solution(function_type,num_isos=None,success_multiplier= -100.0): 
     assert function_type in {1,2} 
     if function_type == 1: 
         assert type(num_isos) == type(None) 
     else: 
-        assert type(num_isos) == int and num_isos > 1 
+        assert type(num_isos) == int and num_isos > 0 
     assert success_multiplier < 0 
 
     def f(hteb:HTEBot,hteb1:HTEBot):

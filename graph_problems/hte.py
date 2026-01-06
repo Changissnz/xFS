@@ -7,7 +7,7 @@ from morebs2.matrix_methods import *
 
 DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER = 1.0 
 
-HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES = True  
+HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES = False  
 
 # TODO: test. 
 """
@@ -54,7 +54,10 @@ When <HTESurface> 'reproduces` a new <HTESurface> from a previous one, this new 
 is an isomorphic derivation of the previous surface. So the threat nodes of the previous 
 surface may translate into those of similar geometric property to this new <HTESurface>. 
 If `navigator_uses_isomorphic_prediction` is set to True, the <HTENavigator> will attempt 
-to predict threat nodes on the new <HTESurface> before proceeding to traveling it. 
+to predict threat nodes on the new <HTESurface> before proceeding to traveling it. If 
+global variable HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES is set to True, all threat 
+nodes of the previous surface will be accounted for in the mapping to the new surface. 
+If variable is set to False, only the nodes that the navigator suspects will be considered. 
 
 From the navigator perspective, there are three mode classes: 
 - navigator_remembers_past_encounters
@@ -69,8 +72,9 @@ constant. If <HTEThreat> is contra, it will attempt to relocate to another node 
 the following conditions: 
 - new node location does not have an existing threat on it, 
 - new node location is a node on an ending subpath the terminated navigator took to get to the 
-  original threat location. The ending subpath is a suffix of the entire path the navigator took, which 
-  may contain duplicate nodes, and is of length equal to the navigator's radius of vision plus one. 
+  original threat location. The ending subpath is a suffix of the entire path the navigator 
+  took, which may contain duplicate nodes, and is of length equal to the navigator's radius 
+  of vision plus one. 
 A contra <HTEThreat> that cannot find a new node location that satisfies these two conditions 
 will stay at the original node location. 
 
@@ -133,6 +137,13 @@ class HTEBot:
         self.hte_nav.uses_isomorphic_prediction = bool(fourvec[1]) 
         self.hte_nav.memory_less = bool(fourvec[2]) 
         self.hte_nav.contra_risk = fourvec[3] 
+
+    def bot_mode(self): 
+        x = [int(self.navigator_remembers),\
+            int(self.hte_nav.uses_isomorphic_prediction),\
+            int(self.hte_nav.memory_less),\
+            self.hte_nav.contra_risk] 
+        return np.array(x) 
 
     def clear_logs(self): 
         self.previous_hsurfaces.clear() 
@@ -238,13 +249,23 @@ class HTEBot:
 
         isomap_hyp = {} 
         nav_avoid = self.hte_nav.avoid 
-        for k,v in isomap.items(): 
-            if k not in nav_avoid and not HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES: 
-                continue 
 
-            isomap_hyp[k] = (v,modulo_in_range(\
+        ks = [] 
+        if not HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES:
+            print("LEN NAV AVOID: ",len(nav_avoid))        
+            for k in isomap.keys(): 
+                if k not in nav_avoid: 
+                    continue 
+                ks.append(k)
+        else: 
+            ks = list(htes2.threat_map.keys())
+            isomap_ = {v:k for k,v in isomap.items()} 
+            ks = [isomap_[k] for k in ks]
+
+        for k in ks: 
+            isomap_hyp[k] = (isomap[k],modulo_in_range(\
                 int(self.hte_surf.prg()),DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE))
-            
+        print("ISOMAP: ",len(isomap_hyp))
         self.previous_hsurfaces.append(self.hte_surf) 
         if type(self.hte_surf_prior_ref) != type(None): 
             self.hsurface_prior_ref.append(self.hte_surf_prior_ref) 

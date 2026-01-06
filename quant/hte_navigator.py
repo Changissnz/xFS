@@ -112,6 +112,7 @@ class HTENavigator(NodeObjectiveNavigator):
 
     def full_navigator_prediction(self,next_context,next_context_hyp_map): 
         self.hnp.full_possible_threats_for_next_context(next_context,next_context_hyp_map,True) 
+        print("--- isomorphic prediction for {} nodes".format(len(self.hnp.suspected_threat_nodes)))
         self.possible_avoid |= self.hnp.suspected_threat_nodes
     
     def load_previous_visual_of_graph(self,reference_graph): 
