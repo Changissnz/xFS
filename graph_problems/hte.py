@@ -7,7 +7,7 @@ from morebs2.matrix_methods import *
 
 DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER = 1.0 
 
-HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES = False  
+HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES = True # False
 
 # TODO: test. 
 """
@@ -252,26 +252,28 @@ class HTEBot:
 
         ks = [] 
         if not HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES:
-            print("LEN NAV AVOID: ",len(nav_avoid))        
             for k in isomap.keys(): 
                 if k not in nav_avoid: 
                     continue 
                 ks.append(k)
         else: 
-            ks = list(htes2.threat_map.keys())
-            isomap_ = {v:k for k,v in isomap.items()} 
-            ks = [isomap_[k] for k in ks]
+            ks = list(self.hte_surf.threat_map.keys())
 
         for k in ks: 
             isomap_hyp[k] = (isomap[k],modulo_in_range(\
                 int(self.hte_surf.prg()),DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE))
-        print("ISOMAP: ",len(isomap_hyp))
+        
         self.previous_hsurfaces.append(self.hte_surf) 
         if type(self.hte_surf_prior_ref) != type(None): 
             self.hsurface_prior_ref.append(self.hte_surf_prior_ref) 
 
         self.hte_surf = htes2 
         self.hte_surf_prior_ref = isomap 
+
+        if self.verbose: 
+            print("*** Reproducing Surface")
+            print("# of isomorphic threats by navigator info: ",len(isomap_hyp))
+            print("total # of isomorphic threats: ",len(self.hte_surf.threat_map))
 
         next_full_context = (self.hte_surf.base_graph,isomap_hyp,self.hte_surf.objective_points)
         self.reproduce_terminated_navigator(next_full_context=next_full_context)

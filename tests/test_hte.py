@@ -157,6 +157,9 @@ class HTEBotClass(unittest.TestCase):
     demonstrates a <HTEBot> case with one navigator 
     that performs slightly better than another, with 
     the use of isomorphic prediction. 
+
+    HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES is set 
+    to True. 
     """
     def test__HTEBot__run_navigator__case_5(self):
         D = generated_graph_sample_1000(500,0.01)
@@ -171,8 +174,14 @@ class HTEBotClass(unittest.TestCase):
         S = count_success_in_increments(stats,10)  
 
         hteb_ = deepcopy(hteb)
-
+        q = set(hteb.hte_surf.base_graph.keys())
         hteb.reproduce_surface(False) 
+        q2 = set(hteb.hte_surf.base_graph.keys())
+
+        assert q.intersection(q2) == set() 
+        assert hteb.hte_nav.objectives == hteb.hte_surf.objective_points 
+        assert hteb.hte_nav.loc in q2  
+
         stats2,P2 = run_n_navigators(hteb,50)
         S2 = count_success_in_increments(stats2,10)  
 
@@ -183,7 +192,7 @@ class HTEBotClass(unittest.TestCase):
         stats3,P3 = run_n_navigators(hteb_,50)
         S3 = count_success_in_increments(stats3,10) 
 
-        assert sum(S2) == 19 and sum(S3) == 17 
+        assert sum(S2) == 19 and sum(S3) == 15,"got {},{}".format(sum(S2),sum(S3)) 
 
 if __name__ == '__main__':
     unittest.main()

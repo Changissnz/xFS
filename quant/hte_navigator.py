@@ -41,15 +41,18 @@ class HTENavigatorPrediction:
             DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE,prg = self.prg)
 
         possible = set() 
+        print("THREAT NODES: ",len(self.threat_nodes))
+        print(self.threat_nodes)
         for t in self.threat_nodes: 
             try: 
                 x = hai.possible_threat_analogs(t) 
                 possible |= x 
             except: 
                 print("NICHT ",t)
-                print(set(self.reference_graph.keys()))
+                #print(set(self.reference_graph.keys()))
                 pass 
-        
+        print("THREAT ISOS: ",len(possible))
+        print(possible)
         if store_results: 
             self.suspected_threat_nodes = deepcopy(possible) 
         return possible 
