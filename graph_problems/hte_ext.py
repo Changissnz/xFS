@@ -49,46 +49,70 @@ class HTEBotModeShifter:
         hteb.clear_logs() 
         return hteb
 
-def HTE_env_solution_fetch_function_(num_navigators): 
-
-    def f(hteb:HTEBot): 
-        navigators = hteb.terminated_navigators[-num_navigators:] 
-        return [(n.path_log,n.success_stat) for n in navigators]
+def HTE_env_solution_fetch_function(hteb:HTEBot): 
+    navigators = hteb.terminated_navigators 
+    ##print("# of navigators: ",len(navigators))
+    return [(n.path_log,n.success_stat) for n in navigators]
     
-    return f 
+def HTE_env_cmp_function_type_1_(hteb,success_multiplier=-100.0): 
+    ps0 = HTE_env_solution_fetch_function(hteb)
+    s0 = 0 
 
-def HTE_env_cmp_solution__type_1_(num_navigators=100,success_multiplier= -100.0): 
+    for p in ps0: 
+        p0,p1 = p 
+        s0 = s0 + (len(p0) + float(p1) * success_multiplier) 
+    return s0 
 
+def HTE_env_cmp_function_type_2_(hteb,num_isos,success_multiplier=-100.0): 
+    assert num_isos > 0 
+    ps0 = HTE_env_solution_fetch_function(hteb)
+    s0 = 0 
+
+    part_size = len(ps0) / (num_isos + 1) 
+    assert int(part_size) == part_size 
+
+    q = [] 
+    for x in range(num_isos + 1): 
+        q.append(HTE_env_cmp_function_type_1_(hteb,success_multiplier)) 
+    
+    d = 0 
+    for i in range(len(q)): 
+        d += q[i+1] - q[i] 
+    return d 
+
+def HTE_env_cmp_solution(function_type,num_isos=None,success_multiplier= -100.0): 
+    assert function_type in {1,2} 
+    if function_type == 1: 
+        assert type(num_isos) == type(None) 
+    else: 
+        assert type(num_isos) == int and num_isos > 1 
     assert success_multiplier < 0 
 
     def f(hteb:HTEBot,hteb1:HTEBot):
-        ps0 = HTE_env_solution_fetch_function_(num_navigators)(hteb)
-        ps1 = HTE_env_solution_fetch_function_(num_navigators)(hteb1)
+        s0,s1 = None,None 
 
-        s0,s1 = 0,0
-        for p,q in zip(ps0,ps1): 
-            p0,p1 = p 
-            s0 = s0 + (len(p0) + float(p1) * success_multiplier) 
-
-            q0,q1 = q 
-            s1 = s1 + (len(q0) + float(q1) * success_multiplier) 
-        
+        if function_type == 1: 
+            s0 = HTE_env_cmp_function_type_1_(hteb,success_multiplier=-100.0)
+            s1 = HTE_env_cmp_function_type_1_(hteb1,success_multiplier=-100.0)
+        else: 
+            s0 = HTE_env_cmp_function_type_2_(hteb,num_isos,success_multiplier=-100.0)
+            s1 = HTE_env_cmp_function_type_2_(hteb1,num_isos,success_multiplier=-100.0)        
         return s0 <= s1 
 
     return f 
 
-def HTE_env_run_(num_navigators=100):
+def HTE_env_run_(num_navigators=100,num_iso_surfaces=1):
 
     def f(hteb:HTEBot): 
-        for i in range(num_navigators):  
+        for _ in range(num_navigators):  
             hteb.run_navigator() 
             hteb.reproduce_terminated_navigator() 
         
-        hteb.reproduce_surface() 
-        for i in range(num_navigators):  
-            hteb.run_navigator() 
-            hteb.reproduce_terminated_navigator() 
-        
+        for _ in range(num_iso_surfaces): 
+            hteb.reproduce_surface(False)  
+            for i in range(num_navigators):  
+                hteb.run_navigator() 
+                hteb.reproduce_terminated_navigator() 
         return 
 
     return f 

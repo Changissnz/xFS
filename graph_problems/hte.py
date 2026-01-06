@@ -7,6 +7,8 @@ from morebs2.matrix_methods import *
 
 DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER = 1.0 
 
+HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES = True  
+
 # TODO: test. 
 """
 Hidden Threat Exposure automaton is related to the 1990's video 
@@ -231,13 +233,13 @@ class HTEBot:
             self.hte_nav.loc)) 
         return
 
-    def reproduce_surface(self): 
+    def reproduce_surface(self,save_previous_navigator:bool=False): 
         htes2,isomap = self.hte_surf.prng_reproduction_scheme2() 
 
         isomap_hyp = {} 
         nav_avoid = self.hte_nav.avoid 
         for k,v in isomap.items(): 
-            if k not in nav_avoid: 
+            if k not in nav_avoid and not HTEBOT_FEEDS_NAVIGATOR_ALL_ISOMORPHIC_NODES: 
                 continue 
 
             isomap_hyp[k] = (v,modulo_in_range(\
@@ -252,6 +254,9 @@ class HTEBot:
 
         next_full_context = (self.hte_surf.base_graph,isomap_hyp,self.hte_surf.objective_points)
         self.reproduce_terminated_navigator(next_full_context=next_full_context)
+        
+        if not save_previous_navigator: 
+            self.terminated_navigators.pop(-1) 
         return
 
     def choose_entry_point_for_navigator(self): 
