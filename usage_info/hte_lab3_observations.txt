@@ -118,7 +118,7 @@ array([1., 0., 1., 1.])
 # [0] navigator_remembers_past_encounters -> True  
 # [1] navigator_uses_isomorphic_prediction -> False    
 # [2] memory_less navigator -> True  
-# [3] `contra_risk` -> 1.0 (none) 
+# [3] `contra_risk` -> 1.0 (full) 
 
 #----------------------------------------------------------------------------------------
 [on developer's device] 
