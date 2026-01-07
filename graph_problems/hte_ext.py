@@ -13,16 +13,23 @@ Four mode classes:
 - memory_less navigator (size 2)
 - contra_risk (size 5) 
 ''' 
-def HTE_env_mode_shift_function__iterator(): 
+def HTE_env_mode_shift_function__iterator(num_contra_risk=4): 
+    assert type(num_contra_risk) == int and num_contra_risk > 0 
+
+    if num_contra_risk == 0: 
+        R = [0.,0.] 
+    else: 
+        x = 1. / num_contra_risk 
+        R = [0.,1. + x] 
 
     bounds = np.array([[0,2],\
                     [0,2],\
                     [0,2],\
-                    [0,1.25]])
+                    R])
 
     start_point = np.array([0,0,0,0]) 
     column_order = [0,1,2,3] 
-    ssi_hop = np.array([2,2,2,5]) 
+    ssi_hop = np.array([2,2,2,num_contra_risk + 1])   
     cycle_on = False 
     cycle_is = 0 
 
@@ -39,8 +46,8 @@ def HTE_env_mode_shift_function__iterator():
 
 class HTEBotModeShifter: 
 
-    def __init__(self): 
-        self.ssi = HTE_env_mode_shift_function__iterator() 
+    def __init__(self,num_contra_risk=4): 
+        self.ssi = HTE_env_mode_shift_function__iterator(num_contra_risk=num_contra_risk) 
 
     def shift_HTEBot(self,hteb:HTEBot): 
         q = self.ssi() 

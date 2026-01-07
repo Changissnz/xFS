@@ -97,11 +97,12 @@ array([1., 1., 1., 0.])
 
 Here are more specific results on these 40 bot mode configurations. Note that the metric 
 used produced results that did not yield the bot mode configuration with simply the highest 
-number of successes (number of navigators that reached an objective node). Some of the better 
-scoring bot mode configurations had many navigators that conducted cyclical travel, increasing 
-the cost for the objective of minimal travel. In these configurations, coincidentally, most 
-of the navigators that lost did so by this way, instead of traveling into a threat node. These 
-configurations set low contra risk for their navigators. 
+number of successes (number of navigators that reached an objective node). Some of the bot 
+mode configurations with a higher success rate had many navigators that conducted cyclical 
+travel, increasing the cost for the objective of minimal travel. In these configurations, 
+coincidentally, most of the navigators that lost did so by this way, instead of traveling 
+into a threat node. These configurations did not necessarily set low contra risk for their 
+navigators. 
 
 Every line shows the results from one bot mode configuration (variable M). Variable L is the 
 average travel length the 100 navigators took. Variable S1 is the number of successes of those 
