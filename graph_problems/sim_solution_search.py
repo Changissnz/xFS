@@ -16,7 +16,6 @@ class SimulationSolutionSearch:
     def __init__(self,sim_env,sim_env_run_function,prng_seq,\
         sim_env_prng_assignment_function,sim_mode_shift_function,\
         simsol_fetch_function,simsol_cmp_function,verbose=False): 
-
         self.sim_env = sim_env 
         # copy of sim_env for mode shift
         self.sim_env2 = deepcopy(self.sim_env) 
