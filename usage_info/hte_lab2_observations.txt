@@ -1,0 +1,193 @@
+@ approximately 1:03AM, 1/7/2026. In this second lab on graph problem, 
+Hidden Threat Exposure (HTE), the focus is solely on navigator performance. 
+The last lab attempted to find the best <HTEBot> bot mode configuration 
+for <HTENavigator> instances to demonstrate improvement in performance 
+between isomorphic <HTESurface> instances. The lab results were somewhat 
+puzzling. In all 3 trials, the best configurations had variables 
+`navigator_remembers_past_encounters`, `memory_less navigator` and `contra_risk` 
+set to True (or 1.). In the 3rd trial, the `navigator_uses_isomorphic_prediction` 
+variable was set at False instead of True. The design of the 1st lab may be 
+flawed in its measurement of differentials, since `contra_risk` set to 1.0 
+may skew the variance in performance of navigators between their isomorphic 
+surfaces. The first lab will be re-run in the 3rd lab on HTE, with contra_risk 
+set to a constant 0.0, in order to determine the best values for the other 
+three mode variables.   
+
+In this second lab, the below code was used to produce results. Note that the 
+initial graph in this lab is different than in the previous lab. It contains 
+1000 nodes, but is less connected (less edges between nodes), thereby causing 
+greater difficulties for navigators. There are interesting cases in this lab, 
+where a navigator conducts cyclical travel until its fuel goes to 0. This 
+phenomena was mentioned in the previous lab. This lab shows more concrete 
+evidence of it. The number of navigators used for every bot mode configuration 
+is 100. A navigator that is a successor to many others before it will have more 
+information on prior threat locations and possible current threat locations. 
+The metric function<HTE_env_cmp_function_type_1_> was used instead. Success 
+status multiplier was set to -100.0. 
+
+#---------------------------------------------------------------------------------
+
+from graph_models.graph_gen import * 
+from graph_problems.hte_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+import time 
+
+num_entry_points = 8 
+num_objective_points = 8
+threat_ratio = 0.1
+threat_mobility_ratio = 0.75 
+threat_nodes_include_entry_points = False  
+
+D = generated_graph_sample_1000()
+
+prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+
+print("GENERATING")
+htes = HTESurface.generate_instance(D,num_entry_points,num_objective_points,\
+    threat_ratio,threat_mobility_ratio,threat_nodes_include_entry_points,\
+    prg)
+hteb = HTEBot(htes,None,navigator_remembers_past_encounters=False,verbose=True)
+hteb.set_bot_mode(np.array([0,0,0,0]))
+
+num_navigators = 100 
+num_iso_surfaces = 0
+run_function = HTE_env_run_(num_navigators,num_iso_surfaces)
+
+prg_seq = prg_to_prg__LCG_sequence(prg,1) 
+assignment_func = HTE_env_prng_assignment_function
+
+mode_shifter = HTEBotModeShifter().shift_HTEBot 
+solution_fetcher = HTE_env_solution_fetch_function
+
+success_multiplier = -100.0 
+function_type = 1
+num_iso_surfaces = None  
+cmp_solution_function = HTE_env_cmp_solution(function_type,\
+    num_isos=num_iso_surfaces,success_multiplier= success_multiplier)
+
+S = SimulationSolutionSearch(hteb,run_function,prg_seq,assignment_func,\
+    mode_shifter,solution_fetcher,cmp_solution_function,verbose=True)
+
+t = time.time() 
+while not S.fin_stat: 
+    t2 = time.time() 
+    ##print("iter ",S.i, " mode ", S.i % 4 + 1)
+    S.process_one()
+    print("-- timenga: ",time.time() - t2)
+
+print("total runtime: {} seconds.".format(time.time() - t))
+
+#----------------------------------------------------------------------------------------
+[on developer's device] 
+total runtime:  1707.971552848816 seconds. 
+#----------------------------------------------------------------------------------------
+####### Trial 1 
+>>> HTE_env_cmp_function_type_1_(S.best[1],success_multiplier=-100.0)
+-1931.0
+>>> S.best[1].bot_mode()
+array([1., 1., 1., 0.])
+
+# [0] navigator_remembers_past_encounters -> True  
+# [1] navigator_uses_isomorphic_prediction -> True   
+# [2] memory_less navigator -> True  
+# [3] `contra_risk` -> 0.0 (full)
+
+#----------------------------------------------------------------------------------------- 
+
+Here are more specific results on these 40 bot mode configurations. Note that the metric 
+used produced results that did not yield the bot mode configuration with simply the highest 
+number of successes (number of navigators that reached an objective node). Some of the better 
+scoring bot mode configurations had many navigators that conducted cyclical travel, increasing 
+the cost for the objective of minimal travel. In these configurations, coincidentally, most 
+of the navigators that lost did so by this way, instead of traveling into a threat node. These 
+configurations set low contra risk for their navigators. 
+
+Every line shows the results from one bot mode configuration (variable M). Variable L is the 
+average travel length the 100 navigators took. Variable S1 is the number of successes of those 
+100 navigators. And variable S2 is the metric score, used by the minimal objective function for 
+the best bot mode configuration. The greatest path length a navigator can have is 1000, the number 
+of nodes of the base graph used. 
+
+
+  L         M             S1      S2 
+
+338.71   [0 0 0 0]        32    30671.0
+
+84.3   [1. 0. 0. 0.]      53    3130.0
+
+338.71   [0. 1. 0. 0.]    32    30671.0
+
+84.3   [1. 1. 0. 0.]      53    3130.0
+
+13.65   [0. 0. 1. 0.]     21    -735.0
+
+12.69   [1. 0. 1. 0.]     32    -1931.0
+
+13.65   [0. 1. 1. 0.]     21    -735.0
+
+12.69   [1. 1. 1. 0.]     32    -1931.0
+
+46.12   [0. 0. 0. 0.25]   54    -788.0
+
+61.33   [1. 0. 0. 0.25]   53    833.0
+
+46.12   [0. 1. 0. 0.25]   54    -788.0
+
+61.33   [1. 1. 0. 0.25]   53    833.0
+
+13.8   [0. 0. 1. 0.25]    26    -1220.0
+
+14.62   [1. 0. 1. 0.25]   30    -1538.0
+
+13.8   [0. 1. 1.   0.25]  26    -1220.0
+
+14.62   [1. 1. 1. 0.25]   30    -1538.0
+
+55.29   [0. 0. 0. 0.5]    47    829.0
+
+84.76   [1. 0. 0. 0.5]    50    3476.0
+
+55.29   [0. 1. 0. 0.5]    47    829.0
+
+84.76   [1. 1. 0. 0.5]    50    3476.0
+
+13.8   [0. 0. 1. 0.5]     25    -1120.0
+
+13.92   [1. 0. 1. 0.5]    32    -1808.0
+
+13.8   [0. 1. 1. 0.5]     25    -1120.0
+
+13.92   [1. 1. 1. 0.5]    32    -1808.0
+
+69.05   [0. 0. 0. 0.75]   52    1705.0
+
+148.02   [1. 0. 0. 0.75]  41    10702.0
+
+69.05   [0. 1. 0. 0.75]   52    1705.0
+
+148.02   [1. 1. 0. 0.75]  41    10702.0
+
+13.69   [0. 0. 1. 0.75]   23    -931.0
+
+13.43   [1. 0. 1. 0.75]   32    -1857.0
+
+13.69   [0. 1. 1. 0.75]   23    -931.0
+
+13.43   [1. 1. 1. 0.75]   32    -1857.0
+
+449.61   [0. 0. 0. 1.]    28    42161.0
+
+213.75   [1. 0. 0. 1.]    41    17275.0
+
+449.61   [0. 1. 0. 1.]    28    42161.0
+
+213.75   [1. 1. 0. 1.]    41    17275.0
+
+13.01   [0. 0. 1. 1.]     17    -399.0
+
+13.77   [1. 0. 1. 1.]     29    -1523.0
+
+13.01   [0. 1. 1. 1.]     17    -399.0
+
+13.77   [1. 1. 1. 1.]     29    -1523.0

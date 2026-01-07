@@ -44,15 +44,13 @@ is 39 (19 for Trial 1, 29 for Trial 2, and 39 for Trial 3).
 
 These trials attempt to find the best solution, comprised of a pair, <HTEBot> bot 
 mode and a pseudo-random number generator(PRNG). The PRNG is used by the <HTENavigator> 
-to make navigation decisions. 
-
-These three trials are certainly not conclusive on what bot mode yields the greatest 
-result. The objective of these trials is to determine the best bot mode for a navigator 
-to have the greatest improvements in performance between every isomorphic surface 
-in a sequence of <HTESurface> instances. As clarification, this objective 
-(see function<HTE_env_cmp_function_type_2_>) is different than merely focusing on 
-navigators' overall performance, their path lengths and success rate (see 
-function<HTE_env_cmp_function_type_1_>). 
+to make navigation decisions. These three trials are certainly not conclusive on what 
+bot mode yields the greatest result. The objective of these trials is to determine 
+the best bot mode for a navigator to have the greatest improvements in performance 
+between every isomorphic surface in a sequence of <HTESurface> instances. As 
+clarification, this objective (see function<HTE_env_cmp_function_type_2_>) is different 
+than merely focusing on navigators' overall performance, their path lengths and success 
+rate (see function<HTE_env_cmp_function_type_1_>). 
 
 ######### Trial 1 
 ######### <SimulationSolutionSearch> for determining the best <HTEBot> mode 
@@ -111,7 +109,7 @@ while not S.fin_stat:
 
 print("total runtime: {} seconds.".format(time.time() - t))
 
-#### Some results 
+########################################### Some results 
 
 >>> HTE_env_cmp_function_type_2_(S.best[1],1)
 -285.0
