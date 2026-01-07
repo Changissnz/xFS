@@ -14,7 +14,7 @@ Four mode classes:
 - contra_risk (size 5) 
 ''' 
 def HTE_env_mode_shift_function__iterator(num_contra_risk=4): 
-    assert type(num_contra_risk) == int and num_contra_risk > 0 
+    assert type(num_contra_risk) == int and num_contra_risk >= 0 
 
     if num_contra_risk == 0: 
         R = [0.,0.] 
