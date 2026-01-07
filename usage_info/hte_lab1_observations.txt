@@ -111,7 +111,7 @@ print("total runtime: {} seconds.".format(time.time() - t))
 >>> S.best[1].bot_mode()
 array([1., 1., 1., 1.])
 
-# [0] navigator_remembers_past_encounters -> False 
+# [0] navigator_remembers_past_encounters -> True  
 # [1] navigator_uses_isomorphic_prediction -> True 
 # [2] memory_less navigator -> True 
 # [3] `contra_risk` -> 1.0 (full)
