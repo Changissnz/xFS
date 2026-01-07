@@ -35,6 +35,13 @@ isomorphic surface, ten for the 2nd isomorphic surface.
 - In Trial 3, there are 40 total navigators, ten for the original, and ten for every 
 successive isomorphic surface after. 
 
+In technical terms, more navigators would reveal the locations of more threats, 
+up until all threats have been encountered once. If the lifespan of a threat node 
+is finite at integer x, the minimum number of navigators required to remove the threat 
+is x. Since there are less than 50 navigators (40 to be precise) used for any bot mode 
+configuration in this lab, the most number of threat nodes known by previous encounter 
+is 39 (19 for Trial 1, 29 for Trial 2, and 39 for Trial 3).  
+
 These trials attempt to find the best solution, comprised of a pair, <HTEBot> bot 
 mode and a pseudo-random number generator(PRNG). The PRNG is used by the <HTENavigator> 
 to make navigation decisions. 
