@@ -8,7 +8,7 @@ probable threat nodes. Because of this quality, an <HTENavigator> with knowledge
 prior <HTENavigator> performance will have non-empty sets of nodes for these 
 variables: `take`,`possible_avoid`, and `avoid`. Large set sizes for the variables 
 `possible_avoid` and `avoid` result in lesser options for an <HTENavigator> moving 
-to the next node. The <HTENavigator> will prioritize next candidates that it has 
+to the next node. The <HTENavigator> will prioritize next candidates that it have 
 already traveled, sometimes resulting in circular travel patterns that make no 
 real progress in the navigator reaching an objective node. In these cases of 
 circular decision-making due to constraints imposed by `possible_avoid` and `avoid` 
@@ -117,7 +117,7 @@ array([1., 1., 1., 1.])
 # [3] `contra_risk` -> 1.0 (full)
 #------------------------------------------------------------------------------------------- 
 [on developer's device] 
-total runtime:  362.1853849887848
+total runtime:  362.1853849887848 seconds. 
 #----------------------------------------------------------------------------------------
 
 ######### Trial 2 
@@ -137,7 +137,7 @@ array([1., 1., 1., 1.])
 
 #----------------------------------------------------------------------------------------
 [on developer's device] 
-total runtime:  716.5579454898834
+total runtime:  716.5579454898834 seconds. 
 #-------------------------------------------------------------------------------------------- 
 
 ######### Trial 3 
@@ -157,5 +157,5 @@ array([1., 0., 1., 1.])
 
 #----------------------------------------------------------------------------------------
 [on developer's device] 
-total runtime:  1707.971552848816
+total runtime:  1707.971552848816 seconds. 
 #----------------------------------------------------------------------------------------

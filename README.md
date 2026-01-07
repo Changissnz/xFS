@@ -11,7 +11,7 @@ further development.
 Here is a list of graph problems in the project: 
 - Respondent Network Bot (Alpha): 
     - vantage point for learning: Q, the questioner. 
-- Hidden Threat Exposure Bot (Work in progress) 
+- Hidden Threat Exposure Bot (Alpha) 
     - vantage point for learning: navigator of network containing threats. 
 - Slander Net Bot (Work in progress) 
 - MK (Mob/Mass Killer) Bot (Work in progress) 
