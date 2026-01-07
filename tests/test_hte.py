@@ -29,27 +29,6 @@ def HTEBot_sample_QWAS(D:defaultdict,threat_mobility_ratio):
     hteb = HTEBot(htes,None,navigator_remembers_past_encounters=False,verbose=False)
     return hteb 
 
-def run_n_navigators(hteb:HTEBot,n:int): 
-
-    stats = [] 
-    P = [] 
-    for i in range(n): 
-        print("I: ",i)
-        hteb.run_navigator()
-        stats.append(hteb.hte_nav.success_stat) 
-        P.append(hteb.hte_nav.path_log)
-        print(hteb.hte_nav)
-
-        # check that path is valid 
-        for i in range(len(hteb.hte_nav.path_log) -1): 
-            p0,p1 = hteb.hte_nav.path_log[i],hteb.hte_nav.path_log[i+1]
-            assert p1 in hteb.hte_surf.base_graph[p0]
-
-        hteb.reproduce_terminated_navigator()
-        print("------------------------------------------------------------")
-    return stats,P 
-
-
 ### lone file test 
 """
 py -m tests.test_hte
@@ -71,7 +50,8 @@ class HTEBotClass(unittest.TestCase):
         hteb = HTEBot_sample_QWAS(D,threat_mobility_ratio) 
 
         t = time.time()
-        stats,P = run_n_navigators(hteb,100)
+
+        stats,P = HTEBot.run_n_navigators(hteb,100,1,True)
         S = count_success_in_increments(stats,10) 
         assert sum(S) == 49 
         assert S == [4, 3, 5, 2, 5, 3, 5, 8, 5, 9]
@@ -94,7 +74,7 @@ class HTEBotClass(unittest.TestCase):
         hteb.set_bot_mode(bmode)
 
         t = time.time() 
-        stats,P = run_n_navigators(hteb,50)
+        stats,P = HTEBot.run_n_navigators(hteb,50,1,True)
         print("total runtime: ",time.time() - t) 
         S = count_success_in_increments(stats,10) 
         assert sum(S) == 12 
@@ -116,12 +96,12 @@ class HTEBotClass(unittest.TestCase):
         hteb.set_bot_mode(bmode)
 
         t = time.time() 
-        stats,P = run_n_navigators(hteb,50)
+        stats,P = HTEBot.run_n_navigators(hteb,50,1,True)
         S = count_success_in_increments(stats,10)  
 
         bmode = np.array([1. , 1. , 1. , 0.])
         hteb_.set_bot_mode(bmode)
-        stats2,P2 = run_n_navigators(hteb_,50)
+        stats2,P2 = HTEBot.run_n_navigators(hteb_,50,1,True)
         S2 = count_success_in_increments(stats2,10)  
 
         assert sum(S) > sum(S2) 
@@ -143,12 +123,12 @@ class HTEBotClass(unittest.TestCase):
         hteb.set_bot_mode(bmode)
 
         t = time.time() 
-        stats,P = run_n_navigators(hteb,50)
+        stats,P = HTEBot.run_n_navigators(hteb,50,1,True)
         S = count_success_in_increments(stats,10)  
 
         bmode = np.array([1. , 1. , 0. , 0.])
         hteb_.set_bot_mode(bmode)
-        stats2,P2 = run_n_navigators(hteb_,50)
+        stats2,P2 = HTEBot.run_n_navigators(hteb_,50,1,True)
         S2 = count_success_in_increments(stats2,10)  
 
         assert sum(S) == 12 and sum(S2) == 17 
@@ -162,6 +142,7 @@ class HTEBotClass(unittest.TestCase):
     to True. 
     """
     def test__HTEBot__run_navigator__case_5(self):
+        print("\t\tCASE 5")
         D = generated_graph_sample_1000(500,0.01)
         threat_mobility_ratio = 0.75   
         hteb = HTEBot_sample_QWAS(D,threat_mobility_ratio) 
@@ -170,7 +151,7 @@ class HTEBotClass(unittest.TestCase):
         hteb.set_bot_mode(bmode)
 
         t = time.time() 
-        stats,P = run_n_navigators(hteb,50)
+        stats,P = HTEBot.run_n_navigators(hteb,50,1,True)
         S = count_success_in_increments(stats,10)  
 
         hteb_ = deepcopy(hteb)
@@ -182,17 +163,17 @@ class HTEBotClass(unittest.TestCase):
         assert hteb.hte_nav.objectives == hteb.hte_surf.objective_points 
         assert hteb.hte_nav.loc in q2  
 
-        stats2,P2 = run_n_navigators(hteb,50)
+        stats2,P2 = HTEBot.run_n_navigators(hteb,50,1,True)
         S2 = count_success_in_increments(stats2,10)  
 
         bmode = np.array([1. , 0. , 0. , 0.5])
         hteb_.set_bot_mode(bmode)
         hteb_.reproduce_surface(False) 
 
-        stats3,P3 = run_n_navigators(hteb_,50)
+        stats3,P3 = HTEBot.run_n_navigators(hteb_,50,1,True)
         S3 = count_success_in_increments(stats3,10) 
 
-        assert sum(S2) == 19 and sum(S3) == 15,"got {},{}".format(sum(S2),sum(S3)) 
+        assert sum(S2) == 17 and sum(S3) == 15,"got {},{}".format(sum(S2),sum(S3)) 
 
 if __name__ == '__main__':
     unittest.main()

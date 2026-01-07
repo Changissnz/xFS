@@ -42,22 +42,45 @@ class HTENavigatorPrediction:
 
         possible = set() 
         print("THREAT NODES: ",len(self.threat_nodes))
-        print(self.threat_nodes)
         for t in self.threat_nodes: 
             try: 
                 x = hai.possible_threat_analogs(t) 
                 possible |= x 
             except: 
                 print("NICHT ",t)
-                #print(set(self.reference_graph.keys()))
                 pass 
         print("THREAT ISOS: ",len(possible))
-        print(possible)
         if store_results: 
+            print("STORING {} SUSPECTS".format(len(possible)))
             self.suspected_threat_nodes = deepcopy(possible) 
         return possible 
 
 
+"""
+Navigator is a subclass of <NodeObjectiveNavigator> and is specially designed 
+for the graph problem of Hidden Threat Exposure (HTE). There are some deficits 
+to navigator decision-making that prevent it from being a consistently intelligent 
+solution for the issue of navigating networkings in Hidden Threat Exposure. One 
+major issue is the navigator does not remember the paths it took, either those 
+that resulted in a threat node or those that allowed it to reach its objective. 
+Navigator only stores some of the individual nodes it took into memory, classifying 
+those nodes as `take` (safe to travel over), `possible_avoid` (possible threat), 
+and `avoid` (certain threat). To exemplify, one possible error a navigator may 
+take by this contextless (no path information included) node labeling is that a 
+path p0,p1,p2 may be taken as p2,p1,p0 by a successive navigator. 
+
+This classification process is not without fault in the general case, especially 
+when the navigator encounters contra (mobile) threats. When a navigator encounters 
+a contra threat, navigator labels the node location of the contra threat as `avoid`. 
+But the contra threat would relocate to another node location. So the next navigator 
+would have the wrong node labeling and make decisions to avoid that node location, 
+despite the threat relocating due to contra. This design is deficient but developed 
+and used in this program because it is simple and does not invoke bigger problems 
+such as more machine-learning requirements and the curse of dimensionality. This 
+navigator type does not have the ability to recognize whether a threat a previous 
+navigator encountered (the navigator was terminated) is contra or not, only that 
+the previous navigator encountered a threat at that specific node location. 
+"""
 class HTENavigator(NodeObjectiveNavigator): 
 
     def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,\
@@ -196,7 +219,8 @@ class HTENavigator(NodeObjectiveNavigator):
             assert type(next_full_context) == tuple and len(next_full_context) == 3
             assert type(next_full_context[0]) == defaultdict 
             assert type(next_full_context[1]) == dict 
-            hten.load_previous_HTE_data(self.visual_of_graph,self.avoid) 
+            q = set(next_full_context[1].keys())
+            hten.load_previous_HTE_data(self.visual_of_graph,q) 
             hten.full_navigator_prediction(next_full_context[0],next_full_context[1])            
 
         return hten

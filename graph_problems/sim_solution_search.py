@@ -55,6 +55,8 @@ class SimulationSolutionSearch:
         G = self.active_prng 
         C_ = deepcopy(self.sim_env2) 
         print("\t\tRunning simulation {}".format(self.i))
+        self.i += 1 
+        
         self.sim_env_run_function(self.sim_env2)
         C = deepcopy(self.sim_env2) 
         S = self.simsol_fetch_function(self.sim_env2)

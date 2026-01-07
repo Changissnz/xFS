@@ -102,6 +102,38 @@ class HTEBot:
         self.hte_nav.fuel = DEFAULT_NAVIGATOR_NODE_FUEL_MULTIPLIER * len(self.hte_surf.base_graph)
         return 
 
+    @staticmethod
+    def run_n_navigators(hteb:HTEBot,n:int,verbose=True,check_path_validity:bool=True): 
+        assert verbose in {0,1,2} 
+        if verbose == 2: 
+            hteb.verbose = True 
+        else: 
+            hteb.verbose = False 
+
+        stats = [] 
+        P = [] 
+        for i in range(n): 
+            if verbose: print("I: ",i)
+            hteb.run_navigator()
+            stats.append(hteb.hte_nav.success_stat) 
+            P.append(hteb.hte_nav.path_log)
+            if verbose: print(hteb.hte_nav)
+
+            # check that path is valid 
+            if check_path_validity: 
+                for i in range(len(hteb.hte_nav.path_log) -1): 
+                    p0,p1 = hteb.hte_nav.path_log[i],hteb.hte_nav.path_log[i+1]
+                    assert p1 in hteb.hte_surf.base_graph[p0]
+
+            hteb.reproduce_terminated_navigator()
+            if verbose: print("------------------------------------------------------------")
+        return stats,P 
+
+    def average_navigator_path_length(self): 
+        if len(self.terminated_navigators) == 0: 
+            return None 
+        return np.mean([len(nav.path_log) for nav in self.terminated_navigators])
+
     #-------------------------------------------------------------------------------------------- 
 
     def preproc(self): 
@@ -178,7 +210,6 @@ class HTEBot:
         #       navigator. 
         if contact_stat: 
             self.hte_nav.made_contact()
-            
 
         # case: navigator made contact with objective. 
         obj_stat = self.hte_nav.loc in self.hte_surf.objective_points

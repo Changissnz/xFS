@@ -11,18 +11,18 @@ Four mode classes:
 - navigator_remembers_past_encounters (size 2)
 - navigator_uses_isomorphic_prediction (size 2)
 - memory_less navigator (size 2)
-- contra_risk (size 11) 
+- contra_risk (size 5) 
 ''' 
 def HTE_env_mode_shift_function__iterator(): 
 
     bounds = np.array([[0,2],\
                     [0,2],\
                     [0,2],\
-                    [0,1.1]])
+                    [0,1.25]])
 
     start_point = np.array([0,0,0,0]) 
     column_order = [0,1,2,3] 
-    ssi_hop = np.array([2,2,2,11] )
+    ssi_hop = np.array([2,2,2,5]) 
     cycle_on = False 
     cycle_is = 0 
 

@@ -1,0 +1,161 @@
+@ approximately 8:37PM, 1/6/2025. 
+
+<HTESurface> uses only undirected simple graphs. Some graphs will prove to 
+be relatively challenging to an <HTENavigator>. These graphs will be of relatively 
+large size, more than a thousand nodes, with a low connectivity ratio. For one, a 
+<HTENavigator> will not have as many options per node location to steer away from 
+probable threat nodes. Because of this quality, an <HTENavigator> with knowledge of 
+prior <HTENavigator> performance will have non-empty sets of nodes for these 
+variables: `take`,`possible_avoid`, and `avoid`. Large set sizes for the variables 
+`possible_avoid` and `avoid` result in lesser options for an <HTENavigator> moving 
+to the next node. The <HTENavigator> will prioritize next candidates that it has 
+already traveled, sometimes resulting in circular travel patterns that make no 
+real progress in the navigator reaching an objective node. In these cases of 
+circular decision-making due to constraints imposed by `possible_avoid` and `avoid` 
+variables, <HTENavigator> will terminate in navigation due to its fuel reaching 0 
+(a loss for the navigator). In this first lab concerning the problem of Hidden 
+Threat Exposure on a relatively connected graph, the issue of circular travel from 
+programmed cautioning is less present.
+
+The design of <SimulationSolutionSearch> for <HTEBot> considers 40 mode configurations 
+of one <HTEBot>. See file<hte_ext> for specific programming. In short, these are the 
+variables (the bot mode) for 
+- navigator_remembers_past_encounters (size 2) -> boolean, quality of <HTENavigator>
+- navigator_uses_isomorphic_prediction (size 2) -> boolean, quality of <HTENavigator>
+- memory_less navigator (size 2) -> boolean, quality of <HTENavigator>
+- contra_risk (size 5) -> value in [0.,1.], quality of <HTENavigator>. 
+
+In this sequence of trials, <HTENavigator> does not have much information to base 
+better navigation decisions on. These are the number of navigators used for every 
+bot mode configuration. 
+- In Trial 1, there are 10 navigators before the <HTESurface> switches to another 
+isomorphism. And then there are 10 navigators after that. 
+- In Trial 2, there are 30 total navigators, ten for the original, ten for the 1st 
+isomorphic surface, ten for the 2nd isomorphic surface. 
+- In Trial 3, there are 40 total navigators, ten for the original, and ten for every 
+successive isomorphic surface after. 
+
+These trials attempt to find the best solution, comprised of a pair, <HTEBot> bot 
+mode and a pseudo-random number generator(PRNG). The PRNG is used by the <HTENavigator> 
+to make navigation decisions. 
+
+These three trials are certainly not conclusive on what bot mode yields the greatest 
+result. The objective of these trials is to determine the best bot mode for a navigator 
+to have the greatest improvements in performance between every isomorphic surface 
+in a sequence of <HTESurface> instances. As clarification, this objective 
+(see function<HTE_env_cmp_function_type_2_>) is different than merely focusing on 
+navigators' overall performance, their path lengths and success rate (see 
+function<HTE_env_cmp_function_type_1_>). 
+
+######### Trial 1 
+######### <SimulationSolutionSearch> for determining the best <HTEBot> mode 
+######### that yields the most positive difference in navigator performance 
+######### across isomorphic <HTESurface>s. See function<HTE_env_cmp_function_type_2_> 
+######### for more details.  
+#----------------------------------------------------------------------------------
+
+from graph_models.graph_gen import * 
+from graph_problems.hte_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+import time 
+
+#### generate the <HTESurface> 
+num_entry_points = 20
+num_objective_points = 15
+threat_ratio = 0.1
+threat_mobility_ratio = 0.75  
+threat_nodes_include_entry_points = False  
+
+D = generated_graph_sample_1000(1200,0.01)
+prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+htes = HTESurface.generate_instance(D,num_entry_points,num_objective_points,\
+    threat_ratio,threat_mobility_ratio,threat_nodes_include_entry_points,\
+    prg)
+
+#### generate <HTEBot> 
+hteb = HTEBot(htes,None,navigator_remembers_past_encounters=False,verbose=True)
+hteb.set_bot_mode(np.array([0,0,0,0]))
+
+num_navigators = 10 
+num_iso_surfaces = 1
+run_function = HTE_env_run_(num_navigators,num_iso_surfaces)
+
+prg_seq = prg_to_prg__LCG_sequence(prg,1) 
+assignment_func = HTE_env_prng_assignment_function
+
+mode_shifter = HTEBotModeShifter().shift_HTEBot 
+solution_fetcher = HTE_env_solution_fetch_function
+
+success_multiplier = -100.0 
+function_type = 2 
+cmp_solution_function = HTE_env_cmp_solution(function_type,\
+    num_isos=num_iso_surfaces,success_multiplier= success_multiplier)
+
+#### start up the solution search
+S = SimulationSolutionSearch(hteb,run_function,prg_seq,assignment_func,\
+    mode_shifter,solution_fetcher,cmp_solution_function,verbose=True)
+
+t = time.time() 
+while not S.fin_stat: 
+    t2 = time.time() 
+    S.process_one()
+    print("-- timenga: ",time.time() - t2)
+
+print("total runtime: {} seconds.".format(time.time() - t))
+
+#### Some results 
+
+>>> HTE_env_cmp_function_type_2_(S.best[1],1)
+-285.0
+>>> S.best[1].bot_mode()
+array([1., 1., 1., 1.])
+
+# [0] navigator_remembers_past_encounters -> False 
+# [1] navigator_uses_isomorphic_prediction -> True 
+# [2] memory_less navigator -> True 
+# [3] `contra_risk` -> 1.0 (full)
+#------------------------------------------------------------------------------------------- 
+[on developer's device] 
+total runtime:  362.1853849887848
+#----------------------------------------------------------------------------------------
+
+######### Trial 2 
+######### virtually the same environment as Trial 1, except 2 isomorphic surfaces instead of 
+######### 1. Adjust the line `num_iso_surfaces = 1` to `num_iso_surfaces = 2` from the above 
+######### code. 
+
+>>> HTE_env_cmp_function_type_2_(S.best[1],2)
+-85.0
+>>> S.best[1].bot_mode()
+array([1., 1., 1., 1.])
+
+# [0] navigator_remembers_past_encounters -> True  
+# [1] navigator_uses_isomorphic_prediction -> True  
+# [2] memory_less navigator -> True  
+# [3] `contra_risk` -> 1.0 (full)
+
+#----------------------------------------------------------------------------------------
+[on developer's device] 
+total runtime:  716.5579454898834
+#-------------------------------------------------------------------------------------------- 
+
+######### Trial 3 
+######### virtually the same environment as Trial 1, except 3 isomorphic surfaces instead of 
+######### 1. Adjust the line `num_iso_surfaces = 1` to `num_iso_surfaces = 3` from the above 
+######### code. 
+
+>>> HTE_env_cmp_function_type_2_(S.best[1],1)
+-597.0
+>>> S.best[1].bot_mode()
+array([1., 0., 1., 1.])
+
+# [0] navigator_remembers_past_encounters -> True  
+# [1] navigator_uses_isomorphic_prediction -> False   
+# [2] memory_less navigator -> True  
+# [3] `contra_risk` -> 1.0 (full)
+
+#----------------------------------------------------------------------------------------
+[on developer's device] 
+total runtime:  1707.971552848816
+#----------------------------------------------------------------------------------------
