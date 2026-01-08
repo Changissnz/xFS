@@ -1,0 +1,245 @@
+The fourth lab for graph problem, Hidden Threat Exposure, uses 3 different PRNGs. The 
+previous three labs used only one PRNG, a linear congruential generator. All three of 
+these PRNGs in this lab are also linear congruential generators. The first trial of 
+this lab focuses on a graph of 2000 nodes, connectivity ratio of 0.005, threat ratio 
+of 0.1 (200 threats), and 0.75 percent (150 threats) of those threats are contra 
+threats. Navigator contra risk is set at a constant 0.0, and the objective function 
+is type 2 (cumulative difference between performance of navigator on isomorphic 
+<HTESurface>s). Two isomorphic surfaces are used. Below is the code used to produce 
+results for Trial 1.  
+
+#------------------------------------------------------------------------------------------------------
+from graph_models.graph_gen import * 
+from graph_problems.hte_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+import time 
+
+#### generate the <HTESurface> 
+num_entry_points = 20
+num_objective_points = 15
+threat_ratio = 0.1
+threat_mobility_ratio = 0.75  
+threat_nodes_include_entry_points = False  
+
+D = generated_graph_sample_1000(2000,0.005)
+
+prg = prg__LCG(55.6,63.44,-1174.1174,19199.5) 
+htes = HTESurface.generate_instance(D,num_entry_points,num_objective_points,\
+    threat_ratio,threat_mobility_ratio,threat_nodes_include_entry_points,\
+    prg)
+
+#### generate <HTEBot> 
+hteb = HTEBot(htes,None,navigator_remembers_past_encounters=False,verbose=True)
+hteb.set_bot_mode(np.array([0,0,0,0.]))
+
+num_navigators = 50  
+num_iso_surfaces = 2
+run_function = HTE_env_run_(num_navigators,num_iso_surfaces)
+
+prg_seq = prg_to_prg__LCG_sequence(prg,3) 
+assignment_func = HTE_env_prng_assignment_function
+
+mode_shifter = HTEBotModeShifter(num_contra_risk=0,zero_case_head=0.).shift_HTEBot 
+solution_fetcher = HTE_env_solution_fetch_function
+
+success_multiplier = -100.0 
+function_type = 2 
+cmp_solution_function = HTE_env_cmp_solution(function_type,\
+    num_isos=num_iso_surfaces,success_multiplier= success_multiplier)
+
+#### start up the solution search
+S = SimulationSolutionSearch(hteb,run_function,prg_seq,assignment_func,\
+    mode_shifter,solution_fetcher,cmp_solution_function,verbose=True)
+
+t = time.time() 
+while not S.fin_stat: 
+    t2 = time.time() 
+    S.process_one()
+    print("-- timenga: ",time.time() - t2)
+
+print("total runtime: {} seconds.".format(time.time() - t))
+#---------------------------------------------------------------------------------------------------------------------
+[on developer's device] 
+total runtime: 2333.6213643550873 seconds.
+#---------------------------------------------------------------------------------------------------------------------
+>>> S.best[1].bot_mode()
+array([0., 1., 0., 0.])
+>>> HTE_env_cmp_function_type_2_(S.best[1],2)
+-1470.0
+
+# [0] navigator_remembers_past_encounters -> False 
+# [1] navigator_uses_isomorphic_prediction -> True 
+# [2] memory_less navigator -> False 
+# [3] `contra_risk` -> 0.0 (none) 
+
+#----------------------------------------------------------------------------------------------------------------------
+
+Here are the results for the (2 x 2 x 2 x 1) x 3 PRNGs = 24 configurations. Variable L is the 
+average travel length the 100 navigators took. Variable S1 is the number of successes of those 
+100 navigators. And variable S2 is the metric score, used by the minimal objective function for 
+the best bot mode configuration. The greatest path length a navigator can have is 2000, the number 
+of nodes of the base graph used. The success rate for every configuration is in the range [64,78]. 
+
+The cumulative S2 scores for bot mode variable `navigator_uses_isomorphic_prediction` are 
+-1161+253-603-365-824-957-126-705-725-940-692-1157 = -8002 (set to False) 
+and 
+-1470-555-821-940-352-1104+74-542-843-907-958-703 = -9121 (set to True). 
+
+There is a noticeable difference in performance dependent on this bot mode variable. The 
+average path lengths for navigators in this <HTEBot> case are relatively short, between 
+5-8 nodes. This demonstrates the convenience of navigator traversal in stronger connected 
+graphs. For a graph of 2000 nodes, there are 2000! possible edges. The connectivity ratio 
+is 0.005, resulting in 2000! x 0.005 edges in the graph (quite a lot). 
+
+
+ L          M           S1        S2         PRNG 
+6.34    [0. 0. 0. 0.]   69      -1161.0       1
+
+6.38    [1. 0. 0. 0.]   68      253.0         1
+
+6.39    [0. 1. 0. 0.]   70      -1470.0       1
+
+5.97    [1. 1. 0. 0.]   73      -555.0        1
+
+6.43    [0. 0. 1. 0.]   68      -603.0        1
+
+6.61    [1. 0. 1. 0.]   66      -365.0        1
+
+6.93    [0. 1. 1. 0.]   72      -821.0        1
+
+6.72    [1. 1. 1. 0.]   74      -940.0        1
+
+6.36    [0. 0. 0. 0.]   74      -824.0        2
+
+6.55    [1. 0. 0. 0.]   78      -957.0        2
+
+6.15    [0. 1. 0. 0.]   66      -352.0        2
+
+6.24    [1. 1. 0. 0.]   76      -1104.0       2 
+
+5.98    [0. 0. 1. 0.]   71      -126.0        2
+
+6.69    [1. 0. 1. 0.]   73      -705.0        2
+
+6.21    [0. 1. 1. 0.]   72      74.0          2
+
+6.39    [1. 1. 1. 0.]   74      -542.0        2
+
+6.66    [0. 0. 0. 0.]   64      -725.0        3
+
+6.93    [1. 0. 0. 0.]   70      -940.0        3
+
+6.3     [0. 1. 0. 0.]   67      -843.0        3
+
+7.46    [1. 1. 0. 0.]   72      -907.0        3
+
+6.37    [0. 0. 1. 0.]   73      -692.0        3
+
+6.84    [1. 0. 1. 0.]   72      -1157.0       3
+
+6.25    [0. 1. 1. 0.]   67      -958.0        3
+
+6.72    [1. 1. 1. 0.]   68      -703.0        3
+
+#------------------------------------------------------------------------------------------------------------------
+
+######## TRIAL 2: a different graph, lesser in connectivity, higher threat ratio, lesser contra threat ratio 
+
+Trial 2 observes another graph, and focuses on navigator objective function type 1 (overall performance). 
+Trial 2 observes navigator contra risk set at 0.0,0.25,0.5,0.75, and 1.0. In the above code, make these changes 
+to reproduce results for Trial 2. There are a total of (2 x 2 x 2 x 5 x 3 PRNGs) = 120 bot mode configurations. 
+This trial took considerably longer time than the other HTE trials. Due to timeliness, only the first 25 bot 
+mode configurations were run. These 25 bot mode configurations took around 2 hours to run. Circular travel 
+patterns were a frequent occurrence in this trial. 
+#--------------------------------------------------------------------------------------------------------------------
+
+D = generated_graph_sample_1000(2000,0.005)
+        to 
+D = generated_graph_sample_1000(2500,0.0003) 
+
+threat_ratio = 0.1
+        to 
+threat_ratio = 0.3 
+
+threat_mobility_ratio = 0.75  
+        to 
+threat_mobility_ratio = 0.25 
+
+mode_shifter = HTEBotModeShifter(num_contra_risk=0,zero_case_head=0.).shift_HTEBot 
+        to 
+mode_shifter = HTEBotModeShifter(num_contra_risk=4).shift_HTEBot
+
+function_type = 2 
+cmp_solution_function = HTE_env_cmp_solution(function_type,\
+    num_isos=num_iso_surfaces,success_multiplier= success_multiplier)
+        to 
+function_type = 1 
+cmp_solution_function = HTE_env_cmp_solution(function_type,\
+    num_isos=None,success_multiplier= success_multiplier)
+
+#--------------------------------------------------------------------------------------------------------------------
+
+>>> S.best[1].bot_mode()
+array([1.  , 0.  , 1.  , 0.25])
+>>> HTE_env_cmp_function_type_1_(S.best[1])
+-1084.0
+
+# [0] navigator_remembers_past_encounters -> True  
+# [1] navigator_uses_isomorphic_prediction -> False  
+# [2] memory_less navigator -> True  
+# [3] `contra_risk` -> 0.25 (none) 
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+ L          M           S1        S2          PRNG 
+
+370.9   [0. 0. 0. 0.]     20      53635.0       1
+
+420.58  [1. 0. 0. 0.]     17      61387.0       1
+
+387.41  [0. 1. 0. 0.]     17      56412.0       1
+
+420.63  [1. 1. 0. 0.]     18      61295.0       1
+
+4.55    [0. 0. 1. 0.]     14      -718.0        1
+
+4.88    [1. 0. 1. 0.]     14      -668.0        1
+
+4.91    [0. 1. 1. 0.]     18      -1064.0       1
+
+4.57    [1. 1. 1. 0.]     13      -614.0        1
+
+289.43  [0. 0. 0. 0.25]   14       42015.0      1
+
+304.66  [1. 0. 0. 0.25]   15      44199.0       1
+
+222.59  [0. 1. 0. 0.25]   12      32189.0       1
+
+221.74  [1. 1. 0. 0.25]   16      31661.0       1
+
+4.43    [0. 0. 1. 0.25]   15      -835.0        1
+
+4.77    [1. 0. 1. 0.25]   18      -1084.0       1
+
+4.41    [0. 1. 1. 0.25]   16      -938.0        1
+
+4.83    [1. 1. 1. 0.25]   16      -875.0        1
+
+354.43  [0. 0. 0. 0.5]    20      51165.0       1
+
+387.48  [1. 0. 0. 0.5]    16      56522.0       1
+
+287.75  [0. 1. 0. 0.5]    19      41262.0       1
+
+288.31  [1. 1. 0. 0.5]    19      41346.0       1
+
+4.34    [0. 0. 1. 0.5]    15      -849.0        1
+
+4.78    [1. 0. 1. 0.5]    17      -983.0        1
+
+4.53    [0. 1. 1. 0.5]    17      -1021.0       1
+
+4.73    [1. 1. 1. 0.5]    17      -991.0        1
+
+287.68  [0. 0. 0. 0.75]   18      41352.0       1

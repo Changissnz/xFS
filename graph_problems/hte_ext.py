@@ -17,8 +17,8 @@ def HTE_env_mode_shift_function__iterator(num_contra_risk=4,zero_case_head=0.0):
     assert type(num_contra_risk) == int and num_contra_risk >= 0 
 
     if num_contra_risk == 0: 
-        assert zero_case_head in {0,1}
-        R = [zero_case_head,zero_case_head] 
+        assert 0. <= zero_case_head <= 1.
+        R = [zero_case_head,zero_case_head + 1] 
         start_point = np.array([0,0,0,zero_case_head]) 
     else: 
         x = 1. / num_contra_risk 
@@ -50,12 +50,20 @@ def HTE_env_mode_shift_function__iterator(num_contra_risk=4,zero_case_head=0.0):
 class HTEBotModeShifter: 
 
     def __init__(self,num_contra_risk=4,zero_case_head=0.): 
-        self.ssi = HTE_env_mode_shift_function__iterator(num_contra_risk=num_contra_risk,\
-            zero_case_head=zero_case_head) 
+        self.num_contra_risk = num_contra_risk
+        self.zero_case_head = zero_case_head 
+        self.ssi = self.new_ssi() 
+
+    def new_ssi(self): 
+        return HTE_env_mode_shift_function__iterator(num_contra_risk=self.num_contra_risk,\
+            zero_case_head=self.zero_case_head) 
 
     def shift_HTEBot(self,hteb:HTEBot): 
         q = self.ssi() 
-        if type(q) == type(None): return None 
+        if type(q) == type(None): 
+            self.ssi = self.new_ssi() 
+            return None 
+            
         hteb.set_bot_mode(q)
         hteb.clear_logs() 
         return hteb
