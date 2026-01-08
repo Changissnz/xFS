@@ -309,7 +309,7 @@ and `memory_less navigator` for navigator path lengths.
 
 [2]: 
     True  -> (3802,370.09)
-    False -> (3802,2071.25)
+    False -> (3899,2071.25)
 
 [3] 
     0.0  -> (1545,582.07)
