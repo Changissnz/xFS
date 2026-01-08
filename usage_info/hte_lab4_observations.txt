@@ -150,7 +150,7 @@ Trial 2 observes another graph, and focuses on navigator objective function type
 Trial 2 observes navigator contra risk set at 0.0,0.25,0.5,0.75, and 1.0. In the above code, make these changes 
 to reproduce results for Trial 2. There are a total of (2 x 2 x 2 x 5 x 3 PRNGs) = 120 bot mode configurations. 
 This trial took considerably longer time than the other HTE trials. Due to timeliness, only the first 25 bot 
-mode configurations were run. These 25 bot mode configurations took around 2 hours to run. Circular travel 
+mode configurations were run. These 25 bot mode configurations took around 2 hours to complete. Circular travel 
 patterns were a frequent occurrence in this trial. 
 #--------------------------------------------------------------------------------------------------------------------
 
