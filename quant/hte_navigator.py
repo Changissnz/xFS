@@ -67,7 +67,7 @@ Navigator only stores some of the individual nodes it took into memory, classify
 those nodes as `take` (safe to travel over), `possible_avoid` (possible threat), 
 and `avoid` (certain threat). To exemplify, one possible error a navigator may 
 take by this contextless (no path information included) node labeling is that a 
-path p0,p1,p2 may be taken as p2,p1,p0 by a successive navigator. 
+path p0,p1,p2 is taken as p2,p1,p0 by a successive navigator. 
 
 This classification process is not without fault in the general case, especially 
 when the navigator encounters contra (mobile) threats. When a navigator encounters 
