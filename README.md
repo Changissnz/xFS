@@ -14,6 +14,7 @@ Here is a list of graph problems in the project:
 - Hidden Threat Exposure Bot (Alpha) 
     - vantage point for learning: navigator of network containing threats. 
 - Slander Net Bot (Work in progress) 
-- MK (Mob/Mass Killer) Bot (Work in progress) 
-- BK (Bull Killer) (Work in progress) 
-- Homo Frame Bot (Work in progress) 
+- MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
+- BK (Bull Killer) (Planned, 50/50 of publishing) 
+- Homo Frame Bot (Planned, 50/50 of publishing)
+- Poison Trace Bot (Planned, 50/50 of publishing)
