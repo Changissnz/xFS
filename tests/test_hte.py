@@ -29,12 +29,41 @@ def HTEBot_sample_QWAS(D:defaultdict,threat_mobility_ratio):
     hteb = HTEBot(htes,None,navigator_remembers_past_encounters=False,verbose=False)
     return hteb 
 
+
+def check_navigator_graph_distance(hteb): 
+    nav = hteb.hte_nav 
+    q = nav.context
+    l = nav.loc 
+    r = nav.visual_radius 
+
+    bdfs = BDFSCache(l,q,is_bfs=False,num_paths_per_node=1)
+    bdfs.exec() 
+
+    x = bdfs.min_paths 
+    for x_ in x.values(): 
+        assert x_[0].cost() <= r 
+    return 
+
 ### lone file test 
 """
 py -m tests.test_hte
 """
 ###
 class HTEBotClass(unittest.TestCase):
+
+    def test__HTEBot__next__case_1(self): 
+
+        D = generated_graph_sample_1000(500)
+        threat_mobility_ratio = 0.75 
+        hteb = HTEBot_sample_QWAS(D,threat_mobility_ratio) 
+        check_navigator_graph_distance(hteb) 
+
+        G0 = hteb.hte_nav.context 
+        for _ in range(20): 
+            next(hteb) 
+            G1 = hteb.hte_nav.context 
+            check_navigator_graph_distance(hteb)
+            assert G0 != G1 
 
     '''
     runs 100 navigators, with <HTEBot> set to these parameters: 
