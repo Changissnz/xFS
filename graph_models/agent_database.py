@@ -8,21 +8,23 @@ class AgentInfo:
             list,set,np.ndarray}  
         self.info_type = info_type
         self.info = None 
+        self.last_info = None 
         return
 
     def __add__(self,s): 
         assert type(s) == self.info_type, "got {}".format(type(s)) 
         q = deepcopy(self)
+        q.last_info = s 
         if type(q.info) == type(None): 
             if q.info_type == np.ndarray: 
                 q.info = np.array([s]) 
             else: 
                 q.info = s 
-        elif type(s) in {str,int,float}: 
+        elif q.info_type in {str,int,float}: 
             q.info += s 
-        elif type(s) == list: 
-            q.info.extend(s) 
-        elif type(s) == set: 
+        elif q.info_type == list: 
+            q.info.append(s) 
+        elif q.info_type == set: 
             q.info |= s 
         else: 
             q.info = np.vstack((q.info,s)) 
@@ -37,7 +39,7 @@ class SimpleAgentDB:
         self.c = 0 
 
     def add_agent(self): 
-        self.agent_idns.append(self.c) 
+        self.add_agent_(self.c)
         self.c += 1 
 
     def add_agent_(self,idn): 
@@ -46,7 +48,8 @@ class SimpleAgentDB:
         self.agent_info[idn] = AgentInfo(self.info_type) 
         return 
 
-    def update_agent(self,idn,info): 
-        assert idn in self.agent_idns 
+    def update_info(self,idn,info): 
+        if idn not in self.agent_idns:
+            self.add_agent_(idn) 
         self.agent_info[idn] = self.agent_info[idn] + info 
         return
