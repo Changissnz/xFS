@@ -27,15 +27,25 @@ class CEAgent:
         self.prev_act = None 
         self.current_query_idn = None 
 
-        self.current_transmission = None 
+        self.current_transmission = {}  
+        self.current_reaction = defaultdict(float) 
         self.bc = VecClassifierTypeBC(cl_num_balls,cl_radius)
+
+        self.score = 0 
+        self.communication_delta = defaultdict(defaultdict)  
+        self.execution_delta = defaultdict(float)  
+        return
+
+    def update_score(self,diff): 
+        self.score += diff 
+
+    def update_cdelta(self,d): 
+        for s_port,t_ports in d.items(): 
+            if s_port not in self.communication_delta: 
+                self.communication_delta[s_port] = defaultdict(float) 
+            for t,f in t_ports.items(): 
+                self.communication_delta[s_port][t] += f 
         return 
-
-    def load_transmission(self): 
-        return -1 
-
-    def receive_from_peer(self):  
-        return -1 
 
     def __str__(self): 
         S = "Agent {}".format(self.idn) 
@@ -52,7 +62,24 @@ class CEAgent:
     def receive_query_response(self,idn,r):   
         assert idn in self.s_port_variance
         self.dbq.update_info(idn,r) 
+
+        # calculate the alternative point for 
+        # transmitting to t-port agents 
+        v = self.s_port_variance[idn]
+        c = self.bc.contra_classify(r,v) 
+        b = self.bc.bc.balls[c]
+        r = modulo_in_range(self.prg(),[0.,b.radius])
+        p2 = random_npoint_from_point(b.center,r) 
+
+        # load up the point 
+        self.current_transmission[idn] = p2 
         return
+
+    def clear_transmission(self): 
+        self.current_transmission.clear()
+
+    def clear_reaction(self): 
+        self.current_reaction.clear() 
     
     def alter_port(self,idn,port_type,add_port:bool):  
         q = self.fetch_ports(port_type) 
@@ -99,6 +126,7 @@ class CEAgent:
     def premeditate_acts(self,num_acts): 
         for _ in range(num_acts): 
             x = self.act_one()
+            self.bc.input(x) 
             self.premeditated.append(x)
         return
 
@@ -107,6 +135,7 @@ class CEAgent:
             q = self.premeditated.pop(0)
         else: 
             q = self.act_one() 
+            self.bc.input(q)  
 
         self.activity.append(q) 
         self.prev_act = q 
@@ -132,4 +161,10 @@ class CEAgentDBBridge:
         self.adb.update_info(self.cea.idn,self.cea.prev_act)
         return
 
-    
+    def accept_transmission(self,subject_idn,v): 
+        q = self.cea.dbq.last_info_for_agent(subject_idn) 
+        if type(q) == type(None): 
+            q = deepcopy(v) 
+        d = euclidean_point_distance(v,q) 
+        self.cea.current_reaction[subject_idn] += d
+        return d  

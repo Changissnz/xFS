@@ -66,10 +66,16 @@ class CEAgentNetwork:
     main method 
     """
     def move_one_timestamp(self): 
-        return -1 
+        self.move_agents() 
+        self.agent_transmissions() 
+        self.agent_reactions() 
+        return
 
     def move_agents(self):
-        for k,v in self.cea_map.items():
+
+        for k,v in self.cea_map.items(): 
+            v.clear_transmission() 
+            v.clear_reaction() 
             v.next_act()
             
             # send info to db 
@@ -79,6 +85,54 @@ class CEAgentNetwork:
         # update each agent database 
         self.update_bridges() 
         return 
+
+    ############################################ methods to transmit vectors 
+    def agent_transmissions(self): 
+        # conduct agent transmission 
+        for k in self.cea_map.keys(): 
+            D,d = self.agent_transmission_(k)
+            c = self.cea_map[k]
+            c.update_score(-d) 
+            c.update_cdelta(D)
+
+    def agent_transmission_(self,idn): 
+
+        def transmit_(subject_idn,target_idn): 
+            v = c.current_transmission[subject_idn] 
+            b = self.bridges[target_idn]
+            return b.accept_transmission(subject_idn,v) 
+
+        c = self.cea_map[idn] 
+        d = 0 
+        D = defaultdict(defaultdict)  
+        for s in c.s_port_variance.keys(): 
+            D[s] = defaultdict(float)
+            for t in c.t_ports: 
+                d_ = transmit_(s,t) 
+                d += d_
+                D[s][t] = round(d_,5)   
+        return D,round(d,5) 
+
+    ############################################ methods for agents to react from transmitted vectors 
+
+    def agent_reactions(self): 
+        for k in self.cea_map.keys(): 
+            self.agent_reaction_(k) 
+
+    def agent_reaction_(self,idn): 
+
+        def react_(r_idn,d): 
+            c2 = self.cea_map[r_idn] 
+            c2.update_score(d)
+            c2.execution_delta[idn] += d 
+            return 
+
+        c = self.cea_map[idn] 
+        d = 0 
+        D = defaultdict(float)
+        for r_,d in c.current_reaction.items(): 
+            react_(r_,d)
+        return
 
     def update_bridges(self): 
         for k in self.cea_map.keys(): 

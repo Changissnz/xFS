@@ -29,5 +29,16 @@ class CEAgentNetworkClass(unittest.TestCase):
         for x in can.main_db.agent_info.values(): 
             assert x.info.shape[0] == 2 
 
+    def test__CEAgentNetwork__move_one_timestamp__case_1(self): 
+
+        can = CEAgentNetwork__sample_1() 
+        for _ in range(200): 
+            can.move_one_timestamp() 
+        
+        for i in range(13): 
+            c = can.cea_map[i] 
+            print("{}:{}".format(c.idn,c.score))
+        return 
+
 if __name__ == '__main__':
     unittest.main()

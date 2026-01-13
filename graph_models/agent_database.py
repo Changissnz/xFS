@@ -62,3 +62,7 @@ class SimpleAgentDB:
             self.add_agent_(idn) 
         self.agent_info[idn] = self.agent_info[idn] + info 
         return
+
+    def last_info_for_agent(self,idn): 
+        if idn not in self.agent_idns: return None 
+        return self.agent_info[idn].last_info 
