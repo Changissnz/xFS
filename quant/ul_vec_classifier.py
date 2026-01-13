@@ -3,7 +3,6 @@ from morebs2.ball_comp import *
 class VecClassifierTypeBC: 
 
     def __init__(self,max_balls,max_radius):  
-        assert max_point_capacity > 0 
         self.max_balls = max_balls 
         self.max_radius = max_radius 
 

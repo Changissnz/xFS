@@ -18,13 +18,25 @@ class CEAgentNetwork:
 
     @staticmethod 
     def generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,s_conn_range,\
-        t_conn_range,s_port_variance_range,prg): 
+        t_conn_range,s_port_variance_range,prg,cl_num_balls=50,prg_output_range=[-1000,1000],\
+        cl_radius_ratio = 0.1): 
+
+        def constrained_prg(prg): 
+
+            def f(): 
+                return modulo_in_range(prg(),prg_output_range) 
+            return f 
 
         prg_ = prg__single_to_int(prg)
         agent_idns = [i for i in range(num_agents)] 
         agent_idns = prg_seqsort(agent_idns,prg_)
 
+        cprg = constrained_prg(prg) 
         cea_map = dict() 
+
+        min_point = np.ones((prg_state_shape,)) * prg_output_range[0] 
+        max_point = np.ones((prg_state_shape,)) * prg_output_range[1] 
+        cl_radius = euclidean_point_distance(min_point,max_point) * cl_radius_ratio
         for a in agent_idns: 
             s = [a2 for a2 in agent_idns if a2 != a] 
 
@@ -45,8 +57,8 @@ class CEAgentNetwork:
                 q = modulo_in_range(prg(),s_port_variance_range)
                 s_port_variance[s_] = q 
             
-            cagent = CEAgent(a,set(r_nodes),s_port_variance,set(t_nodes),prg,prg_state_shape,\
-                deepcopy(s_port_variance_range)) 
+            cagent = CEAgent(a,set(r_nodes),s_port_variance,set(t_nodes),cprg,prg_state_shape,\
+                cl_num_balls,cl_radius,deepcopy(s_port_variance_range)) 
             cea_map[a] = cagent 
         return CEAgentNetwork(cea_map,prg)
 

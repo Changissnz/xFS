@@ -7,7 +7,7 @@ communication/execution agent
 class CEAgent: 
 
     def __init__(self,idn,r_ports,s_port_variance,t_ports,prg,prg_state_shape,\
-        new_s_port_var_range = [0.,1.]):  
+        cl_num_balls,cl_radius,new_s_port_var_range = [0.,1.]):  
         assert type(idn) == int
         assert type(r_ports) == type(t_ports) == set 
         assert type(s_port_variance) == dict 
@@ -28,6 +28,7 @@ class CEAgent:
         self.current_query_idn = None 
 
         self.current_transmission = None 
+        self.bc = VecClassifierTypeBC(cl_num_balls,cl_radius)
         return 
 
     def load_transmission(self): 
@@ -45,15 +46,12 @@ class CEAgent:
         S += "\n\tT-ports:\n{}\n".format(self.t_ports) 
         return S 
 
-    def pending_query(self,peer_idn):  
-        assert peer_idn in self.known_other_agents
-        self.current_query_idn = peer_idn 
-        return 
-    
+    """
+    latest vector from source connection 
+    """    
     def receive_query_response(self,idn,r):   
         assert idn in self.s_port_variance
         self.dbq.update_info(idn,r) 
-        #self.current_query_idn = None 
         return
     
     def alter_port(self,idn,port_type,add_port:bool):  
