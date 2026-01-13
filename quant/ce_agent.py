@@ -6,7 +6,8 @@ communication/execution agent
 """
 class CEAgent: 
 
-    def __init__(self,idn,r_ports,s_port_variance,t_ports,prg,prg_state_shape):  
+    def __init__(self,idn,r_ports,s_port_variance,t_ports,prg,prg_state_shape,\
+        new_s_port_var_range = [0.,1.]):  
         assert type(idn) == int
         assert type(r_ports) == type(t_ports) == set 
         assert type(s_port_variance) == dict 
@@ -17,7 +18,8 @@ class CEAgent:
         self.s_port_variance = s_port_variance
         self.t_ports = t_ports  
         self.prg = prg
-        self.prg_state_shape = prg_state_shape 
+        self.prg_state_shape = prg_state_shape
+        self.new_s_port_var_range = new_s_port_var_range  
         self.dbq = SimpleAgentDB(np.ndarray) 
 
         self.premeditated = []
@@ -34,6 +36,15 @@ class CEAgent:
     def receive_from_peer(self):  
         return -1 
 
+    def __str__(self): 
+        S = "Agent {}".format(self.idn) 
+        S += "\n\tR-ports:\n{}\n".format(self.r_ports) 
+        S += "\n\tS-ports:\n"
+        for k,v in self.s_port_variance.items(): 
+            S += "* agent {}, variance {}\n".format(k,v) 
+        S += "\n\tT-ports:\n{}\n".format(self.t_ports) 
+        return S 
+
     def pending_query(self,peer_idn):  
         assert peer_idn in self.known_other_agents
         self.current_query_idn = peer_idn 
@@ -45,14 +56,16 @@ class CEAgent:
         return
     
     def alter_port(self,idn,port_type,add_port:bool):  
-        assert port_type in {"r","s","t"}
+        q = self.fetch_ports(port_type) 
 
-        if port_type == "r": 
-            q = self.r_ports
-        elif port_type == "s": 
-            q = self.s_ports
-        else: 
-            q = self.t_ports
+        if port_type == "s": 
+            if add_port: 
+                assert idn not in q 
+                q[idn] = modulo_in_range(self.prg(),self.new_s_port_var_range)  
+            else: 
+                assert idn in q 
+                del q[idn] 
+            return 
 
         if add_port: 
             assert idn not in q
@@ -61,6 +74,19 @@ class CEAgent:
             assert idn in q 
             q -= {idn} 
         return
+
+    def fetch_ports(self,port_type):
+        assert port_type in {"r","s","t"}
+
+        if port_type == "r": 
+            return self.r_ports
+        elif port_type == "s": 
+            return self.s_port_variance
+        else: 
+            return self.t_ports
+
+    def is_related(self,idn,port_type): 
+        return idn in self.fetch_ports(port_type) 
 
     def act_one(self): 
         q = np.cumprod(self.prg_state_shape)[-1]          
