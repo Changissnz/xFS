@@ -6,17 +6,16 @@ communication/execution agent
 """
 class CEAgent: 
 
-    def __init__(self,idn,r_ports,s_ports,t_ports,s_port_variance,prg,prg_state_shape):  
+    def __init__(self,idn,r_ports,s_port_variance,t_ports,prg,prg_state_shape):  
         assert type(idn) == int
-        assert type(r_ports) == type(s_ports) == \
-            type(t_ports) == set
+        assert type(r_ports) == type(t_ports) == set 
+        assert type(s_port_variance) == dict 
         assert type(prg_state_shape) == int and prg_state_shape > 0 
 
         self.idn = idn 
         self.r_ports = r_ports 
-        self.s_ports = s_ports
-        self.t_ports = t_ports  
         self.s_port_variance = s_port_variance
+        self.t_ports = t_ports  
         self.prg = prg
         self.prg_state_shape = prg_state_shape 
         self.dbq = SimpleAgentDB(np.ndarray) 
@@ -25,9 +24,11 @@ class CEAgent:
         self.activity = [] 
         self.prev_act = None 
         self.current_query_idn = None 
+
+        self.current_transmission = None 
         return 
 
-    def transmit(self): 
+    def load_transmission(self): 
         return -1 
 
     def receive_from_peer(self):  
