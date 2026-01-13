@@ -14,5 +14,20 @@ class CEAgentNetworkClass(unittest.TestCase):
         assert can.is_reactive_dtriplet((6,0,1)) == (True, True, False)
         assert can.is_reactive_dtriplet((6,5,8)) == (True, False, False)
 
+    def test__CEAgentNetwork__move_agents__case_1(self): 
+        can = CEAgentNetwork__sample_1() 
+        can.move_agents()
+        cm = can.cea_map
+        for v in cm.values():
+            print("DB FOR {}".format(v.idn))
+            print(v.dbq)
+            x = set(v.dbq.agent_info.keys())
+            x2 = set(v.s_port_variance.keys())
+            assert x == x2 
+
+        can.move_agents() 
+        for x in can.main_db.agent_info.values(): 
+            assert x.info.shape[0] == 2 
+
 if __name__ == '__main__':
     unittest.main()

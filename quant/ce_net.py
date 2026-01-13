@@ -9,6 +9,11 @@ class CEAgentNetwork:
             assert k == v.idn 
         self.cea_map = cea_map 
         self.prg = prg 
+
+        self.main_db = SimpleAgentDB(np.ndarray) 
+        self.bridges = dict() 
+        for k,v in cea_map.items(): 
+            self.bridges[k] = CEAgentDBBridge(v,self.main_db) 
         return
 
     @staticmethod 
@@ -50,6 +55,32 @@ class CEAgentNetwork:
     """
     def move_one_timestamp(self): 
         return -1 
+
+    def move_agents(self):
+        for k,v in self.cea_map.items():
+            v.next_act()
+            
+            # send info to db 
+            b = self.bridges[k] 
+            b.transmit_agent_state_to_db() 
+        
+        # update each agent database 
+        self.update_bridges() 
+        return 
+
+    def update_bridges(self): 
+        for k in self.cea_map.keys(): 
+            self.update_bridge(k) 
+        return
+
+    def update_bridge(self,idn): 
+        c = self.cea_map[idn]
+        b = self.bridges[idn]
+
+        S = c.s_port_variance.keys()
+        for s in S: 
+            b.exec_query(s) 
+        return 
 
     def fetch_agent(self,idn): 
         assert idn in self.cea_map

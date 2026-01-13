@@ -11,6 +11,9 @@ class AgentInfo:
         self.last_info = None 
         return
 
+    def __str__(self): 
+        return str(self.info) 
+
     def __add__(self,s): 
         assert type(s) == self.info_type, "got {}".format(type(s)) 
         q = deepcopy(self)
@@ -37,6 +40,12 @@ class SimpleAgentDB:
         self.agent_idns = [] 
         self.agent_info = dict() 
         self.c = 0 
+
+    def __str__(self): 
+        S = ""
+        for k,v in self.agent_info.items(): 
+            S += str(k) + "\n" + str(v) + "\n\n" 
+        return S 
 
     def add_agent(self): 
         self.add_agent_(self.c)

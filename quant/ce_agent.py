@@ -50,9 +50,10 @@ class CEAgent:
         self.current_query_idn = peer_idn 
         return 
     
-    def receive_query_response(self,r):  
-        self.dbq.update_agent(self.current_query_idn,r) 
-        self.current_query_idn = None 
+    def receive_query_response(self,idn,r):   
+        assert idn in self.s_port_variance
+        self.dbq.update_info(idn,r) 
+        #self.current_query_idn = None 
         return
     
     def alter_port(self,idn,port_type,add_port:bool):  
@@ -89,10 +90,11 @@ class CEAgent:
         return idn in self.fetch_ports(port_type) 
 
     def act_one(self): 
+        prg_ = prg__single_to_int(self.prg)
         q = np.cumprod(self.prg_state_shape)[-1]          
         x = np.zeros((q,))
-        for i in range(q): 
-            x[i] = int(prg())
+        
+        for i in range(q): x[i] = prg_()
         x = x.reshape(self.prg_state_shape) 
         return x
 
@@ -117,18 +119,19 @@ data transmission bridge for CE Agent
 """
 class CEAgentDBBridge: 
 
-    def __init__(self,cea_map:CEAgent,adb:SimpleAgentDB): 
+    def __init__(self,cea:CEAgent,adb:SimpleAgentDB): 
         self.cea = cea 
         self.adb = adb 
 
     def exec_query(self,other_idn): 
         assert other_idn in self.adb.agent_idns and other_idn != self.cea.idn 
-        q = deepcopy(self.adb.agent_idns[other_idn].last_info) 
-        self.cea.receive_query_response(q) 
+        assert other_idn in self.cea.s_port_variance 
+        q = deepcopy(self.adb.agent_info[other_idn].last_info) 
+        self.cea.receive_query_response(other_idn,q) 
         return
 
     def transmit_agent_state_to_db(self):
-        self.adb.update_agent(self.cea.idn,self.cea.prev_act)
+        self.adb.update_info(self.cea.idn,self.cea.prev_act)
         return
 
     
