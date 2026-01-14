@@ -37,9 +37,11 @@ class CEAgent:
         #   map shows the resistance  values, absolute difference of 
         #   instance's variation on source agent's vector and target 
         #   agent's knowledge of source agent's vector. 
+        #   aka source delta (sender end). Non-negative values. 
         self.communication_delta = defaultdict(defaultdict)  
         # source agent -> (positive resistance)::float 
         #   map is for cumulative values from source agent transmitted from agent connected to source 
+        #   aka reaction delta (receiver end). -&0&+.
         self.execution_delta = defaultdict(float)  
         return
 
@@ -102,7 +104,7 @@ class CEAgent:
             else: 
                 assert idn in q 
                 del q[idn] 
-            self.dbq.delete_agent_info(idn) 
+                self.dbq.delete_agent_info(idn) 
             return 
 
         if add_port: 
@@ -111,6 +113,7 @@ class CEAgent:
         else: 
             assert idn in q 
             q -= {idn} 
+            self.dbq.delete_agent_info(idn) 
         return
 
     def fetch_ports(self,port_type):
@@ -152,6 +155,79 @@ class CEAgent:
         self.activity.append(q) 
         self.prev_act = q 
         return q 
+
+    ######################## used to make decisions on port deltas. Some of the logic is arbitrary in correlation to 
+    ######################## objective of maximizing score 
+
+    def close_port__max_decision(self,port_type:bool,actual_exec:bool):  
+
+        if port_type == "r": 
+            candidates = sorted([(k,v) for k,v in self.execution_delta.items() if k in self.r_ports],key=lambda x:x[1]) 
+        elif port_type == "s":
+            candidates = self.comm_delta_values(False)
+            candidates = sorted([c for c in candidates if c[0] in self.s_port_variance],key=lambda x:x[1],reverse=True) 
+        else: 
+            candidates = self.comm_delta_values(True) 
+            candidates = sorted([c for c in candidates if c[0] in self.t_ports],key=lambda x:x[1],reverse=True) 
+
+        if len(candidates) == 0: return None 
+        conn = candidates[0][0] 
+        if actual_exec: self.alter_port(conn,port_type,False) 
+        return candidates  
+
+    def open_port__max_decision(self,port_type:bool,actual_exec:bool): 
+        if port_type == "r": 
+            candidates = self.comm_delta_values(True) 
+            candidates = sorted([(c0,c1) for (c0,c1) in candidates if not c0 in self.r_ports],\
+                        key=lambda x:x[1],reverse=True)  
+        elif port_type == "s": 
+            candidates = self.comm_delta_values(True) 
+            candidates = sorted([(c0,c1) for (c0,c1) in candidates if not c0 in self.s_port_variance],\
+                        key=lambda x:x[1]) 
+        else: 
+            candidates = self.comm_delta_values(False) 
+            candidates = sorted([(c0,c1) for (c0,c1) in candidates if not c0 in self.t_ports],\
+                        key=lambda x:x[1]) 
+
+        if len(candidates) == 0: return None 
+        conn = candidates[0][0] 
+        if actual_exec: self.alter_port(conn,port_type,True) 
+        return candidates
+
+    def port_delta_decision(self): 
+        candidates = [] 
+        for x in ["r","s","t"]: 
+            q = self.close_port__max_decision(x,False)
+            if type(q) != type(None): 
+                candidates.append((q[0][0],x,False)) 
+
+            q2 = self.open_port__max_decision(x,False)
+            if type(q2) != type(None): 
+                candidates.append((q2[0][0],x,True))
+        
+        if len(candidates) == 0: 
+            return None  
+
+        prg_ = prg__single_to_int(self.prg)
+        candidates = prg_seqsort(candidates,prg_) 
+        i = prg_() % len(candidates)
+        c = candidates[i]
+        self.alter_port(c[0],c[1],c[2])  
+        return
+
+    def comm_delta_values(self,is_tbasis): 
+        candidates = [] 
+        if not is_tbasis: 
+            for k,v in self.communication_delta.items(): 
+                v2 = sum(v.values())
+                candidates.append((k,v2)) 
+        else: 
+            candidates = defaultdict(float)
+            for k,v in self.communication_delta.items(): 
+                for k2,v2 in v.items(): 
+                    candidates[k2] += v2 
+            candidates = [(k,v) for k,v in candidates.items()]
+        return candidates
 
 """
 data transmission bridge for CE Agent 

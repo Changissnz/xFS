@@ -71,7 +71,7 @@ class SimpleAgentDB:
     def delete_agent_info(self,idn): 
         if idn not in self.agent_idns: return 
 
-        i = self.agent_idns.where(idn) 
+        i = self.agent_idns.index(idn) 
         self.agent_idns.pop(i) 
         del self.agent_info[idn] 
         return 
