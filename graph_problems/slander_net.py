@@ -52,12 +52,12 @@ transmission phase.
 All agents that received vector derivatives V_s'' into a map M, 
     M: subject agent -> accumulated differential. 
 The vector derivatives V_s'' are 
-    V_s'' = || S(A_t) - V_s' ||    if agent A_t does not have an S-port 
+    V_s'' = || V - V_s' ||    if agent A_t does not have an S-port 
                                    to agent s, 
-            ||V_s'||                otherwise.
+            -||V_s'||                otherwise.
 
 * Reaction phase: 
-For every agent A, A sends -M[B] to every R-port.  
+For every agent A, A sends M[B] to every R-port.  
 ------------------------------------------------------------------------------ 
 
 This network was conceptualized using barebones structural units. Every agent 
