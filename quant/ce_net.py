@@ -2,14 +2,15 @@ from .ce_agent import *
 
 class CEAgentNetwork:
 
-    def __init__(self,cea_map:dict,prg): 
+    def __init__(self,cea_map:dict,prg,reaction_requires_connection:bool=False): 
         assert type(cea_map) == dict 
         for k,v in cea_map.items(): 
             assert type(v) == CEAgent 
             assert k == v.idn 
+        assert type(reaction_requires_connection) == bool 
         self.cea_map = cea_map 
         self.prg = prg 
-
+        self.reaction_requires_connection = reaction_requires_connection
         self.main_db = SimpleAgentDB(np.ndarray) 
         self.bridges = dict() 
         for k,v in cea_map.items(): 
@@ -22,7 +23,7 @@ class CEAgentNetwork:
     @staticmethod 
     def generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,s_conn_range,\
         t_conn_range,s_port_variance_range,prg,cl_num_balls=50,prg_output_range=[-1000,1000],\
-        cl_radius_ratio = 0.1,negative_reaction_allowed:bool=False):  
+        cl_radius_ratio = 0.1,negative_reaction_allowed:bool=False,reaction_requires_connection:bool=False):  
 
         def constrained_prg(prg): 
 
@@ -63,7 +64,7 @@ class CEAgentNetwork:
             cagent = CEAgent(a,set(r_nodes),s_port_variance,set(t_nodes),cprg,prg_state_shape,\
                 cl_num_balls,cl_radius,deepcopy(s_port_variance_range),negative_reaction_allowed)  
             cea_map[a] = cagent 
-        return CEAgentNetwork(cea_map,prg)
+        return CEAgentNetwork(cea_map,prg,reaction_requires_connection)
 
     def deterministic_one_hundred(self,switch_on:bool=True): 
         if not switch_on: 
@@ -149,6 +150,9 @@ class CEAgentNetwork:
         d = 0 
         D = defaultdict(float)
         for r_,d in c.current_reaction.items(): 
+            if self.reaction_requires_connection and not r_ in c.t_ports: 
+                continue 
+
             react_(r_,d)
         return
 

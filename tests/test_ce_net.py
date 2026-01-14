@@ -82,6 +82,9 @@ class CEAgentNetworkClass(unittest.TestCase):
             print("{}:{}".format(c.idn,c.score))
         return 
 
+    """
+    demonstrates difference in score outcomes of mode `negative_reaction_allowed` 
+    """
     def test__CEAgentNetwork__move_one_timestamp__case_3(self):
 
         can = CEAgentNetwork__sample_1(False) 
@@ -126,6 +129,36 @@ class CEAgentNetworkClass(unittest.TestCase):
         for k in dmap2.keys(): 
             assert dmap2[k] == 0. 
         return 
+
+    '''
+    demonstrates difference in score outcomes of mode `reaction_requires_connection` 
+    '''
+    def test__CEAgentNetwork__move_one_timestamp__case_4(self):
+
+        can = CEAgentNetwork__sample_1(True,False) 
+        can.deterministic_one_hundred(True)
+        for _ in range(2): 
+            can.move_one_timestamp() 
+
+        can2 = CEAgentNetwork__sample_1(True,True) 
+        can2.deterministic_one_hundred(True) 
+        for _ in range(2): 
+            can2.move_one_timestamp() 
+
+        dmap = dict()
+        for k in can.cea_map.keys(): 
+            c0 = can.cea_map[k]
+            c1 = can2.cea_map[k]
+            dmap[k] = round(c1.score - c0.score,5) 
+
+        ans = {7: 18687.32172, 10: 15710.03073, \
+            11: 18139.67816, 8: 15120.80177, \
+            3: 9155.88729, 1: 23477.91154, \
+            2: 25798.92263, 4: 5967.76383, \
+            9: 19788.48679, 5: 29034.4076, \
+            0: 22024.78274, 12: 13681.44473, \
+            6: 6191.73424}
+        assert dmap == ans 
 
 if __name__ == '__main__':
     unittest.main()

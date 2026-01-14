@@ -1,6 +1,7 @@
 from quant.ce_net import * 
 
-def CEAgentNetwork__sample_1(negative_reaction_allowed:bool=False): 
+def CEAgentNetwork__sample_1(negative_reaction_allowed:bool=False,\
+    reaction_requires_connection:bool=False): 
     num_agents = 13 
     prg_state_shape = 6 
     r_conn_range = [0.3,0.4] 
@@ -11,4 +12,5 @@ def CEAgentNetwork__sample_1(negative_reaction_allowed:bool=False):
 
     return CEAgentNetwork.generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,\
         s_conn_range,t_conn_range,s_port_variance_range,prg,\
-        negative_reaction_allowed=negative_reaction_allowed) 
+        negative_reaction_allowed=negative_reaction_allowed,\
+        reaction_requires_connection=reaction_requires_connection) 
