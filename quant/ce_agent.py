@@ -7,12 +7,12 @@ communication/execution agent
 class CEAgent: 
 
     def __init__(self,idn,r_ports,s_port_variance,t_ports,prg,prg_state_shape,\
-        cl_num_balls,cl_radius,new_s_port_var_range = [0.,1.]):  
+        cl_num_balls,cl_radius,new_s_port_var_range = [0.,1.],negative_reaction_allowed:bool=False):   
         assert type(idn) == int
         assert type(r_ports) == type(t_ports) == set 
         assert type(s_port_variance) == dict 
         assert type(prg_state_shape) == int and prg_state_shape > 0 
-
+        assert type(negative_reaction_allowed) == bool 
         self.idn = idn 
         self.r_ports = r_ports 
         self.s_port_variance = s_port_variance
@@ -20,6 +20,7 @@ class CEAgent:
         self.prg = prg
         self.prg_state_shape = prg_state_shape
         self.new_s_port_var_range = new_s_port_var_range  
+        self.negative_reaction_allowed = negative_reaction_allowed
         self.dbq = SimpleAgentDB(np.ndarray) 
 
         self.premeditated = []
@@ -32,7 +33,13 @@ class CEAgent:
         self.bc = VecClassifierTypeBC(cl_num_balls,cl_radius)
 
         self.score = 0 
+        # source agent -> target agent -> (resistance)::float  
+        #   map shows the resistance  values, absolute difference of 
+        #   instance's variation on source agent's vector and target 
+        #   agent's knowledge of source agent's vector. 
         self.communication_delta = defaultdict(defaultdict)  
+        # source agent -> (positive resistance)::float 
+        #   map is for cumulative values from source agent transmitted from agent connected to source 
         self.execution_delta = defaultdict(float)  
         return
 
@@ -69,7 +76,11 @@ class CEAgent:
         c = self.bc.contra_classify(r,v) 
         b = self.bc.bc.balls[c]
         r = modulo_in_range(self.prg(),[0.,b.radius])
+        
+        np_state = np.random.get_state()
+        np.random.seed(abs(int(self.prg())))
         p2 = random_npoint_from_point(b.center,r) 
+        np.random.set_state(np_state) 
 
         # load up the point 
         self.current_transmission[idn] = p2 
@@ -164,8 +175,22 @@ class CEAgentDBBridge:
 
     def accept_transmission(self,subject_idn,v): 
         q = self.cea.dbq.last_info_for_agent(subject_idn) 
+        stat = True 
         if type(q) == type(None): 
             q = deepcopy(v) 
+            stat = False 
+
         d = euclidean_point_distance(v,q) 
-        self.cea.current_reaction[subject_idn] += d
+
+        # case: negative reaction 
+        if self.cea.negative_reaction_allowed:  
+            if stat: 
+                self.cea.current_reaction[subject_idn] += d
+            else: 
+                v_ = np.zeros((len(v),)) 
+                d_ = euclidean_point_distance(v_,v)
+                self.cea.current_reaction[subject_idn] -= d_ 
+        else: 
+            self.cea.current_reaction[subject_idn] += d
+
         return d  

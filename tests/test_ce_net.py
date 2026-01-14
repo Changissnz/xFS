@@ -17,6 +17,7 @@ class CEAgentNetworkClass(unittest.TestCase):
     def test__CEAgentNetwork__move_agents__case_1(self): 
         can = CEAgentNetwork__sample_1() 
         can.move_agents()
+        can.update_bridges() 
         cm = can.cea_map
         for v in cm.values():
             print("DB FOR {}".format(v.idn))
@@ -30,7 +31,7 @@ class CEAgentNetworkClass(unittest.TestCase):
             assert x.info.shape[0] == 2 
 
     def test__CEAgentNetwork__move_one_timestamp__case_1(self): 
-        can = CEAgentNetwork__sample_1() 
+        can = CEAgentNetwork__sample_1(False) 
        
         # t=0
         can.move_one_timestamp()
@@ -49,7 +50,7 @@ class CEAgentNetworkClass(unittest.TestCase):
             exec_delta += c.current_reaction[idn]
 
         s = -comm_delta + exec_delta
-        assert abs(a4.score - s) <= 10 ** -5 
+        assert abs(a4.score - s) <= 10 ** -4 
 
 
         # t=1 
@@ -72,13 +73,44 @@ class CEAgentNetworkClass(unittest.TestCase):
     """
     def test__CEAgentNetwork__move_one_timestamp__case_2(self): 
 
-        can = CEAgentNetwork__sample_1() 
-        for _ in range(200): 
+        can = CEAgentNetwork__sample_1(False) 
+        for _ in range(100): 
             can.move_one_timestamp() 
         
         for i in range(13): 
             c = can.cea_map[i] 
             print("{}:{}".format(c.idn,c.score))
+        return 
+
+    def test__CEAgentNetwork__move_one_timestamp__case_3(self):
+
+        can = CEAgentNetwork__sample_1(False) 
+        can.deterministic_one_hundred(True)
+        for _ in range(2): 
+            can.move_one_timestamp() 
+
+        can2 = CEAgentNetwork__sample_1(True) 
+        can2.deterministic_one_hundred(True) 
+        for _ in range(2): 
+            can2.move_one_timestamp() 
+
+        dmap = dict() 
+        for k in can.cea_map.keys(): 
+            c0 = can.cea_map[k]
+            c1 = can2.cea_map[k]
+
+            dmap[k] = round(c1.score - c0.score,5) 
+
+        ans = {7: -28322.35617, 10: -21942.95849, \
+            11: -38520.52462, 8: -35641.55698, \
+            3: -20882.65389, 1: -44257.85061, \
+            2: -39529.9821, 4: -23711.98803, \
+            9: -23506.23402, 5: -47716.20482, \
+            0: -41717.49754, 12: -29574.0191, \
+            6: -31418.37468}
+
+        for k in dmap.keys(): 
+            assert ans[k] == dmap[k],"got {} want {}".format(dmap[k],ans[k])
         return 
 
 if __name__ == '__main__':

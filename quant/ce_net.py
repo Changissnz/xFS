@@ -14,12 +14,15 @@ class CEAgentNetwork:
         self.bridges = dict() 
         for k,v in cea_map.items(): 
             self.bridges[k] = CEAgentDBBridge(v,self.main_db) 
+
+        self.prev_stat_np = None 
+        self.prev_stat_rand = None  
         return
 
     @staticmethod 
     def generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,s_conn_range,\
         t_conn_range,s_port_variance_range,prg,cl_num_balls=50,prg_output_range=[-1000,1000],\
-        cl_radius_ratio = 0.1): 
+        cl_radius_ratio = 0.1,negative_reaction_allowed:bool=False):  
 
         def constrained_prg(prg): 
 
@@ -58,22 +61,39 @@ class CEAgentNetwork:
                 s_port_variance[s_] = q 
             
             cagent = CEAgent(a,set(r_nodes),s_port_variance,set(t_nodes),cprg,prg_state_shape,\
-                cl_num_balls,cl_radius,deepcopy(s_port_variance_range)) 
+                cl_num_balls,cl_radius,deepcopy(s_port_variance_range),negative_reaction_allowed)  
             cea_map[a] = cagent 
         return CEAgentNetwork(cea_map,prg)
+
+    def deterministic_one_hundred(self,switch_on:bool=True): 
+        if not switch_on: 
+            if type(self.prev_stat_np) == type(None): 
+                return 
+            random.setstate(self.prev_stat_rand) 
+            np.random.set_state(self.prev_stat_np) 
+            return 
+        
+        self.prev_stat_rand = random.getstate() 
+        self.prev_stat_np = np.random.get_state() 
+
+        random.seed(abs(int(self.prg()))) 
+        np.random.seed(abs(int(self.prg()))) 
+        return 
 
     """
     main method 
     """
     def move_one_timestamp(self): 
         self.move_agents() 
+        # update each agent database 
+        self.update_bridges() 
         self.agent_transmissions() 
         self.agent_reactions() 
         return
 
     def move_agents(self):
-
-        for k,v in self.cea_map.items(): 
+        for k in self.cea_map.keys(): 
+            v = self.cea_map[k]
             v.clear_transmission() 
             v.clear_reaction() 
             v.next_act()
@@ -82,8 +102,6 @@ class CEAgentNetwork:
             b = self.bridges[k] 
             b.transmit_agent_state_to_db() 
         
-        # update each agent database 
-        self.update_bridges() 
         return 
 
     ############################################ methods to transmit vectors 
@@ -124,7 +142,7 @@ class CEAgentNetwork:
         def react_(r_idn,d): 
             c2 = self.cea_map[r_idn] 
             c2.update_score(d)
-            c2.execution_delta[idn] += d 
+            c2.execution_delta[idn] += d
             return 
 
         c = self.cea_map[idn] 
@@ -135,7 +153,7 @@ class CEAgentNetwork:
         return
 
     def update_bridges(self): 
-        for k in self.cea_map.keys(): 
+        for k in self.cea_map.keys():
             self.update_bridge(k) 
         return
 
@@ -143,8 +161,7 @@ class CEAgentNetwork:
         c = self.cea_map[idn]
         b = self.bridges[idn]
 
-        S = c.s_port_variance.keys()
-        for s in S: 
+        for s in c.s_port_variance.keys(): 
             b.exec_query(s) 
         return 
 
