@@ -19,7 +19,7 @@ kinds of edges (ports):
 
 Slander Net is so named because the mathematical functions and network 
 design attempt to emulate the effect of transmitting mutable objects, 
-specifically vectors. The Game of Telephone is similar in the vain of 
+specifically vectors. The Game of Telephone is similar in the vein of 
 transmitting mutable information. Slander Net has more pre-defined 
 structure to it. The word "slander" is used to describe the origin and 
 quality of transmitted information. The S-ports that every agent has 
