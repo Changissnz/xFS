@@ -91,6 +91,7 @@ class CEAgent:
             else: 
                 assert idn in q 
                 del q[idn] 
+            self.dbq.delete_agent_info(idn) 
             return 
 
         if add_port: 

@@ -50,6 +50,7 @@ class SimpleAgentDB:
     def add_agent(self): 
         self.add_agent_(self.c)
         self.c += 1 
+        return 
 
     def add_agent_(self,idn): 
         assert idn not in self.agent_idns
@@ -66,3 +67,11 @@ class SimpleAgentDB:
     def last_info_for_agent(self,idn): 
         if idn not in self.agent_idns: return None 
         return self.agent_info[idn].last_info 
+
+    def delete_agent_info(self,idn): 
+        if idn not in self.agent_idns: return 
+
+        i = self.agent_idns.where(idn) 
+        self.agent_idns.pop(i) 
+        del self.agent_info[idn] 
+        return 
