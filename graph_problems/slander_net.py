@@ -28,7 +28,7 @@ Agent activity is one n-vector from one agent at every timestamp, and these
 n-vectors sequentially accumulate into a matrix of n columns. Agent activity is 
 'assumed' to be private and known only by the agent. So regardless of 
 whether the information an agent retrieves through an S-port on some 
-s is true or not (the information is, at source), transmitted information 
+other agent is true or not (the information is, at source), transmitted information 
 is slander in the case of violating privatization through S-port retrieval, 
 and probably slander (if the agent has a variance measure in range (0,1]) 
 in the case of a source agent transmitting a vector derivative,of the 
