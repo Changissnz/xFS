@@ -22,9 +22,9 @@ design attempt to emulate the effect of transmitting mutable objects,
 specifically vectors. The Game of Telephone is similar in the vein of 
 transmitting mutable information. Slander Net has more pre-defined 
 structure to it. The word "slander" is used to describe the origin and 
-quality of transmitted information. The S-ports that every agent has 
+quality of transmitted information. The S-ports that every agent have 
 link to a database containing information of the S-port agents' activity. 
-Agent activity is one n-vector from one agent at every timestamp, and these 
+Agent activity is one n-vector from each agent at every timestamp, and these 
 n-vectors sequentially accumulate into a matrix of n columns. Agent activity is 
 'assumed' to be private and known only by the agent. So regardless of 
 whether the information an agent retrieves through an S-port on some 
