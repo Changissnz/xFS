@@ -94,12 +94,21 @@ class CEAgentNetworkClass(unittest.TestCase):
         for _ in range(2): 
             can2.move_one_timestamp() 
 
-        dmap = dict() 
+        can3 = CEAgentNetwork__sample_1(False) 
+        can3.deterministic_one_hundred(True)
+        for _ in range(2): 
+            can3.move_one_timestamp() 
+        
+
+        dmap = dict()
+        dmap2 = dict() 
         for k in can.cea_map.keys(): 
             c0 = can.cea_map[k]
             c1 = can2.cea_map[k]
+            c2 = can3.cea_map[k]
 
             dmap[k] = round(c1.score - c0.score,5) 
+            dmap2[k] = round(c2.score - c0.score,5) 
 
         ans = {7: -28322.35617, 10: -21942.95849, \
             11: -38520.52462, 8: -35641.55698, \
@@ -109,8 +118,13 @@ class CEAgentNetworkClass(unittest.TestCase):
             0: -41717.49754, 12: -29574.0191, \
             6: -31418.37468}
 
+        # difference in negatives  
         for k in dmap.keys(): 
             assert ans[k] == dmap[k],"got {} want {}".format(dmap[k],ans[k])
+
+        # equal in positives 
+        for k in dmap2.keys(): 
+            assert dmap2[k] == 0. 
         return 
 
 if __name__ == '__main__':
