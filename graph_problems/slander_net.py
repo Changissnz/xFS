@@ -57,7 +57,7 @@ The vector derivatives V_s'' are
             ||V_s'||                otherwise.
 
 * Reaction phase: 
-For every agent A, A sends M[B] to every R-port. 
+For every agent A, A sends -M[B] to every R-port.  
 ------------------------------------------------------------------------------ 
 
 This network was conceptualized using barebones structural units. Every agent 
