@@ -37,7 +37,7 @@ actual vector from subject agent, to T-port agent.
 * Activity phase: 
 At every timestamp, every agent produces one n-vector. 
 * Source retrieval phase: 
-For every agent A, A retrieves vectors on agents listed in its S-ports.
+For every agent A, A retrieves vectors from agents listed in its S-ports.
 * Transmission phase: 
 For every agent A, A calculates a vector derivative V_s' for every vector 
 V_s from its S-port agents. A sends this vector derivative to every one of its 
