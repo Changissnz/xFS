@@ -72,9 +72,9 @@ For a network of n agents, there can be at most n autonomous agents. These
 q autonomous agents can, at every timestamp, make exactly one port delta. 
 These autonomous agents use function<close_port__max_decision> and 
 function<close_port__max_decision> to estimate the best agent to close/open 
-ports. These functions are not guaranteed to produce the best ordering 
+port to. These functions are not guaranteed to produce the best ordering 
 of candidate ports. These two functions are used by an autonomous agent via 
-its pseudo-random number generator. 
+its pseudo-random number generator for port delta decision. 
 
 Objective #1 for an autonomous agent is to maximize its score over k timestamps. 
 """
