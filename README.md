@@ -14,6 +14,8 @@ Here is a list of graph problems in the project:
 - Hidden Threat Exposure Bot (Alpha) 
     - vantage point for learning: navigator of network containing threats. 
 - Slander Net Bot (Work in progress) 
+    - vantage point for learning: agent that determines what communication 
+    ports to open and close to maximize objective function score. 
 - MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
 - BK (Bull Killer) (Planned, 50/50 of publishing) 
 - Homo Frame Bot (Planned, 50/50 of publishing)

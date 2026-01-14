@@ -46,8 +46,8 @@ as
     d = || S(A_t) - V_s' ||; 
     S(A_t) is V_s' if agent A_t does not have an S-port to agent s, 
                    otherwise V_s. 
-Agent A subtracts every response differential it receives from this transmission 
-phase. 
+Agent A subtracts its score to every response differential it receives in this 
+transmission phase. 
 
 All agents that received vector derivatives V_s'' into a map M, 
     M: subject agent -> accumulated differential. 
