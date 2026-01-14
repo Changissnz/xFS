@@ -195,6 +195,19 @@ class CEAgent:
         return candidates
 
     def port_delta_decision(self): 
+        # arbitrary decision-making by prng to proceed with a delta decision or not 
+        prg_ = prg_decimal(self.cea_map[i].prg,[0.,1.]) 
+        d0,d1 = prg_(),prg_() 
+        
+        if int(self.cea_map[i].prg()) % 2: 
+            dx = [d0,d1]
+        else: 
+            dx = [d1,d0] 
+        
+        if dx[0] > dx[1]: 
+            return None 
+
+        # proceedign with decision 
         candidates = [] 
         for x in ["r","s","t"]: 
             q = self.close_port__max_decision(x,False)
