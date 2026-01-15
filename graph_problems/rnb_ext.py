@@ -44,7 +44,7 @@ of <RStruct> nodes.
 Objective: minimize 
 
 return: 
-- 0 if `rnbot1` has better solution else 1. 
+- 1 if `rnbot1` has better solution else 0. 
 """
 def RNB_env_cmp_solution__type_1(rnbot1:RNBot,rnbot2:RNBot,verbose=True): 
     S1 = RNB_cumulative_nonzero_RStruct_resistance(rnbot1)

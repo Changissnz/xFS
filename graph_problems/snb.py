@@ -1,6 +1,8 @@
 from quant.mutable_ce_net import * 
 
 """
+Slander Net Bot. 
+
 A simulation fixating on vector differentials calculated in a multi-agent 
 setting. The multi-agent setting is a network that is a directed graph 
 comprised of n agents, connected to each other by a combination of three 
@@ -22,7 +24,7 @@ design attempt to emulate the effect of transmitting mutable objects,
 specifically vectors. The Game of Telephone is similar in the vein of 
 transmitting mutable information. Slander Net has more pre-defined 
 structure to it. The word "slander" is used to describe the origin and 
-quality of transmitted information. The S-ports that every agent have 
+quality of transmitted information. The S-ports that every agent has 
 link to a database containing information of the S-port agents' activity. 
 Agent activity is one n-vector from each agent at every timestamp, and these 
 n-vectors sequentially accumulate into a matrix of n columns. Agent activity is 
@@ -78,9 +80,28 @@ its pseudo-random number generator for port delta decision.
 
 Objective #1 for an autonomous agent is to maximize its score over k timestamps. 
 """
-class SlanderNetBase(MutableCEAgentNetwork): 
+class SNBot(MutableCEAgentNetwork): 
 
-    def __init__(self,cea_map,auto_agents,prg):
-        super().__init__(cea_map,prg,True) 
+    def __init__(self,cea_map,auto_agents,prg,verbose:bool=False):
+        assert type(verbose) == bool 
+
+        super().__init__(cea_map,prg) 
         self.set_auto_agents(auto_agents)  
+        self.verbose = verbose 
 
+    def __next__(self): 
+        super().__next__() 
+
+        if self.verbose: 
+            q = self.agent_scores() 
+            q = sorted([(k,v) for k,v in q.items()],key = lambda x:x[1]) 
+
+            for q_ in q: 
+                print("{}  ->  {}\n".format(q_[0],q_[1])) 
+            print("------------------------------------------")
+
+    @staticmethod 
+    def from_MutableCEAgentNetwork(mcan:MutableCEAgentNetwork,auto_agents,verbose=False):
+        cea_map = mcan.cea_map 
+        prg = mcan.prg 
+        return SNBot(cea_map,auto_agents,prg,verbose)

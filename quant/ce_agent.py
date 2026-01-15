@@ -43,6 +43,7 @@ class CEAgent:
         #   map is for cumulative values from source agent transmitted from agent connected to source 
         #   aka reaction delta (receiver end). -&0&+.
         self.execution_delta = defaultdict(float)  
+        self.pdelta_log = [] 
         return
 
     def update_score(self,diff): 
@@ -196,18 +197,17 @@ class CEAgent:
 
     def port_delta_decision(self): 
         # arbitrary decision-making by prng to proceed with a delta decision or not 
-        prg_ = prg_decimal(self.cea_map[i].prg,[0.,1.]) 
-        d0,d1 = prg_(),prg_() 
-        
-        if int(self.cea_map[i].prg()) % 2: 
+        d0,d1 = prg_decimal(self.prg,[0.,1.]),prg_decimal(self.prg,[0.,1.])  
+        if int(self.prg()) % 2: 
             dx = [d0,d1]
         else: 
             dx = [d1,d0] 
         
         if dx[0] > dx[1]: 
+            self.pdelta_log.append(None)
             return None 
 
-        # proceedign with decision 
+        # proceeding with decision 
         candidates = [] 
         for x in ["r","s","t"]: 
             q = self.close_port__max_decision(x,False)
@@ -219,12 +219,14 @@ class CEAgent:
                 candidates.append((q2[0][0],x,True))
         
         if len(candidates) == 0: 
+            self.pdelta_log.append(None)
             return None  
 
         prg_ = prg__single_to_int(self.prg)
         candidates = prg_seqsort(candidates,prg_) 
         i = prg_() % len(candidates)
         c = candidates[i]
+        self.pdelta_log.append(c) 
         self.alter_port(c[0],c[1],c[2])  
         return
 

@@ -16,7 +16,13 @@ class VecClassifierTypeBC:
         # case: declare a new classifier 
         if self.bc.terminateDelta: 
             self.start_BallComp_classifier() 
-        self.bc.conduct_decision(p) 
+        
+        # WARNING: try-except used to catch rare cases of failed ball splitting 
+        try:  
+            self.bc.conduct_decision(p) 
+        except: 
+            self.bc.terminateDelta = True 
+            return self.input(p)
         return 
 
     def classify(self,p): 
