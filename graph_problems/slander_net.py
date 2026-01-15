@@ -49,7 +49,7 @@ as
 Agent A subtracts its score to every response differential it receives in this 
 transmission phase. 
 
-All agents that received vector derivatives V_s'' into a map M, 
+All receiving agents store vector derivatives V_s'' into a map M, 
     M: subject agent -> accumulated differential. 
 The vector derivatives V_s'' are 
     V_s'' = || V - V_s' ||    if agent A_t does not have an S-port 
