@@ -69,7 +69,7 @@ closing ports). These maps are
     source agent -> (positive resistance)::float. 
 
 For a network of n agents, there can be at most n autonomous agents. These 
-q autonomous agents can, at every timestamp, make exactly one port delta. 
+q autonomous agents can, at every timestamp, each make exactly one port delta. 
 These autonomous agents use function<close_port__max_decision> and 
 function<close_port__max_decision> to estimate the best agent to close/open 
 port to. These functions are not guaranteed to produce the best ordering 
