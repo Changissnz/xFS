@@ -5,8 +5,7 @@ from types import MethodType,FunctionType
 
 def SNB_env_prng_assignment_function(snbot:SNBot,prg):
     assert type(prg) in {MethodType,FunctionType} 
-    assert len(snbot.auto_agents) == 1 
-    a_idn =  next(iter(snbot.auto_agents))
+    a_idn =  snbot.t_auto 
     snbot.set_agent_prg(a_idn,prg)
     return
 
@@ -17,7 +16,7 @@ def SNB_env_solution_fetch_function(snbot:SNBot):
 
     # collect scores into map 
     m = snbot.agent_scores() 
-    a_idn = next(iter(snbot.auto_agents))
+    a_idn = snbot.t_auto 
 
     s = m[a_idn]
     del m[a_idn] 

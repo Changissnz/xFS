@@ -89,6 +89,14 @@ class SNBot(MutableCEAgentNetwork):
         self.set_auto_agents(auto_agents)  
         self.verbose = verbose 
 
+    """
+    used in <SimulationSolutionSearch> to search for best PRNG solution 
+    """
+    def set_one_auto(self,q): 
+        assert q in self.auto_agents 
+        self.t_auto = q  
+        return
+
     def __next__(self): 
         super().__next__() 
 
