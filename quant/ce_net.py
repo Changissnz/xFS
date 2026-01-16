@@ -189,6 +189,14 @@ class CEAgentNetwork:
         stat2 = C.is_related(triplet[1],'r')
         return (stat0,stat1,stat2) 
 
+    def rst_to_agent(self,a_idn,rst:str):
+        assert rst  in {'r','s','t'} 
+        A = set()  
+        for v in self.cea_map.values(): 
+            if a_idn in v.fetch_ports(rst): 
+                A |= {v.idn} 
+        return A 
+
     """
     Three 3 x 3 matrices, one each for R,S,T in triplet, for 
     pairwise directed relations of A,B,C. 

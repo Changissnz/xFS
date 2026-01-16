@@ -1,0 +1,474 @@
+The network that this SNBot operates on exemplifies a case of zero-change of some 
+of the agent scores. Below code demonstrates this case of zero-change. 
+
+Agents 0,1,4, and 5 stay at zero. 
+
+#--------------------------------------------------------------------------------- 
+
+from graph_problems.snb_ext import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+num_agents = 7 
+prg_state_shape = 5 
+
+r_conn_range = [0.2,0.25] 
+##r_conn_range = [0.15,0.5]
+
+s_conn_range = [0.1,0.15] 
+##s_conn_range = [0.15,0.5]
+
+t_conn_range = [0.1,0.2]  
+##t_conn_range = [0.15,0.5]
+
+s_port_variance_range = [0.,1.]
+
+prg = prg__LCG(45.66,8.94,-999.76,1032.66)
+prg2 = prg__LCG(-38.94,194.66,-89.76,-2048.66)
+def prg3(): return prg() + prg2() 
+def prg4(): return prg() * prg() / 1000 
+
+mcan = MutableCEAgentNetwork.generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,\
+    s_conn_range,t_conn_range,s_port_variance_range,prg4)
+
+snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([]),False)
+
+for _ in range(500): 
+    next(snbot) 
+
+print("RESULTS")
+scores = snbot.agent_scores() 
+scores = [(k,v) for k,v in scores.items()]
+scores = sorted(scores,key=lambda x:x[1]) 
+for x in scores: 
+    print(x) 
+    print() 
+
+print("=====================================") 
+
+for x in snbot.cea_map.items(): 
+    print("X")
+    print(x[1])
+    print("\n\n") 
+    print("C-DELTA")
+    print(x[1].communication_delta) 
+    print("\n\n") 
+    print("E-DELTA")
+    print(x[1].execution_delta) 
+    print("-----------------------------------") 
+
+#---------------------------------------------------------------------------------
+### OUTPUT 
+
+RESULTS
+(6, np.float64(-833551.0598359449))
+
+(3, np.float64(-386526.95137))
+
+(2, np.float64(-381029.2564000005))
+
+(1, np.float64(0.0))
+
+(0, np.float64(0.0))
+
+(5, np.float64(0.0))
+
+(4, np.float64(0.0))
+
+=====================================
+X
+Agent 6
+        R-ports:
+{0, 3}
+
+        S-ports:
+* agent 5, variance 0.7472811423285748
+
+        T-ports:
+{1}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {5: defaultdict(<class 'float'>, {1: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {1: np.float64(-833551.0598359449)})
+-----------------------------------
+X
+Agent 1
+        R-ports:
+{3, 6}
+
+        S-ports:
+* agent 4, variance 0.3273441079927011
+
+        T-ports:
+{4}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {4: defaultdict(<class 'float'>, {4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 0
+        R-ports:
+{1, 4}
+
+        S-ports:
+* agent 3, variance 0.9448233364026919
+
+        T-ports:
+{4}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {3: defaultdict(<class 'float'>, {4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 5
+        R-ports:
+{3, 4}
+
+        S-ports:
+* agent 3, variance 0.4218800683483277
+
+        T-ports:
+{4}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {3: defaultdict(<class 'float'>, {4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 3
+        R-ports:
+{2, 6}
+
+        S-ports:
+* agent 1, variance 0.2955844116386004
+
+        T-ports:
+{2}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {1: defaultdict(<class 'float'>, {2: np.float64(386526.95137)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 2
+        R-ports:
+{3, 6}
+
+        S-ports:
+* agent 1, variance 0.43095481799224444
+
+        T-ports:
+{3}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {1: defaultdict(<class 'float'>, {3: np.float64(381029.2564000005)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 4
+        R-ports:
+{0, 2}
+
+        S-ports:
+* agent 6, variance 0.9746450712051917
+
+        T-ports:
+{1, 6}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {6: defaultdict(<class 'float'>, {1: np.float64(0.0), 6: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+
+#------------------------------------------------------------------------------------------------------
+
+The cause of this zero-change has to do with the details of the R-S-T connections belonging to the 
+zero-score agents. Consider Agents 0 and 1. 
+
+#------------------------------------------------------------------------------------------------------
+## Case: Agent 1 
+
+>>> snbot.rst_to_agent(1,'r')
+{0}
+>>> snbot.rst_to_agent(0,'t')
+set()
+>>> snbot.fetch_agent(1).fetch_ports('s')
+{4: 0.3273441079927011}
+>>> snbot.fetch_agent(1).fetch_ports('t')
+{4}
+
+#------------------------------------------------------------------------------------------------------ 
+Agent 0 has an R-port to Agent 1. But Agent 0 does not have any transmission activity: no T-ports to 
+it. Execution delta is empty. Agent 0 has zero reaction to Agent 1. Agent 1 has an S-port to Agent 4 
+and a T-port also to Agent 4. Communication delta nullifies. 
+
+#------------------------------------------------------------------------------------------------------
+## Case: Agent 0 
+
+>>> snbot.rst_to_agent(0,'r')
+{4, 6}
+>>> snbot.fetch_agent(6).communication_delta
+defaultdict(<class 'collections.defaultdict'>, {5: defaultdict(<class 'float'>, {1: np.float64(0.0)})})
+>>> snbot.fetch_agent(4).communication_delta
+defaultdict(<class 'collections.defaultdict'>, {6: defaultdict(<class 'float'>, {1: np.float64(0.0), 6: np.float64(0.0)})})
+>>> snbot.fetch_agent(0).communication_delta
+defaultdict(<class 'collections.defaultdict'>, {3: defaultdict(<class 'float'>, {4: np.float64(0.0)})})
+
+>>> snbot.fetch_agent(0).fetch_ports('s')
+{3: 0.9448233364026919}
+>>> snbot.fetch_agent(0).fetch_ports('t')
+{4}
+
+#------------------------------------------------------------------------------------------------------
+
+Agent 0 receives no reaction delta from its R-port senders 4 and 6. Agent 0 receives no transmission 
+delta from its T-port to Agent 4 on subject Agent 3. 
+
+#------------------------------------------------------------------------------------------------------ 
+
+LEMMA: By the design of the <MutableCEAgentNetwork>, the data structure that <SNBot> is based on, an 
+       autonomous agent cannot open or close ports to agents it does not know. Agents that it does not 
+       know are ones not found in its maps, "communication_delta" and "execution_delta". The 
+       "communication_delta" corresponds to the agents of its initial S-ports and T-ports. The 
+       "execution_delta" corresponds to the agents with R-ports to it. 
+
+LEMMA: A consequence of this is that it may not be possible for an autonomous agent to open or close 
+       ports for any change to its score. 
+
+#------------------------------------------------------------------------------------------------------
+
+Change line 34 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([]),False)
+to 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([0,1,4,5]),False)
+
+Now Agents 0,1,4 and 5 are autonomous. Re-run the code. 
+
+#-------------------------------------------------------------------------------------------------------
+### OUTPUT 
+
+RESULTS
+(2, np.float64(-380216.4670999999))
+
+(3, np.float64(-372854.1511700004))
+
+(6, np.float64(-52490.93852502283))
+
+(1, np.float64(0.0))
+
+(0, np.float64(0.0))
+
+(5, np.float64(0.0))
+
+(4, np.float64(0.0))
+
+
+=====================================
+X
+Agent 6
+        R-ports:
+{0, 3}
+
+        S-ports:
+* agent 5, variance 0.7472811423285748
+
+        T-ports:
+{1}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {5: defaultdict(<class 'float'>, {1: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {1: np.float64(-52490.93852502283)})
+-----------------------------------
+X
+Agent 1
+        R-ports:
+{3, 4, 6}
+
+        S-ports:
+
+        T-ports:
+{4}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {4: defaultdict(<class 'float'>, {4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 0
+        R-ports:
+{1, 3, 4}
+
+        S-ports:
+* agent 4, variance 0.44958533396913936
+
+        T-ports:
+set()
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {3: defaultdict(<class 'float'>, {4: np.float64(0.0), 3: np.float64(0.0)}), 4: defaultdict(<class 'float'>, {3: np.float64(0.0), 4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 5
+        R-ports:
+{3, 4}
+
+        S-ports:
+* agent 4, variance 0.7213455866316281
+
+        T-ports:
+{3, 4}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {3: defaultdict(<class 'float'>, {4: np.float64(0.0), 3: np.float64(0.0)}), 4: defaultdict(<class 'float'>, {3: np.float64(0.0), 4: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 3
+        R-ports:
+{2, 6}
+
+        S-ports:
+* agent 1, variance 0.2955844116386004
+
+        T-ports:
+{2}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {1: defaultdict(<class 'float'>, {2: np.float64(372854.1511700004)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 2
+        R-ports:
+{3, 6}
+
+        S-ports:
+* agent 1, variance 0.43095481799224444
+
+        T-ports:
+{3}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {1: defaultdict(<class 'float'>, {3: np.float64(380216.4670999999)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+X
+Agent 4
+        R-ports:
+{0, 1, 2, 6}
+
+        S-ports:
+* agent 1, variance 0.032249551004838395
+
+        T-ports:
+{6}
+
+
+
+
+C-DELTA
+defaultdict(<class 'collections.defaultdict'>, {6: defaultdict(<class 'float'>, {1: np.float64(0.0), 6: np.float64(0.0)}), 1: defaultdict(<class 'float'>, {6: np.float64(0.0), 1: np.float64(0.0)})})
+
+
+
+E-DELTA
+defaultdict(<class 'float'>, {})
+-----------------------------------
+
+#---------------------------------------------------------------------------------------------------
+
+Observation: Agents 0,1,4 and 5 stay at zero-change in their scores. 
