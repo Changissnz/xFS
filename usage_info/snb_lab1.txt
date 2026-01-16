@@ -1,0 +1,213 @@
+This lab focuses on a generated graph of 13 agents. Agent 6 is the autonomous principal. 
+Below is code that runs this Slander Net Bot. 
+
+#-----------------------------------------------------------------------------------------
+from graph_problems.snb_ext import * 
+
+# declare the <MutableCEAgentNetwork> base 
+num_agents = 13 
+prg_state_shape = 6 
+r_conn_range = [0.3,0.4] 
+s_conn_range = [0.2,0.4] 
+t_conn_range = [0.2,0.4] 
+s_port_variance_range = [0.,1.]
+prg = prg__LCG(45.66,8.94,-999.76,1032.66)
+
+mcan = MutableCEAgentNetwork.generate_instance__type_prng(num_agents,prg_state_shape,r_conn_range,\
+    s_conn_range,t_conn_range,s_port_variance_range,prg)
+
+# declare SNBot 
+snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([]),False)
+
+# set different PRNGs for every agent 
+prg_ = deepcopy(prg)
+prg2 = [default_std_Python_prng(abs(round(prg_()))) for i in range(13)] 
+for i in range(num_agents): 
+    if i == 6: continue 
+    snbot.set_agent_prg(i,prg2[i])
+
+# run the SNBot for 50 iterations 
+for _ in range(50): 
+    next(mcan) 
+
+q = sorted([(k,v.score) for k,v in mcan.cea_map.items()],key=lambda x:x[1]) 
+for q_ in q: print(q) 
+
+#------------------------------------------------------------------------------------------
+### OUTPUT 
+
+(12, np.float64(-1088714187.453016))
+(8, np.float64(-1050638062.8596098))
+(10, np.float64(-715917595.7026339))
+(6, np.float64(-649862065.4344094))
+(7, np.float64(-548257950.9782717))
+(5, np.float64(-519676690.6112023))
+(2, np.float64(-444028831.02703696))
+(3, np.float64(-379433870.9295399))
+(1, np.float64(-319340232.8675805))
+(4, np.float64(-317978672.655946))
+(0, np.float64(-295599796.147407))
+(9, np.float64(-274466839.6099776))
+(11, np.float64(-51336244.90736499))
+
+#------------------------------------------------------------------------------------------- 
+
+Changing the line `for _ in range(50): ` to `for _ in range(300): ` produces these 
+results. 
+
+#-------------------------------------------------------------------------------------------
+### OUTPUT 
+
+(12, np.float64(-6233517214.683652))
+(8, np.float64(-6167153353.483496))
+(10, np.float64(-4168272825.0539374))
+(6, np.float64(-3835460547.5083265))
+(7, np.float64(-3287908134.312316))
+(5, np.float64(-3034199309.0816426))
+(2, np.float64(-2666238695.3524384))
+(3, np.float64(-2200233776.090369))
+(1, np.float64(-1937474765.9607747))
+(4, np.float64(-1814287439.7210855))
+(0, np.float64(-1778530442.2115428))
+(9, np.float64(-1637961168.7103152))
+(11, np.float64(-494516725.6360861))
+
+#---------------------------------------------------------------------------------------------- 
+
+LEMMA: in a zero-autonomous Slander Net Bot, the rankings of the agents do not change over time 
+       once the bot has run (t > 0). Every agent incurs the same proportional difference to its 
+       score at every timestamp. 
+
+#---------------------------------------------------------------------------------------------- 
+
+Focus turns to Agent 6, ranked as 3rd/4th from last. 
+
+Replace line 20 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([]),False)
+with 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([i for i in range(13)]),False) 
+
+This sets all agents to being able to open and close their own ports. More code is added after 
+lines 5-27. Delete lines 28-34. 
+
+#---------------------------------------------------------------------------------------------- 
+
+prg = prg__LCG(45.66,8.94,-999.76,1032.66)
+prg2 = prg__LCG(-8.94,45.66,-99.76,-1031.66)
+def prg3(): return prg() + prg2() 
+def prg4(): return prg() * prg() / 1000 
+def prg5(): return prg3() + prg4() 
+
+prng_seq = prg_to_prg__LCG_sequence(prg5,100,3.511)  
+
+SNB_env_run = SNB_env_run_(300)
+
+S = SimulationSolutionSearch(snbot,SNB_env_run,prng_seq,\
+    SNB_env_prng_assignment_function,SNB_env_mode_shift_function,\
+    SNB_env_solution_fetch_function,SNB_env_cmp_solution__type_1) 
+
+t = time.time() 
+i = 0 
+while not S.fin_stat: 
+    print("iter ",i) 
+    S.process_one()
+    i += 1
+print("runtime: ",time.time() - t)
+
+q = S.best[2] 
+print("rank: ",rank_one_in_all(q[0],q[1]))
+print("reference score: ", q[0],"\n") 
+for x in q[1]: print(x) 
+#---------------------------------------------------------------------------------------------- 
+### OUTPUT FOR: SNBot of all autonomous agents, comparator function 1 (maximize Agent 6 score) 
+
+rank: 12 
+reference score: np.float64(64825406.25117132) 
+
+np.float64(-3738288902.0885296)
+np.float64(-3681603607.9944434) 
+np.float64(-2029859508.1694643) 
+np.float64(-1868947439.85687)
+np.float64(-1543106110.9741795) 
+np.float64(-1429958359.2892158) 
+np.float64(-1352637644.894306) 
+np.float64(-1050487197.9243104) 
+np.float64(-906619339.8340882) 
+np.float64(-726339104.127093) 
+np.float64(-706317028.0899794) 
+np.float64(-316234221.49863803)
+
+#----------------------------------------------------------------------------------------------- 
+
+Now change the line 107 from  
+    SNB_env_solution_fetch_function,SNB_env_cmp_solution__type_1) 
+to 
+    SNB_env_solution_fetch_function,SNB_env_cmp_solution__type_2)  
+
+Run the revised code to get 
+
+#----------------------------------------------------------------------------------------------- 
+### OUTPUT FOR: SNBot of all autonomous agents, comparator function 2 (maximize Agent 6 positve 
+### score difference with other agents). Results is the same solution (sequence of port delta changes 
+### Agent 6 made).  
+
+runtime:  2179.451003551483
+rank: 12 
+reference score: np.float64(64825406.25117132)
+
+np.float64(-3738288902.0885296)
+np.float64(-3681603607.9944434) 
+np.float64(-2029859508.1694643) 
+np.float64(-1868947439.85687)
+np.float64(-1543106110.9741795) 
+np.float64(-1429958359.2892158) 
+np.float64(-1352637644.894306) 
+np.float64(-1050487197.9243104) 
+np.float64(-906619339.8340882) 
+np.float64(-726339104.127093) 
+np.float64(-706317028.0899794) 
+np.float64(-316234221.49863803)
+
+#----------------------------------------------------------------------------------------------- 
+
+Focus now shifts to only Agent 6 being autonomous. Change line 107 back to 
+    SNB_env_solution_fetch_function,SNB_env_cmp_solution__type_1) 
+
+Change line 20 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([i for i in range(13)]),False) 
+to 
+    snbot = SNBot.from_MutableCEAgentNetwork(mcan,set([6]),False)
+
+Run the code again. 
+
+#-----------------------------------------------------------------------------------------------
+### OUTPUT FOR: SNBot of only Agent 6 being autonomous, comparator function 1. 
+
+runtime:  1076.8133285045624
+rank: 12 
+reference score: np.float64(-652317691.4947878)
+
+np.float64(-5486207416.5965), 
+np.float64(-5212915052.394155) 
+np.float64(-5040768746.692495) 
+np.float64(-4020635478.174564) 
+np.float64(-3203575930.022107) 
+np.float64(-2769949702.841159) 
+np.float64(-2679344490.9220347) 
+np.float64(-2508961915.0500283) 
+np.float64(-2229064087.7629547) 
+np.float64(-1469465327.9505372) 
+np.float64(-1459474919.5120792)
+np.float64(-835155292.8787854)
+
+#------------------------------------------------------------------------------------------------
+### OUTPUT FOR: SNBot of only Agent 6 being autonomous, comparator function 2. 
+###             Results is the same as above, by comparator function 1. 
+
+#------------------------------------------------------------------------------------------------ 
+### Lab conclusion: 
+
+Solutions, consisting of a sequence of port deltas by autonomous Agent 6, were able to be found 
+for all four trials, of these two modes  
+(all autonomous | only Agent 6 is autonomous, comparator function 1 | 2), that placed Agent 6 as 
+the highest ranking agent. 

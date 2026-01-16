@@ -150,7 +150,7 @@ class CEAgentNetwork:
         d = 0 
         D = defaultdict(float)
         for r_,d in c.current_reaction.items(): 
-            if self.reaction_requires_connection and not r_ in c.t_ports: 
+            if self.reaction_requires_connection and not r_ in c.r_ports: 
                 continue 
 
             react_(r_,d)
