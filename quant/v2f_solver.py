@@ -1,6 +1,6 @@
 import numpy as np 
 from copy import deepcopy 
-from morebs2.matrix_methods import is_vector
+from morebs2.matrix_methods import is_vector,is_valid_range
 from morebs2.numerical_generator import prg__single_to_int,prg__LCG,prg_choose_n,prg_decimal,modulo_in_range 
 from types import FunctionType,MethodType 
 
@@ -13,17 +13,19 @@ Given a vector V, calculate a vector V2 of length |V| s.t.
 """
 class Vector2FloatSolverTypeS1:  
 
-    def __init__(self,V,f,prg):
+    def __init__(self,V,f,prg,coeff_scale=DEFAULT_FIT_TYPE_1_COEFFICIENT_SCALE,adjustment_steps=None):
         assert is_vector(V)
         assert type(prg) in {FunctionType,MethodType}
-
+        assert is_valid_range(coeff_scale,False,True)
         self.V = V 
         self.f = float(f)
         self.prg = prg 
+        self.coeff_scale = coeff_scale
         self.W = np.zeros((len(self.V),)) 
         
         self.adjustment_indices = None 
         self.running_sum = 0
+        self.adjustment_steps = adjustment_steps
 
         self.c = 0
         self.fin_stat = False  
@@ -74,6 +76,8 @@ class Vector2FloatSolverTypeS1:
         return q 
 
     def number_of_adjustment_steps(self):
+        if type(self.adjustment_steps) == int and self.adjustment_steps > 0: 
+            return 
         prg_ = prg__single_to_int(self.prg) 
         self.adjustment_steps = modulo_in_range(prg_(),DEFAULT_FIT_TYPE_1_MAX_ADJUSTMENT_STEPS)
         return
@@ -81,7 +85,7 @@ class Vector2FloatSolverTypeS1:
     def fit_next(self,fit_exact:bool): 
         s = 1.0 
         if not fit_exact: 
-            s = modulo_in_range(self.prg(),DEFAULT_FIT_TYPE_1_COEFFICIENT_SCALE)
+            s = modulo_in_range(self.prg(),self.coeff_scale)
 
         diff = self.f - self.output()
         diff = diff * s 
