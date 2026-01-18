@@ -65,7 +65,7 @@ class Vector2FloatSolverTypeS1:
         if num_attempts < 0: assert False 
 
         prg_ = prg__single_to_int(self.prg)
-        n = modulo_in_range(prg_(),[1,len(S)]) 
+        n = modulo_in_range(prg_(),[1,len(S)+1]) 
         q = prg_choose_n(deepcopy(S),n,\
             prg_,is_unique_picker=True)
         stat = round(self.subset_coefficient_sum(q),5) == 0 
