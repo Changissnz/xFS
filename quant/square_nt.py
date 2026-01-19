@@ -1,11 +1,35 @@
 from .v2f_solver import * 
 from morebs2.search_space_iterator import * 
 
+"""
+transforms a square matrix M of dim (n x n) into its negative 
+-M. 
+
+There are (n * n) steps in this transformation, every step transforming 
+index (i,j) into its negative. Iteration of indices starts at (0,0) and 
+increments with index 0 first (column-wise). 
+
+At every index (i,j), the transformation matrix S is constructed by this procedure: 
+- set S to an identity matrix. 
+- find a vector R of length n s.t. for matrix M' (the matrix of M after some k transformations), 
+  row M'[i] * R = -M'[i,j]. 
+- replace column S[:,j] with R. 
+
+At the end of these (n * n) steps, a final transformation matrix E for addition instead of dot product, 
+this the error term, is calculated as 
+E = -M - M' --> 
+-M = -M' + E. 
+
+NOTE: 
+A quirky procedure that exemplifies geometric noise involved. 
+"""
 class SquareMatrixNegativeTransform: 
 
-    def __init__(self,M,prg):
+    def __init__(self,M,prg,min_max=[-1.,1.]):
         assert M.shape[0] == M.shape[1]
-        assert len(M.shape) == 2  
+        assert len(M.shape) == 2 
+        assert is_valid_range(min_max,False,False) or is_valid_range(min_max,True,False) 
+        assert min_max[0] <= np.min(M) <= np.max(M) <= min_max[1]
         self.M = M 
         self.M_ = deepcopy(M)
         self.prg = prg 
