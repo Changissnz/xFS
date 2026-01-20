@@ -12,6 +12,7 @@ class NodePath:
     def __init__(self,start_node):
         self.p = [start_node]
         self.pweights = []
+        self.index = 0 
 
     @staticmethod
     def preload(p,pw):
@@ -60,7 +61,7 @@ class NodePath:
             x = self.p[self.index]
             self.index += 1
             return x
-        raise StopIteration
+        return None 
 
     def __len__(self):
         return len(self.p)

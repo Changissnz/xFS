@@ -85,7 +85,7 @@ class SquareMatrixNegativeTransform:
         S[:,i1] = vs.W 
         self.transform_log.append(S) 
         self.M_ = np.dot(self.M_,S) 
-        return S 
+        return deepcopy(self.M_) 
 
     def last_transform(self): 
         q = self.M * -1 
