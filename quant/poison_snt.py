@@ -4,6 +4,9 @@ from morebs2.matrix_methods import equal_iterables
 
 DEFAULT_POISON_MODEL_SNT_MINMAX = [-1.,1.]
 
+"""
+representative of poison in simulation Poison Trace Bot. 
+"""
 class PoisonModelSNT(SquareMatrixNegativeTransform): 
 
     def __init__(self,M,prg,min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=None):
@@ -17,6 +20,12 @@ class PoisonModelSNT(SquareMatrixNegativeTransform):
 
         return super().__next__()
 
+"""
+representative of poisoning action taken by source against target, in simulation Poison Trace Bot. 
+Poisoning action consists of two phases: 
+- send phase: poison travels through network from source to target. 
+- reaction phsae: after registering hit with target, poison activates in target. 
+"""
 class PoisonPath: 
 
     def __init__(self,npath:NodePath,poison_type="expressive"): 
@@ -97,6 +106,10 @@ class PoisonRelay:
         suspects = suspects | set(q) 
         return suspects 
 
+"""
+action structure that can be utilized by a target after it has been struck with poison. 
+Target uses <PoisonBacktracker> to determine source information behind the poison. 
+"""
 class PoisonBacktracker: 
 
     def __init__(self,p:PoisonPath):
@@ -118,6 +131,11 @@ class PoisonBacktracker:
         self.i -= 1 
         return q 
 
+"""
+database utilized by a target in simulation Poison Trace Bot. Target stores information 
+on (source identifiers, poison identifiers, PRNG reactor) it or its predecessors, located 
+at the same node, encounter over the course of Poison Trace Bot simulation activity. 
+"""
 class PoisonDB: 
 
     def __init__(self): 
@@ -150,11 +168,15 @@ class PoisonDB:
             sources.extend(d2.keys())
         return sorted(sources) 
 
+"""
+Poison Target 
+"""
 class PoisonTarget: 
 
-    def __init__(self,node_idn,prg): 
+    def __init__(self,node_idn,target_idn,prg): 
         assert type(prg) in {MethodType,FunctionType}
         self.node_idn = node_idn
+        self.target_idn = target_idn 
         self.prg = prg 
         self.poison_db = PoisonDB() 
         self.poison_reaction_log = []  
@@ -281,3 +303,50 @@ class PoisonTarget:
     def add_relay(self,rsuspects:set): 
         self.relay_suspects.append(rsuspects)  
         return
+
+class PoisonSource: 
+
+    def __init__(self,source_idn,target_path_map,poison_matrix_map,expressive_mode:bool,prg):  
+        assert type(source_idn) == int 
+        assert type(target_path_map) == dict 
+        assert type(poison_matrix_map) == dict 
+        for k,v in poison_matrix_map.items(): 
+            assert type(k) == int 
+            assert type(v) == np.ndarray and len(v.shape) == 2 
+        assert type(expressive_mode) == bool 
+        assert type(prg) in {MethodType,FunctionType}
+
+        self.source_idn = source_idn 
+        self.target_path_map = sorted(target_path_map) 
+        self.poison_matrix_map = poison_matrix_map 
+        self.expressive_mode = expressive_mode
+        self.prg = prg 
+        self.prg2 = deepcopy(self.prg) 
+
+        self.active_poison_action = None 
+        return 
+
+    def form_poison(self,p_idn): 
+        M_ = self.poison_matrix_map[poison_idn] 
+        p = PoisonModelSNT(M_,deepcopy(self.prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=poison_idn)
+
+        # form poison
+        npath = self.target_path_map[target_idn]  
+        poison_type = "expressive" if self.expressive_mode else "inexpressive"
+        pp = PoisonPath(npath,poison_type) 
+        pp.load_poison(p) 
+        return pp 
+
+    def send_poison(self): 
+        # choose target 
+        possible_targets = sorted(self.target_path_map)
+        i = int(self.prg()) % len(possible_targets) 
+        target_idn = possible_targets[i] 
+
+        # choose poison 
+        P_ = sorted(self.poison_matrix_map) 
+        i = int(self.prg()) % len(P_)
+        poison_idn = P_[i] 
+
+        self.active_poison_action = self.form_poison(poison_idn)
+        return self.active_poison_action
