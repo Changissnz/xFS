@@ -1,6 +1,7 @@
 from .square_nt import * 
 from graph_models.node_path import * 
 from morebs2.matrix_methods import equal_iterables
+from math import ceil 
 
 DEFAULT_POISON_MODEL_SNT_MINMAX = [-1.,1.]
 

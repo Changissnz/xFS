@@ -67,6 +67,10 @@ class PoisonTarget:
         self.guess_count = defaultdict(int) 
 
         self.terminated = False 
+
+        self.verbose = False 
+
+        self.backtracked = False 
         return
 
     def reset(self):
@@ -77,6 +81,7 @@ class PoisonTarget:
         self.source_guess = None 
         self.previous_source_guesses.clear() 
         self.poison_reaction_log.clear() 
+        self.backtracked = False 
 
     def reproduce(self): 
         self.reset() 
@@ -92,6 +97,8 @@ class PoisonTarget:
         return False 
 
     def start_backtrack(self,poison_path,source_info): 
+        if self.backtracked: 
+            return 
         self.backtracker = PoisonBacktracker(poison_path,source_info) 
         return 
 
@@ -100,13 +107,15 @@ class PoisonTarget:
             return 
         q = next(self.backtracker) 
 
+        print("{} is backtracking to {}".format(self.node_idn,q))
         # case: finished, register into DB and RelayPlacement 
         if type(q) in {MethodType,FunctionType}: 
             nodeset = self.backtracker.cache
             poison_idn = self.backtracker.poison_idn 
             source_idn = self.backtracker.source_idn 
             self.poison_db.add_poison_source_info(poison_idn,source_idn,q) 
-            self.backtracker = None 
+            self.backtracker = None
+            self.backtracked = True  
         return 
 
     def register_termination(self): 
@@ -234,7 +243,7 @@ class PoisonSource:
         assert type(prg) in {MethodType,FunctionType}
 
         self.source_idn = source_idn 
-        self.target_path_map = sorted(target_path_map) 
+        self.target_path_map = target_path_map 
         self.poison_matrix_map = poison_matrix_map 
         self.expressive_mode = expressive_mode
         self.prg = prg 
@@ -268,8 +277,8 @@ class PoisonSource:
         self.active_poison_action = None 
 
     def form_poison(self,p_idn,t_idn): 
-        M_ = self.poison_matrix_map[poison_idn] 
-        p = PoisonModelSNT(M_,deepcopy(self.prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=poison_idn)
+        M_ = self.poison_matrix_map[p_idn] 
+        p = PoisonModelSNT(M_,deepcopy(self.prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=p_idn)
 
         # form poison
         npath = self.target_path_map[t_idn]  

@@ -50,13 +50,13 @@ def fetch_source2target_paths(G,sources,targets,prg):
             st_path_map[source][t] = q 
     return st_path_map
 
-def generate_m_square_integer_matrixes(m,n,prg): 
-    prg_ = prg__single_to_nvec(prg__single_to_int(prg),n) 
+def generate_m_square_integer_matrixes(m,n,prg,ranged_modulo): 
+    prg_ = prg__single_to_nvec(prg,n) 
 
     def one_square_matrix(): 
         x = np.zeros((n,n)) 
         for i in range(n): 
-            x[i] = prg_() 
+            x[i] = modulo_in_range(prg_(),ranged_modulo) 
         return x 
 
     matrixes = [] 
@@ -81,7 +81,16 @@ class PoisonDeliveryNetwork:
         self.verbose = verbose 
         self.relay_map = defaultdict(list) 
         self.pending_poisons = dict() 
+        self.set_verbosity() 
         return 
+
+    def set_verbosity(self): 
+        for t in self.target_map.values(): 
+            t.verbose = self.verbose 
+
+    def __next__(self): 
+        self.move_sources() 
+        self.move_targets() 
 
     def move_sources(self): 
         self.pending_poisons.clear() 
@@ -109,6 +118,14 @@ class PoisonDeliveryNetwork:
 
     def process_source_move(self,source_idn,x,mode): 
         pp = self.source_map[source_idn].active_poison_action 
+
+        if self.verbose: 
+            print("source: ",source_idn) 
+            print("mode: ",mode)
+            print("info:\n",x) 
+            print(pp)
+            print("----------------")
+
         if mode == "send": 
             if x in self.relay_map: 
                 
@@ -134,35 +151,53 @@ class PoisonDeliveryNetwork:
         t = self.target_map[target_idn] 
         pstat = t.is_poisoned() 
 
+        if self.verbose: 
+            print("target {}".format(target_idn))
         # case: target has been poisoned 
         if pstat: 
             pred = t.predict_poison()
             x = self.pending_poisons[target_idn]
 
+            if self.verbose:
+                print("-- reaction") 
+                print("actual: ",x) 
+                print("predicted: ",pred) 
+
             # compare prediction with actual 
             #   subcase: correct prediction, halt poison 
             if type(pred) != type(None): 
                 if equal_iterables(x,pred,5): 
+                    if self.verbose: print("-- halting poison.") 
                     self.halt_poison(target_idn)  
             #   subcase: start backtracking if no guesses 
             else:
-                if type(t.backtracker) == type(None):                 
+                if type(t.backtracker) == type(None):
+                    print("-- starting backtracker")             
                     s = self.poison_source_of_target(target_idn) 
                     assert type(s) != type(None) 
                     pp = s.active_poison_action
                     source_info = deepcopy(s.prg) 
                     t.start_backtrack(pp,source_info) 
 
+
+        if target_idn in self.pending_poisons: 
+            x = self.pending_poisons[target_idn]
             t.register_poison_reaction(x) 
             del self.pending_poisons[target_idn] 
         
         finished_target = next(t) 
+
+        if self.verbose: 
+            print("is poisoned: {}".format(pstat)) 
+            print("--------------------------------------") 
+
         if finished_target: 
             self.target_map[target_idn] = t.reproduce()
 
     def occupied_targets(self): 
         targets = set() 
         for s in self.source_map.values(): 
+            if type(s.active_poison_action) == type(None): continue 
             targets |= {s.active_poison_action.path_target()}
         return targets 
 
@@ -182,7 +217,7 @@ class PoisonDeliveryNetwork:
 
     @staticmethod 
     def generate_instance(num_source_nodes,num_targets,num_poisons,poison2source_ratio_range,poison_matrix_square_dim,\
-        expressive_mode,prg,relays_per_source=2,relay_accuracy_range=[0.75,0.9]):  
+        expressive_mode,prg,relays_per_source=2,relay_accuracy_range=[0.75,0.9],verbose:bool=False):  
         # generate the base graph 
         source_nodes = set([i for i in range(num_source_nodes)]) 
         T = TreeGen.generate_tree__mroot_n_leaves(source_nodes,num_targets,prg,is_dsg=False,\
@@ -191,7 +226,8 @@ class PoisonDeliveryNetwork:
         L = T.leaves 
 
         # generate the poisons 
-        poison_matrices = generate_m_square_integer_matrixes(num_poisons,poison_matrix_square_dim,prg)
+        
+        poison_matrices = generate_m_square_integer_matrixes(num_poisons,poison_matrix_square_dim,prg,DEFAULT_POISON_MODEL_SNT_MINMAX)
         poison_matrix_map = {i:m for (i,m) in enumerate(poison_matrices)} 
 
         # calculate the paths of every source to targets 
@@ -227,4 +263,4 @@ class PoisonDeliveryNetwork:
             targets[l] = PoisonTarget(l,0,prgs[i],max_relays,num_source_nodes,\
                 relay_accuracy_range)
 
-        return PoisonDeliveryNetwork(G,psources,targets) 
+        return PoisonDeliveryNetwork(G,psources,targets,verbose) 
