@@ -38,6 +38,8 @@ class PoisonPath:
         self.phase = "send" 
         self.fin_stat = False 
         self.first_reaction = True 
+
+        self.loc = None 
         return
 
     def __str__(self): 
@@ -72,6 +74,7 @@ class PoisonPath:
             if type(q) == type(None): 
                 self.phase = "react" 
                 return next(self) 
+            self.loc = q 
             return q,self.phase 
         else: 
             q = self.react_next()
@@ -80,6 +83,9 @@ class PoisonPath:
                 return None,None  
             q_ = q if self.poison_type == "expressive" else None 
             return q_,self.phase
+
+    def location(self): 
+        return self.loc 
 
     def send_next(self): 
         assert self.phase == "send"
@@ -130,7 +136,7 @@ class PoisonRelay:
 
 class RelayPlacement: 
 
-    def __init__(self,source_idn,num_sources,max_relays,prg,relay_accuracy_range):   
+    def __init__(self,source_idn,num_sources,max_relays,prg,relay_accuracy_range,verbose:bool=False):   
 
         self.source_idn = source_idn 
         self.num_sources = num_sources 
@@ -142,6 +148,24 @@ class RelayPlacement:
         # path idn -> partial nodeset of path 
         self.paths_info = defaultdict(set)
         return 
+
+    def attempt_relay_PoisonPath(self,poison_path,possible_candidates): 
+        x = poison_path.location() 
+        relays = self.relays_at_location(x) 
+
+        q = [] 
+        for relay in relays: 
+            possible = relay.relay_poison(poison_path,possible_candidates)
+            q.append(possible)
+        return q 
+        
+    def relays_at_location(self,location): 
+        relays = set() 
+        for relay_set in self.active_relays.values():  
+            for r in relay_set: 
+                if r.location != location: continue 
+                relays |= {r} 
+        return relays 
 
     def set_placement_scheme(self,scheme): 
         assert scheme in {0,1} 
@@ -202,6 +226,12 @@ class RelayPlacement:
         self.active_relays[p_idn] |= {relay} 
         return True 
 
+    def __next__(self): 
+
+        if not self.add_one_relay(): 
+            self.move_one_relay() 
+        return
+
     def path_relay_hit_counter_map(self): 
         path_hits = dict() 
         for k,v in self.active_relays.items(): 
@@ -209,8 +239,6 @@ class RelayPlacement:
             path_hits[k] = f 
         return path_hits 
 
-    def __next__(self): 
-        return -1 
 
 """
 action structure that can be utilized by a target after it has been struck with poison. 

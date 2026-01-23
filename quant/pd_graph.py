@@ -17,6 +17,9 @@ def connect_TreeGen_forest(T:TreeGen,prg,sg2sg_conn_ratios=(0.15,0.1)):
 
     M = MicroGraph(T.d) 
 
+    if len(gd.components) < 2: 
+        return M.dg 
+
     c0,c1 = gd.components[0],gd.components[1]
     M0,M1 = M.subgraph_by_nodeset_(c0),M.subgraph_by_nodeset_(c1) 
 
@@ -112,7 +115,6 @@ class PoisonDeliveryNetwork:
             t_ = q.active_poison_action.path_target() 
             t = self.target_map[t_] 
             self.target_map[t_].terminated = True 
-            q.clear_poison_action()  
 
         if type(mode) == type(None): return 
 
@@ -130,11 +132,9 @@ class PoisonDeliveryNetwork:
             print("----------------")
 
         if mode == "send": 
-            if x in self.relay_map: 
-                
-                for relay in self.relay_map[x]: 
-                    source_candidates = relay.relay_poison(pp,set(self.source_map.keys()))
-                    self.target_map[relay.owner].add_relay(source_candidates)
+            possible_candidates = set(self.source_map.keys()) 
+            for t in self.target_map.values(): 
+                t.relay_register(pp,possible_candidates) 
             return 
 
         # case: pending receive for target  
@@ -154,23 +154,26 @@ class PoisonDeliveryNetwork:
         t = self.target_map[target_idn] 
         pstat = t.is_poisoned() 
 
-        if self.verbose: 
+        if self.verbose and pstat: 
             print("target {}, terminated? {}".format(target_idn,t.terminated))
-
+            print("target DB size: {}".format(len(t.poison_db))) 
         finished_target = next(t) 
 
-        if self.verbose: 
+        if self.verbose and pstat:  
             print("is poisoned: {}".format(pstat)) 
 
         if finished_target: 
             if self.verbose: 
-                print("reproducing terminated agent") 
+                print("reproducing terminated agent {}".format(target_idn)) 
+            
+            s = self.poison_source_of_target(target_idn)
+            s.clear_poison_action() 
             self.target_map[target_idn] = t.reproduce()
-            print("--------------------------------------") 
+            if self.verbose: print("--------------------------------------") 
             return 
 
         # case: target has been poisoned 
-        if pstat: 
+        if pstat and target_idn in self.pending_poisons: 
             pred = t.predict_poison()
             x = self.pending_poisons[target_idn]
 
@@ -188,7 +191,7 @@ class PoisonDeliveryNetwork:
             #   subcase: start backtracking if no guesses 
             else:
                 if type(t.backtracker) == type(None):
-                    print("-- starting backtracker")             
+                    if self.verbose: print("-- starting backtracker")             
                     s = self.poison_source_of_target(target_idn) 
                     assert type(s) != type(None) 
                     pp = s.active_poison_action
@@ -201,7 +204,7 @@ class PoisonDeliveryNetwork:
             t.register_poison_reaction(x) 
             del self.pending_poisons[target_idn] 
 
-        if self.verbose: print("--------------------------------------") 
+        if self.verbose and pstat: print("--------------------------------------") 
 
         ## 
         return 
@@ -228,6 +231,9 @@ class PoisonDeliveryNetwork:
 
         s = self.poison_source_of_target(t_idn) 
         s.clear_poison_action() 
+
+        if t_idn in self.pending_poisons: 
+            del self.pending_poisons[t_idn]
         return
 
     @staticmethod 

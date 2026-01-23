@@ -1,5 +1,5 @@
 from .poison_snt import * 
-
+from morebs2.numerical_generator import prg_seqsort
 
 """
 database utilized by a target in simulation Poison Trace Bot. Target stores information 
@@ -11,6 +11,12 @@ class PoisonDB:
     def __init__(self): 
         self.poison2source_prngs = dict() 
         return
+
+    def __len__(self): 
+        s = 0 
+        for v in self.poison2source_prngs.values(): 
+            s += len(v) 
+        return s 
 
     def add_poison_source_info(self,poison_idn,source_idn,prng): 
         if poison_idn not in self.poison2source_prngs: 
@@ -28,7 +34,7 @@ class PoisonDB:
     def source_poisons(self,source_idn): 
         poisons = [] 
         for k,d2 in self.poison2source_prngs.items(): 
-            if source_idn in d2.items(): 
+            if source_idn in d2: 
                 poisons.append(k)  
         return sorted(poisons) 
 
@@ -82,6 +88,7 @@ class PoisonTarget:
         self.previous_source_guesses.clear() 
         self.poison_reaction_log.clear() 
         self.backtracked = False 
+        self.terminated = False 
 
     def reproduce(self): 
         self.reset() 
@@ -94,6 +101,8 @@ class PoisonTarget:
 
         if type(self.backtracker) == type(None) and self.terminated: 
             return True 
+        
+        next(self.rplacer)
         return False 
 
     def start_backtrack(self,poison_path,source_info): 
@@ -140,8 +149,7 @@ class PoisonTarget:
             return None 
 
         is_expressive = self.is_expressive_poison() 
-        poison_idn,source_idn = self.next_guess()
-
+        source_idn,poison_idn = self.next_guess()
         if type(poison_idn) == type(None): 
             return None 
 
@@ -169,7 +177,8 @@ class PoisonTarget:
         for x in poison_candidates: 
             q = (self.source_guess,x) 
             if q not in self.poison_guess_candidates: 
-                return (self.source_guess,q) 
+                self.poison_guess_candidates.append(q) 
+                return (self.source_guess,x) 
         
         self.source_guess = None 
         return self.next_guess() 
@@ -203,12 +212,11 @@ class PoisonTarget:
         prg = self.poison_db.poison_source_info(\
             poison_idn,source_idn) 
 
-        pms = PoisonModelSNT(M,prg,min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=None)
+        pms = PoisonModelSNT(M,deepcopy(prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=None)
 
         for i in range(1,len(self.poison_reaction_log)): 
             q = next(pms) 
             q2 = self.poison_reaction_log[i] 
-            
             if type(q2) == type(None): 
                 if expressive_restriction:
                     return None,False 
@@ -228,6 +236,16 @@ class PoisonTarget:
 
     def add_relay(self,rsuspects:set): 
         self.relay_suspects.append(rsuspects)  
+        return
+
+    def relay_register(self,poison_path,possible_candidates):
+        q = self.rplacer.attempt_relay_PoisonPath(poison_path,possible_candidates)
+        if self.verbose and len(q) > 0: 
+            print("relay register @ node={}".format(poison_path.location()))
+            print("candidates: ") 
+            print(q) 
+
+        for q_ in q: self.add_relay(q_)
         return
 
 class PoisonSource: 
