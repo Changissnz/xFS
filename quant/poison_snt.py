@@ -39,6 +39,12 @@ class PoisonPath:
         self.first_reaction = True 
         return
 
+    def __str__(self): 
+        S = "* Poison Path Status: " + self.phase + "\n" 
+        S += "\ttype: " + self.poison_type + "\n" 
+        S += str(self.npath) 
+        return S 
+
     def load_poison(self,p:PoisonModelSNT): 
         assert type(p) == PoisonModelSNT
         self.p = p 
@@ -46,6 +52,14 @@ class PoisonPath:
 
     def path_head(self): 
         return self.npath.head() 
+
+    def path_target(self): 
+        return self.npath.tail() 
+
+    def poison_idn(self):
+        if type(self.p) == type(None): 
+            return None  
+        return self.p.idn 
 
     def __next__(self): 
         assert type(self.p) == PoisonModelSNT 
@@ -87,12 +101,14 @@ class PoisonRelay:
         self.location = location 
         self.recognition_accuracy = recognition_accuracy 
         self.prg = prg 
+        self.hit_counter = 0 
         return 
 
     def relay_poison(self,pp:PoisonPath,all_source_candidates:set):  
         assert type(pp) == PoisonPath 
         assert type(all_source_candidates) == set 
-
+        
+        self.hit_counter += 1
         path_head = pp.path_head() 
         all_source_candidates = sorted(all_source_candidates - {path_head}) 
 
@@ -106,247 +122,122 @@ class PoisonRelay:
         suspects = suspects | set(q) 
         return suspects 
 
+    def change_location(self,new_loc): 
+        self.location = new_loc 
+        self.hit_counter = 0 
+
+class RelayPlacement: 
+
+    def __init__(self,source_idn,num_sources,max_relays,prg,relay_accuracy_range):   
+
+        self.source_idn = source_idn 
+        self.num_sources = num_sources 
+        self.max_relays = max_relays 
+        self.prg = prg 
+        self.relay_accuracy_range = relay_accuracy_range
+        # path idn -> set of relays 
+        self.active_relays = defaultdict(set) 
+        # path idn -> partial nodeset of path 
+        self.paths_info = defaultdict(set)
+        return 
+
+    def set_placement_scheme(self,scheme): 
+        assert scheme in {0,1} 
+        self.placement_scheme = scheme 
+
+    def relay_count(self): 
+        s = 0 
+        for x in self.active_relays.values(): 
+            s += len(x) 
+        return s 
+
+    def add_path_info(self,nodeset): 
+        l = len(self.paths_info) 
+        self.paths_info[l] = nodeset 
+        return 
+
+    def add_one_relay(self):
+        if self.relay_count() == self.max_relays: 
+            return False 
+
+        q = ceil(self.max_relays / self.num_sources)
+        x = sorted(self.active_relays.keys())
+        if len(x) == 0: return False 
+
+        i = int(self.prg()) % len(x) 
+        p_idn = x[i]
+
+        nodes = sorted(self.paths_info[p_idn]) 
+        j = int(self.prg()) % len(nodes) 
+        loc = nodes[j] 
+
+        accuracy = modulo_in_range(self.prg(),self.relay_accuracy_range)
+        r = PoisonRelay(self.source_idn,loc,accuracy,self.prg)
+        self.active_relays[p_idn] |= r
+        return True 
+
+    def move_one_relay(self): 
+        x = sorted(self.active_relays.keys())
+        if len(x) == 0: return False 
+        x2 = sorted(set(self.active_relays.keys()) - set(x)) 
+
+        i = int(self.prg()) % len(x) 
+        p_idn = x[i]
+        nodes = sorted(self.paths_info[p_idn]) 
+        j = int(self.prg()) % len(nodes) 
+        new_loc = nodes[j] 
+
+        j = int(self.prg()) % len(x2)
+        p_idn2 = x[j] 
+
+        relays = list(self.active_relays[p_idn2]) 
+        k = int(self.prg()) % len(relays) 
+        relay = relays[k] 
+
+        relay.change_location(new_loc) 
+
+        self.active_relays[p_idn2] -= {relay} 
+        self.active_relays[p_idn] |= {relay} 
+        return True 
+
+    def path_relay_hit_counter_map(self): 
+        path_hits = dict() 
+        for k,v in self.active_relays.items(): 
+            f = sum([v_.hit_counter for v_ in v]) 
+            path_hits[k] = f 
+        return path_hits 
+
+    def __next__(self): 
+        return -1 
+
 """
 action structure that can be utilized by a target after it has been struck with poison. 
 Target uses <PoisonBacktracker> to determine source information behind the poison. 
 """
 class PoisonBacktracker: 
 
-    def __init__(self,p:PoisonPath):
+    def __init__(self,p:PoisonPath,source_info): 
         assert type(p) == PoisonPath 
+        assert type(source_info) in {MethodType,FunctionType} 
+
         self.p = p  
+        self.source_idn = self.p.path_head()
+        self.poison_idn = self.p.poison_idn() 
+        self.source_info = source_info 
         self.fin_stat = False 
         self.i = -1  
         self.l = -ceil(len(self.p.npath) / 2)
+        self.cache = set() 
         return 
 
     def __next__(self): 
         if self.fin_stat: 
-            return None 
+            return self.source_info 
 
         if self.i == self.l: 
             self.fin_stat = True 
     
         q = self.p.npath[self.i] 
         self.i -= 1 
+        self.cache |= {q} 
         return q 
-
-"""
-database utilized by a target in simulation Poison Trace Bot. Target stores information 
-on (source identifiers, poison identifiers, PRNG reactor) it or its predecessors, located 
-at the same node, encounter over the course of Poison Trace Bot simulation activity. 
-"""
-class PoisonDB: 
-
-    def __init__(self): 
-        self.poison2source_prngs = dict() 
-        return
-
-    def add_poison_source_info(self,poison_idn,source_idn,prng): 
-        if poison_idn not in self.poison2source_prngs: 
-            self.poison2source_prngs[poison_idn] = dict() 
-        self.poison2source_prngs[poison_idn][source_idn] = prng 
-        return 
-
-    def poison_source_info(self,poison_idn,source_idn): 
-        if poison_idn not in self.poison2source_prngs: 
-            return None 
-        if source_idn not in self.poison2source_prngs[poison_idn]: 
-            return None 
-        return deepcopy(self.poison2source_prngs[poison_idn][source_idn]) 
-
-    def source_poisons(self,source_idn): 
-        poisons = [] 
-        for k,d2 in self.poison2source_prngs.items(): 
-            if source_idn in d2.items(): 
-                poisons.append(k)  
-        return sorted(poisons) 
-
-    def sources(self): 
-        sources = [] 
-        for d2 in self.poison2source_prngs.values(): 
-            sources.extend(d2.keys())
-        return sorted(sources) 
-
-"""
-Poison Target 
-"""
-class PoisonTarget: 
-
-    def __init__(self,node_idn,target_idn,prg): 
-        assert type(prg) in {MethodType,FunctionType}
-        self.node_idn = node_idn
-        self.target_idn = target_idn 
-        self.prg = prg 
-        self.poison_db = PoisonDB() 
-        self.poison_reaction_log = []  
-
-        # element := set(source)
-        self.relay_suspects = []
-        # element := source 
-        self.relay_suspects_ = []
-        self.start_guess = False 
-        # element := (source,poison idn) 
-        self.poison_guess_candidates = [] 
-        self.source_guess = None 
-        self.previous_source_guesses = [] 
-
-        self.guess_count = defaultdict(int) 
-        return
-
-    def reset(self):
-        self.relay_suspects.clear() 
-        self.relay_suspects_.clear() 
-        self.start_guess = False 
-        self.poison_guess_candidates.clear() 
-        self.source_guess = None 
-        self.previous_source_guesses.clear() 
-
-    """
-    rule: if expressive poison, choose (source,poison) that exactly fits 
-          poison_reaction_log. 
-
-          if inexpressive poison, will have to make blind guess. 
-    """
-    def predict_poison(self):
-
-        # case: not enough reactions to start prediction 
-        if len(self.poison_reaction_log) < 2: 
-            return None 
-
-        is_expressive = self.is_expressive_poison() 
-        poison_idn,source_idn = self.next_guess()
-
-        if type(poison_idn) == type(None): 
-            return None 
-
-        r,stat = self.predict_poison__stepwise(poison_idn,source_idn,expressive_restriction=is_expressive) 
-        if not stat: 
-            return None 
-        return r 
-
-    def is_expressive_poison(self): 
-        if len(self.poison_reaction_log) < 2: 
-            return False 
-        if type(self.poison_reaction_log[1]) != type(None): 
-            return True 
-        return False
-
-    def next_guess(self): 
-        if type(self.source_guess) == type(None): 
-            self.source_guess = self.guess_source() 
-        
-        if type(self.source_guess) == type(None): 
-            return None,None 
-
-        poison_candidates = self.poison_db.source_poisons(self.source_guess)
-        poison_candidates = prg_seqsort(poison_candidates,prg__single_to_int(self.prg)) 
-        for x in poison_candidates: 
-            q = (self.source_guess,x) 
-            if q not in self.poison_guess_candidates: 
-                return (self.source_guess,q) 
-        
-        self.source_guess = None 
-        return self.next_guess() 
-
-    def init_guess(self): 
-        if len(self.relay_suspects) == 0: 
-            self.relay_suspects_ = self.poison_db.sources()  
-            return 
-        
-        self.relay_suspects_ = self.relay_suspects[0] 
-        for i in range(1,len(self.relay_suspects)): 
-            self.relay_suspects_ = self.relay_suspects_ | self.relay_suspects[i] 
-        return 
-
-    def guess_source(self): 
-
-        if len(self.relay_suspects_) == 0: 
-            return None 
-
-        i = int(self.prg()) % len(self.relay_suspects_)
-        q = self.relay_suspects_.pop(i) 
-        return q 
-
-    def predict_poison__stepwise(self,poison_idn,source_idn,expressive_restriction:bool=True): 
-        if len(self.poison_reaction_log) == 0: 
-            return None,False 
-        
-        M = self.poison_reaction_log[0]
-
-        prg = self.poison_db.poison_source_info(\
-            poison_idn,source_idn) 
-
-        pms = PoisonModelSNT(M,prg,min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=None)
-
-        for i in range(1,len(self.poison_reaction_log)): 
-            q = next(pms) 
-            q2 = self.poison_reaction_log[i] 
-            
-            if type(q2) == type(None): 
-                if expressive_restriction:
-                    return None,False 
-                continue 
-
-            if not equal_iterables(q,q2,5): 
-                return None,False 
-        return next(pms),True 
-
-    def register_poison_reaction(self,r): 
-        self.poison_reaction_log.append(r) 
-        return 
-        
-    def add_poison_source_info(self,poison,source,prng): 
-        self.poison_db.add_poison_source_info(poison,source,prng)
-        return 
-
-    def add_relay(self,rsuspects:set): 
-        self.relay_suspects.append(rsuspects)  
-        return
-
-class PoisonSource: 
-
-    def __init__(self,source_idn,target_path_map,poison_matrix_map,expressive_mode:bool,prg):  
-        assert type(source_idn) == int 
-        assert type(target_path_map) == dict 
-        assert type(poison_matrix_map) == dict 
-        for k,v in poison_matrix_map.items(): 
-            assert type(k) == int 
-            assert type(v) == np.ndarray and len(v.shape) == 2 
-        assert type(expressive_mode) == bool 
-        assert type(prg) in {MethodType,FunctionType}
-
-        self.source_idn = source_idn 
-        self.target_path_map = sorted(target_path_map) 
-        self.poison_matrix_map = poison_matrix_map 
-        self.expressive_mode = expressive_mode
-        self.prg = prg 
-        self.prg2 = deepcopy(self.prg) 
-
-        self.active_poison_action = None 
-        return 
-
-    def form_poison(self,p_idn): 
-        M_ = self.poison_matrix_map[poison_idn] 
-        p = PoisonModelSNT(M_,deepcopy(self.prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=poison_idn)
-
-        # form poison
-        npath = self.target_path_map[target_idn]  
-        poison_type = "expressive" if self.expressive_mode else "inexpressive"
-        pp = PoisonPath(npath,poison_type) 
-        pp.load_poison(p) 
-        return pp 
-
-    def send_poison(self): 
-        # choose target 
-        possible_targets = sorted(self.target_path_map)
-        i = int(self.prg()) % len(possible_targets) 
-        target_idn = possible_targets[i] 
-
-        # choose poison 
-        P_ = sorted(self.poison_matrix_map) 
-        i = int(self.prg()) % len(P_)
-        poison_idn = P_[i] 
-
-        self.active_poison_action = self.form_poison(poison_idn)
-        return self.active_poison_action
