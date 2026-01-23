@@ -94,7 +94,8 @@ class PoisonDeliveryNetwork:
 
     def move_sources(self): 
         self.pending_poisons.clear() 
-        for s in self.source_map.keys(): 
+        sources = sorted(self.source_map.keys())
+        for s in sources: 
             self.move_source(s) 
         return
 
@@ -104,13 +105,15 @@ class PoisonDeliveryNetwork:
         if type(q.active_poison_action) == type(None):  
             q.send_poison(self.occupied_targets()) 
 
+        x,mode = next(q) 
+
         # case: poison has finished, terminate target 
         if q.active_poison_action.fin_stat: 
             t_ = q.active_poison_action.path_target() 
             t = self.target_map[t_] 
             self.target_map[t_].terminated = True 
+            q.clear_poison_action()  
 
-        x,mode = next(q) 
         if type(mode) == type(None): return 
 
         self.process_source_move(source_idn,x,mode) 
@@ -152,14 +155,27 @@ class PoisonDeliveryNetwork:
         pstat = t.is_poisoned() 
 
         if self.verbose: 
-            print("target {}".format(target_idn))
+            print("target {}, terminated? {}".format(target_idn,t.terminated))
+
+        finished_target = next(t) 
+
+        if self.verbose: 
+            print("is poisoned: {}".format(pstat)) 
+
+        if finished_target: 
+            if self.verbose: 
+                print("reproducing terminated agent") 
+            self.target_map[target_idn] = t.reproduce()
+            print("--------------------------------------") 
+            return 
+
         # case: target has been poisoned 
         if pstat: 
             pred = t.predict_poison()
             x = self.pending_poisons[target_idn]
 
             if self.verbose:
-                print("-- reaction") 
+                print("-- reaction {}".format(len(t.poison_reaction_log))) 
                 print("actual: ",x) 
                 print("predicted: ",pred) 
 
@@ -184,15 +200,11 @@ class PoisonDeliveryNetwork:
             x = self.pending_poisons[target_idn]
             t.register_poison_reaction(x) 
             del self.pending_poisons[target_idn] 
-        
-        finished_target = next(t) 
 
-        if self.verbose: 
-            print("is poisoned: {}".format(pstat)) 
-            print("--------------------------------------") 
+        if self.verbose: print("--------------------------------------") 
 
-        if finished_target: 
-            self.target_map[target_idn] = t.reproduce()
+        ## 
+        return 
 
     def occupied_targets(self): 
         targets = set() 
@@ -203,6 +215,9 @@ class PoisonDeliveryNetwork:
 
     def poison_source_of_target(self,target_idn): 
         for s in self.source_map.values(): 
+            if type(s.active_poison_action) == type(None): 
+                continue 
+
             if s.active_poison_action.path_target() == target_idn: 
                 return s 
         return None 

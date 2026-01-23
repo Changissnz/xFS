@@ -41,7 +41,8 @@ class PoisonPath:
         return
 
     def __str__(self): 
-        S = "* Poison Path Status: " + self.phase + "\n" 
+        S = "* Poison Path Status: " + self.phase + "\n"
+        S += "* finished: " + str(self.fin_stat) + "\n" 
         S += "\ttype: " + self.poison_type + "\n" 
         S += str(self.npath) 
         return S 
@@ -73,7 +74,7 @@ class PoisonPath:
                 return next(self) 
             return q,self.phase 
         else: 
-            q = self.react_next() 
+            q = self.react_next()
             if type(q) == type(None): 
                 self.fin_stat = True
                 return None,None  

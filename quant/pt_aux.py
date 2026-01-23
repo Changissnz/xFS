@@ -107,7 +107,7 @@ class PoisonTarget:
             return 
         q = next(self.backtracker) 
 
-        print("{} is backtracking to {}".format(self.node_idn,q))
+        if self.verbose: print("{} is backtracking to {}".format(self.node_idn,q))
         # case: finished, register into DB and RelayPlacement 
         if type(q) in {MethodType,FunctionType}: 
             nodeset = self.backtracker.cache
@@ -267,7 +267,7 @@ class PoisonSource:
 
     def __next__(self): 
         if self.active_poison_action.fin_stat: 
-            self.active_poison_action = None 
+            #self.clear_poison_action() 
             return None,None 
 
         q,mode = next(self.active_poison_action) 
