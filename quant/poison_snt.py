@@ -78,11 +78,9 @@ class PoisonPath:
             return q,self.phase 
         else: 
             q = self.react_next()
-            if type(q) == type(None): 
-                self.fin_stat = True
+            if self.fin_stat:  
                 return None,None  
-            q_ = q if self.poison_type == "expressive" else None 
-            return q_,self.phase
+            return q,self.phase
 
     def location(self): 
         return self.loc 
@@ -96,7 +94,10 @@ class PoisonPath:
         if self.first_reaction: 
             self.first_reaction = not self.first_reaction
             return deepcopy(self.p.M) 
-        return next(self.p) 
+        
+        q = next(self.p)
+        if type(q) == type(None): self.fin_stat = True 
+        return q if self.poison_type == "expressive" else None 
 
 class PoisonRelay: 
 

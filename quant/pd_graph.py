@@ -123,7 +123,7 @@ class PoisonDeliveryNetwork:
         if type(q.active_poison_action) == type(None):  
             q.send_poison(self.occupied_targets()) 
 
-        x,mode = next(q) 
+        x,mode = next(q)
 
         # case: poison has finished, terminate target 
         if q.active_poison_action.fin_stat: 
@@ -151,7 +151,6 @@ class PoisonDeliveryNetwork:
             for t in self.target_map.values(): 
                 t.relay_register(pp,possible_candidates) 
             return 
-
         # case: pending receive for target  
         t = pp.path_target()
         assert t not in self.pending_poisons 
@@ -199,7 +198,7 @@ class PoisonDeliveryNetwork:
 
             # compare prediction with actual 
             #   subcase: correct prediction, halt poison 
-            if type(pred) != type(None): 
+            if type(pred) != type(None) and type(x) != type(None): 
                 if equal_iterables(x,pred,5): 
                     if self.verbose: print("-- halting poison.") 
                     self.halt_poison(target_idn)  

@@ -45,7 +45,8 @@ class PoisonDB:
         return sorted(sources) 
 
 """
-Poison Target 
+<PoisonTarget> has the issue of dealing with poisons sent from <PoisonSource>s through 
+the network. 
 """
 class PoisonTarget: 
 
