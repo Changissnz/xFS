@@ -38,7 +38,6 @@ class PoisonPath:
         self.phase = "send" 
         self.fin_stat = False 
         self.first_reaction = True 
-
         self.loc = None 
         return
 
@@ -97,7 +96,7 @@ class PoisonPath:
         
         q = next(self.p)
         if type(q) == type(None): self.fin_stat = True 
-        return q if self.poison_type == "expressive" else None 
+        return q #if self.poison_type == "expressive" else None 
 
 class PoisonRelay: 
 
