@@ -91,6 +91,12 @@ class PoisonDeliveryNetwork:
         for t in self.target_map.values(): 
             t.verbose = self.verbose 
 
+    def set_target_prngs(self,prng_map): 
+        for k,v in prng_map.items(): 
+            assert k in self.target_map 
+            self.target_map[k].set_prng(v) 
+        return 
+
     def target_performances(self): 
         x = sorted(self.target_map.keys()) 
         for x_ in x: 

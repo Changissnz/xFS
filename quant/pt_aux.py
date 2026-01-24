@@ -96,6 +96,10 @@ class PoisonTarget:
         q.target_idn += 1 
         return q 
 
+    def set_prng(self,prg): 
+        assert type(prg) in {MethodType,FunctionType}
+        self.prg = prg  
+
     def __next__(self):
         self.next_backtrack() 
 
