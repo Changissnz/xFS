@@ -132,7 +132,7 @@ class PoisonRelay:
 
     def change_location(self,new_loc): 
         self.location = new_loc 
-        self.hit_counter = 0 
+        self.hit_counter = 0
 
 class RelayPlacement: 
 
@@ -144,7 +144,7 @@ class RelayPlacement:
         self.prg = prg 
         self.relay_accuracy_range = relay_accuracy_range
         # path idn -> set of relays 
-        self.active_relays = defaultdict(set) 
+        self.active_relays = defaultdict(list)  
         # path idn -> partial nodeset of path 
         self.paths_info = defaultdict(set)
         return 
@@ -177,9 +177,8 @@ class RelayPlacement:
             s += len(x) 
         return s 
 
-    def add_path_info(self,nodeset): 
-        l = len(self.paths_info) 
-        self.paths_info[l] = nodeset 
+    def add_path_info(self,source_idn,nodeset): 
+        self.paths_info[source_idn] = nodeset 
         return 
 
     def add_one_relay(self):
@@ -187,7 +186,7 @@ class RelayPlacement:
             return False 
 
         q = ceil(self.max_relays / self.num_sources)
-        x = sorted(self.active_relays.keys())
+        x = sorted(self.paths_info.keys())
         if len(x) == 0: return False 
 
         i = int(self.prg()) % len(x) 
@@ -199,31 +198,33 @@ class RelayPlacement:
 
         accuracy = modulo_in_range(self.prg(),self.relay_accuracy_range)
         r = PoisonRelay(self.source_idn,loc,accuracy,self.prg)
-        self.active_relays[p_idn] |= r
+        self.active_relays[p_idn].append(r) 
         return True 
 
     def move_one_relay(self): 
         x = sorted(self.active_relays.keys())
         if len(x) == 0: return False 
-        x2 = sorted(set(self.active_relays.keys()) - set(x)) 
 
         i = int(self.prg()) % len(x) 
         p_idn = x[i]
-        nodes = sorted(self.paths_info[p_idn]) 
-        j = int(self.prg()) % len(nodes) 
-        new_loc = nodes[j] 
 
-        j = int(self.prg()) % len(x2)
-        p_idn2 = x[j] 
+        relays = self.active_relays[p_idn] 
+        j = int(self.prg()) % len(relays) 
+        old_relay = relays[j] 
 
-        relays = list(self.active_relays[p_idn2]) 
-        k = int(self.prg()) % len(relays) 
-        relay = relays[k] 
+        q = sorted(set(self.paths_info.keys()) - {p_idn})
+        if len(q) == 0: 
+            return False 
 
-        relay.change_location(new_loc) 
+        k = int(self.prg()) % len(q) 
 
-        self.active_relays[p_idn2] -= {relay} 
-        self.active_relays[p_idn] |= {relay} 
+        new_loc = q[k] 
+        old_relay.change_location(new_loc) 
+
+        self.active_relays[p_idn].pop(j) 
+        if len(self.active_relays[p_idn]) == 0: 
+            del self.active_relays[p_idn] 
+        self.active_relays[new_loc].append(old_relay) 
         return True 
 
     def __next__(self): 

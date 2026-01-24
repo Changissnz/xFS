@@ -70,7 +70,7 @@ class PoisonTarget:
         self.previous_source_guesses = [] 
 
         self.backtracker = None 
-        self.guess_count = defaultdict(int) 
+        self.guess_count = 0 
 
         self.terminated = False 
 
@@ -123,6 +123,7 @@ class PoisonTarget:
             poison_idn = self.backtracker.poison_idn 
             source_idn = self.backtracker.source_idn 
             self.poison_db.add_poison_source_info(poison_idn,source_idn,q) 
+            self.rplacer.add_path_info(source_idn,nodeset) 
             self.backtracker = None
             self.backtracked = True  
         return 
@@ -200,7 +201,9 @@ class PoisonTarget:
             return None 
 
         i = int(self.prg()) % len(self.relay_suspects_)
-        q = self.relay_suspects_.pop(i) 
+        x = sorted(self.relay_suspects_)
+        q = x.pop(i)
+        self.relay_suspects_ = set(x)  
         return q 
 
     def predict_poison__stepwise(self,poison_idn,source_idn,expressive_restriction:bool=True): 
@@ -213,9 +216,10 @@ class PoisonTarget:
             poison_idn,source_idn) 
 
         pms = PoisonModelSNT(M,deepcopy(prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=None)
-
+        self.guess_count += 1 
         for i in range(1,len(self.poison_reaction_log)): 
             q = next(pms) 
+            self.guess_count += 1 
             q2 = self.poison_reaction_log[i] 
             if type(q2) == type(None): 
                 if expressive_restriction:
@@ -224,6 +228,7 @@ class PoisonTarget:
 
             if not equal_iterables(q,q2,5): 
                 return None,False 
+        self.guess_count += 1 
         return next(pms),True 
 
     def register_poison_reaction(self,r): 

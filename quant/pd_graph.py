@@ -91,6 +91,15 @@ class PoisonDeliveryNetwork:
         for t in self.target_map.values(): 
             t.verbose = self.verbose 
 
+    def target_performances(self): 
+        x = sorted(self.target_map.keys()) 
+        for x_ in x: 
+            q = self.target_map[x_] 
+            print("idn: ",q.node_idn) 
+            print("number of terminations: ",q.target_idn) 
+            print("number of guesses: ",q.guess_count) 
+            print() 
+
     def __next__(self): 
         self.move_sources() 
         self.move_targets() 
