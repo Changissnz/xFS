@@ -27,11 +27,11 @@ The steps a <PoisonSource> S_i takes to poison a <PoisonTarget> T_j:
   until completion, such that T_j is terminated. 
 
   During the course of these reactions, for timestamp t_q, if T_j is able to predict the 
-  reaction, a square n x n matrix, from the previous reactions of [(q - 1) + 1], for the 
-  initial poison state matrix, then T_j is able to halt the poison from terminating it. 
-- A <PoisonSource> uses a <PoisonPath> instance to deliver and react the poison to a target. 
-  At any single point in time, a <PoisonSource> can have at most one <PoisonPath> instance 
-  active. 
+  reaction, a square n x n matrix, from the previous (q -1) reactions and the initial 
+  poison state matrix M, then T_j is able to halt the poison from terminating it. 
+- A <PoisonSource> uses a <PoisonPath> instance to deliver a poison to and react it in a 
+  target. At any single point in time, a <PoisonSource> can have at most one <PoisonPath> 
+  instance active. 
 ---------------------------------------------------------------------------------------------
 
 The steps a <PoisonTarget> T_j takes when a poison p_k hits it: 
