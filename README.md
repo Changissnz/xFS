@@ -1,6 +1,8 @@
 # xFS
 
-This project is allocated for algorithms I have attempted in some of my past projects. 
+This project is allocated for algorithms I have attempted in some of my past projects, 
+as well as some emerging ideas of mine. 
+ 
 The projects `puissec` and `r2apart`, in particular, are not fully functional and were 
 developed by me only in conjunction with my research efforts. Technicalities in both 
 hardware and those projects' code implementation have pressured me to cease their 
@@ -37,7 +39,7 @@ developer results. As of this time in writing, developer Python version is 3.14.
 
 The graph problems defined in this project involve software agents. These agents are 
 programmed with functionalities that are static. This implies the agents cannot "learn" 
-any more, past the programming, about the specific problems they act in. Their learning 
+any more, past their programming, about the specific problems they act in. Their learning 
 mechanisms cannot "expand" any more outside of this static programming: no additional 
 variables of interest, no different data structure formats, no different ordering scheme 
 of deciding on the best decision per timestamp, no different ranking mechanisms for choices. 
