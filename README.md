@@ -16,10 +16,22 @@ Here is a list of graph problems in the project:
 - Slander Net Bot (Alpha)  
     - vantage point for learning: agent that determines what communication 
       ports to open and close to maximize objective function score. 
+    - code has non-deterministic elements to it. Required to set seeds for 
+    Python and Numpy random. 
 - Poison Trace Bot (Pre-Alpha) 
+    - vantage point for learning: agent (poison target), in a network, that 
+    has to position alert relays to help it know (poison source, poison identity) 
+    of poison delivered to it. Accurate knowledge allows for poison target to 
+    negate poison before its termination. 
+    - code has non-deterministic elements to it. Required to set seeds for 
+    Python and Numpy random. 
 - MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
 - BK (Bull Killer) (Planned, 50/50 of publishing) 
 - Homo Frame Bot (Planned, 50/50 of publishing)
+
+#### NOTE: 
+Some of these bots rely on Python/Numpy random. User results may differ from 
+developer results. As of this time in writing, developer python version is 3.14.2. 
 
 ## The Machine-Learning Aspect 
 

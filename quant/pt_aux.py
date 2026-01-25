@@ -2,7 +2,7 @@ from .poison_snt import *
 from morebs2.numerical_generator import prg_seqsort,prg__single_to_nvec,prg_to_prg__LCG_sequence
 
 """
-database utilized by a target in simulation Poison Trace Bot. Target stores information 
+database utilized by a <PoisonTarget> in simulation Poison Trace Bot. Target stores information 
 on (source identifiers, poison identifiers, PRNG reactor) it or its predecessors, located 
 at the same node, encounter over the course of Poison Trace Bot simulation activity. 
 """
@@ -286,7 +286,7 @@ class PoisonSource:
         # poison. 
         self.poison_prng_map = {} 
         prngs = prg_to_prg__LCG_sequence(prg,len(poison_matrix_map))
-        for (i,k) in enumerate(self.poison_matrix_map.keys()): 
+        for (i,k) in enumerate(sorted(self.poison_matrix_map)):
             self.set_prng_for_poison(k,prngs[i])
 
         self.active_poison_action = None 
