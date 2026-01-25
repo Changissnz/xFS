@@ -7,7 +7,7 @@ Poison Trace Bot is a construct with rather simple rules, outside of the computa
 necessary to transform a <PoisonModelSNT> n x n square matrix through its n^2 reactions. 
 
 These simple rules do not grant any <PoisonTarget> the potential to calculate with 
-certainty and ahead of time the <PoisonSource>s that deliver poison to them through a 
+certainty and ahead of time the <PoisonSource>s that deliver poison to it through a 
 network T, a multi-rooted tree. The roots are the <PoisonSource>s instances, and the 
 leaves are the <PoisonTarget>s. 
 
