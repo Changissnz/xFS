@@ -36,8 +36,11 @@ and agents map these numbers out to decisions taken by them. The utility of obta
 high-performing PRNG for a graph problem of specific starting parameters is restricted to 
 that case. There is no software mechanism to automate deriving of further insight into the 
 graph problem example via a high-performing PRNG. This deficit differs from traditional 
-machine-learning problems on fixed and labeled datasets. It is possible to implement 
-further code for these graph problems to be more conducive for machine-learning. However, 
+machine-learning problems on fixed and labeled datasets, where feedback loops of training 
+iterations can be guaranteed to yield incrementally better solutions, until the global 
+optima is found. This guarantee, of course, is theoretical and cannot be stated for 
+deep learning problems on highly variable datasets. It is possible to implement further 
+code for these graph problems to be more conducive for machine-learning. However, 
 implementing further code would defeat the purpose of graph problem difficulty. The 
 division of partial information between agents in every one of these graph problems was 
 deliberate in fulfillment of maintaining a high baseline of difficulty for an agent 
