@@ -52,8 +52,8 @@ The steps a <PoisonTarget> T_j takes when a poison p_k hits it:
       <PoisonSource> can conduct: `expressive` or `inexpressive`. If poison is expressive, 
       all elements of `poison_reaction_log` will be matrices. If poison is inexpressive, 
       only the first element of the log is a matrix (initial poison), and the remaining are 
-      categorically None. If poisoning is expressive, T_j will calculate a replication of every 
-      reaction, and if a replication R' does not equal a reaction R at some index 
+      categorically None. If poisoning is expressive, T_j will sequentially calculate a replication 
+      of each reaction, and if a replication R' does not equal a reaction R at some index 
       in the `poison_reaction_log`, quits computing on hypothesis (poison identifier source identifier). 
       However, with inexpressive poisons, T_j calculates every replication, that is, the length of 
       the `poison_reaction_log` to output the predicted reaction M_x for the current timestamp.  
