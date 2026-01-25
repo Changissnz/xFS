@@ -43,7 +43,7 @@ deep learning problems on highly variable datasets. It is possible to implement 
 code for these graph problems to be more conducive for machine-learning. However, 
 implementing further code would defeat the purpose of graph problem difficulty. The 
 division of partial information between agents in every one of these graph problems was 
-deliberate in fulfillment of maintaining a high baseline of difficulty for an agent 
+deliberate in fulfillment of maintaining a baseline of probabilistic difficulty for an agent 
 to improve its solution (PRNG). Unlike the highly vectorizable (input,output) samples 
 of traditional machine-learning that typically operates in Euclidean space, finding a 
 high-scoring solution does not easily lead to a better solution derived from that one. 
