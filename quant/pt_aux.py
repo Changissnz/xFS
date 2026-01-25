@@ -1,5 +1,5 @@
 from .poison_snt import * 
-from morebs2.numerical_generator import prg_seqsort
+from morebs2.numerical_generator import prg_seqsort,prg__single_to_nvec,prg_to_prg__LCG_sequence
 
 """
 database utilized by a target in simulation Poison Trace Bot. Target stores information 
@@ -72,6 +72,8 @@ class PoisonTarget:
 
         self.backtracker = None 
         self.guess_count = 0 
+        self.poison_count = 0 
+        self.poison_stat = False 
 
         self.terminated = False 
 
@@ -90,6 +92,7 @@ class PoisonTarget:
         self.poison_reaction_log.clear() 
         self.backtracked = False 
         self.terminated = False 
+        self.poison_stat = False 
 
     def reproduce(self): 
         self.reset() 
@@ -137,7 +140,10 @@ class PoisonTarget:
         self.terminated = True 
         return 
 
-    def is_poisoned(self): 
+    def is_poisoned(self):
+        if not self.poison_stat: 
+            self.poison_stat = True 
+            self.poison_count += 1 
         return len(self.poison_reaction_log) > 0 
 
     """
@@ -197,7 +203,7 @@ class PoisonTarget:
         
         self.relay_suspects_ = self.relay_suspects[0] 
         for i in range(1,len(self.relay_suspects)): 
-            self.relay_suspects_ = self.relay_suspects_ | self.relay_suspects[i] 
+            self.relay_suspects_ = self.relay_suspects_.intersection(self.relay_suspects[i]) 
         return 
 
     def guess_source(self): 
@@ -274,11 +280,20 @@ class PoisonSource:
         self.target_path_map = target_path_map 
         self.poison_matrix_map = poison_matrix_map 
         self.expressive_mode = expressive_mode
-        self.prg = prg 
-        self.prg2 = deepcopy(self.prg) 
+        self.prg2 = deepcopy(prg) 
+
+        # declare 1 LCG prng, using the `prg` parameter, for every 
+        # poison. 
+        self.poison_prng_map = {} 
+        prngs = prg_to_prg__LCG_sequence(prg,len(poison_matrix_map))
+        for (i,k) in enumerate(self.poison_matrix_map.keys()): 
+            self.set_prng_for_poison(k,prngs[i])
 
         self.active_poison_action = None 
         return 
+
+    def set_prng_for_poison(self,p_idn,prg): 
+        self.poison_prng_map[p_idn] = prg 
 
     def __str__(self):
         S = "* active poison action" + "\n" 
@@ -306,7 +321,8 @@ class PoisonSource:
 
     def form_poison(self,p_idn,t_idn): 
         M_ = self.poison_matrix_map[p_idn] 
-        p = PoisonModelSNT(M_,deepcopy(self.prg),min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=p_idn)
+        prng = deepcopy(self.poison_prng_map[p_idn])
+        p = PoisonModelSNT(M_,prng,min_max=DEFAULT_POISON_MODEL_SNT_MINMAX,idn=p_idn)
 
         # form poison
         npath = self.target_path_map[t_idn]  

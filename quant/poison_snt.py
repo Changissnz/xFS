@@ -150,6 +150,9 @@ class RelayPlacement:
         return 
 
     def attempt_relay_PoisonPath(self,poison_path,possible_candidates): 
+        if poison_path.path_target() != self.source_idn: 
+            return [] 
+
         x = poison_path.location() 
         relays = self.relays_at_location(x) 
 

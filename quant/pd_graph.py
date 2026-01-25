@@ -3,7 +3,6 @@ from graph_models.tree_gen import *
 from graph_models.analog_schemes_aux import connect_subgraphs__prior_to_current 
 from graph_models.shortest_paths import * 
 from .pt_aux import *  
-from morebs2.numerical_generator import prg__single_to_nvec,prg_to_prg__LCG_sequence
 from morebs2.graph_basics import * 
 
 """
@@ -97,14 +96,21 @@ class PoisonDeliveryNetwork:
             self.target_map[k].set_prng(v) 
         return 
 
-    def target_performances(self): 
+    def target_performances(self,display:bool=True): 
+        d = {}  
         x = sorted(self.target_map.keys()) 
         for x_ in x: 
             q = self.target_map[x_] 
-            print("idn: ",q.node_idn) 
-            print("number of terminations: ",q.target_idn) 
-            print("number of guesses: ",q.guess_count) 
-            print() 
+            
+            if display: 
+                print("idn: ",q.node_idn) 
+                print("number of terminations: ",q.target_idn) 
+                print("number of guesses: ",q.guess_count) 
+                print("number of poisonings: ",q.poison_count)
+                print()
+            d[q.node_idn] = (q.target_idn,q.guess_count,q.poison_count) 
+        return d 
+
 
     def __next__(self): 
         self.move_sources() 
@@ -209,7 +215,7 @@ class PoisonDeliveryNetwork:
                     s = self.poison_source_of_target(target_idn) 
                     assert type(s) != type(None) 
                     pp = s.active_poison_action
-                    source_info = deepcopy(s.prg) 
+                    source_info = deepcopy(s.poison_prng_map[pp.poison_idn()]) 
                     t.start_backtrack(pp,source_info) 
 
 
@@ -219,7 +225,7 @@ class PoisonDeliveryNetwork:
                 x2 = x[0] 
             else: 
                 x2 = None if x[1] == "inexpressive" else x[0] 
-                
+
             t.register_poison_reaction(x2) 
             del self.pending_poisons[target_idn] 
 
@@ -258,6 +264,8 @@ class PoisonDeliveryNetwork:
     @staticmethod 
     def generate_instance(num_source_nodes,num_targets,num_poisons,poison2source_ratio_range,poison_matrix_square_dim,\
         expressive_mode,prg,relays_per_source=2,relay_accuracy_range=[0.75,0.9],verbose:bool=False):  
+
+        assert num_source_nodes <= num_targets 
         # generate the base graph 
         source_nodes = set([i for i in range(num_source_nodes)]) 
         T = TreeGen.generate_tree__mroot_n_leaves(source_nodes,num_targets,prg,is_dsg=False,\
