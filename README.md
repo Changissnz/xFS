@@ -25,11 +25,11 @@ Here is a list of graph problems in the project:
 
 The graph problems defined in this project involve software agents. These agents are 
 programmed with functionalities that are static. This implies the agents cannot "learn" 
-any more about the specific problems they act in. Their learning mechanisms cannot 
-"expand" any more outside of this static programming: no additional variables of 
-interest, no different data structure formats, no different ordering of deciding on 
-the best decision per timestamp, no different ranking mechanisms for choices. Instead, 
-the only way to improve a solution is through a semi-blind search process that iterates 
+any more, past the programming, about the specific problems they act in. Their learning 
+mechanisms cannot "expand" any more outside of this static programming: no additional 
+variables of interest, no different data structure formats, no different ordering scheme 
+of deciding on the best decision per timestamp, no different ranking mechanisms for choices. 
+Instead, the only way to improve a solution is through a semi-blind search process that iterates 
 through a candidate list of pseudo-random number generators (PRNGs) for the best PRNG. 
 PRNGs are used in agent decision-making for these graph problems. PRNGs output numbers, 
 and agents map these numbers out to decisions taken by them. The utility of obtaining a 
@@ -42,5 +42,14 @@ implementing further code would defeat the purpose of graph problem difficulty. 
 division of partial information between agents in every one of these graph problems was 
 deliberate in fulfillment of maintaining a high baseline of difficulty for an agent 
 to improve its solution (PRNG). Unlike the highly vectorizable (input,output) samples 
-of traditional machine-learning, finding a high-scoring solution does not easily lead 
-to a better solution derived from that one. 
+of traditional machine-learning that typically operates in Euclidean space, finding a 
+high-scoring solution does not easily lead to a better solution derived from that one. 
+Users can refer to one high-scoring PRNG, and add tweaks to it at selected indices of 
+the generator output. See below for illustration on PRNG G and tweaking it to G2: 
+```
+G:  x0,x1,x2,x3,x4,x5... 
+G2: x0,x42,x2,x56,x4,x5,... 
+```
+
+But this is a cumbersome process, and there is no guarantee making tweaks to a high-performing 
+generator would result in a better solution. 
