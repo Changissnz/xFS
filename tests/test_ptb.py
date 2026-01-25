@@ -2,9 +2,8 @@ from graph_problems.ptb import *
 import time 
 import unittest
 
-def PTBot_sample_X(num_source_nodes,num_targets,num_poisons,relays_per_source,poison_matrix_square_dim=4): 
+def PTBot_sample_X(num_source_nodes,num_targets,num_poisons,relays_per_source,poison_matrix_square_dim=4,expressive_mode=False): 
     poison2source_ratio_range = [1.,1.] 
-    expressive_mode = False   
     prg = prg__LCG(56.54,-100.32,455.3,197.55)
 
     seed_pair = (34,34)
@@ -109,7 +108,7 @@ class PTBotClass(unittest.TestCase):
     """
     1 minute <= developer runtime <= 2 minutes 
 
-    all parameters for this test case are the same as that for Case 1, except for 
+    All parameters for this test case are the same as that for Case 1, except for 
     matrix dimension 8 instead of 4. 
 
     The lower poison potency (lower matrix dimension is higher potency) of this test 
@@ -171,11 +170,41 @@ class PTBotClass(unittest.TestCase):
         assert got == pb_target_measures, "got {}".format(got)
         return 
 
+
+    """
+    1 minute <= developer runtime <= 2 minutes. 
+
+    All parameters for this test case are the same as that for Case 2, except for 
+    poison mode set to `expressive`. 
+
+    Target performance measures, specifically the number of guesses, are better than in Case 2.  
+    """
+    def test__PTBot__next__case_5(self): 
+        num_source_nodes = 2
+        num_targets = 10
+        num_poisons = 3
+        relays_per_source = 2 
+
+        pb = PTBot_sample_X(num_source_nodes,num_targets,num_poisons,relays_per_source,expressive_mode=True)
+
+        t = time.time() 
+        for i in range(5000): 
+            next(pb) 
+            if i % 1000 == 0: 
+                print("iter {}".format(i)) 
+
+        print("case #5 runtime: ",time.time() - t)
+
+        # (number of terminations, number of guesses, number of poisonings) 
+        pb_target_measures = {5: (2, 1478, 143), 8: (6, 1680, 171), \
+        9: (6, 1747, 181), 10: (5, 1968, 194), 11: (6, 1622, 168), \
+        12: (4, 1934, 192), 13: (4, 1793, 168), 14: (4, 1929, 176), \
+        15: (3, 2037, 182), 16: (5, 1452, 150)}
+
+
+        got = pb.target_performances(False)
+        assert got == pb_target_measures, "got {}".format(got)
+        return
+
 if __name__ == '__main__':
     unittest.main()
-
-# 2 relays 
-# {0: (162, 37964, 350), 1: (154, 37361, 361), 2: (183, 38122, 345), 3: (185, 37967, 349), 4: (171, 37360, 353), 5: (177, 37655, 348), 6: (176, 38237, 351), 7: (172, 38447, 338), 8: (189, 38944, 340), 9: (182, 37748, 342)}
-
-# 10 relays 
-#{0: (179, 37547, 355), 1: (164, 37262, 354), 2: (172, 38350, 338), 3: (168, 37376, 354), 4: (171, 38193, 345), 5: (182, 38054, 330), 6: (164, 37248, 359), 7: (176, 38298, 343), 8: (176, 37935, 346), 9: (185, 38054, 340)}
