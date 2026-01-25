@@ -16,7 +16,31 @@ Here is a list of graph problems in the project:
 - Slander Net Bot (Alpha)  
     - vantage point for learning: agent that determines what communication 
       ports to open and close to maximize objective function score. 
+- Poison Trace Bot (Pre-Alpha) 
 - MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
 - BK (Bull Killer) (Planned, 50/50 of publishing) 
 - Homo Frame Bot (Planned, 50/50 of publishing)
-- Poison Trace Bot (Planned, 50/50 of publishing)
+
+## The Machine-Learning Aspect 
+
+The graph problems defined in this project involve software agents. These agents are 
+programmed with functionalities that are static. This implies the agents cannot "learn" 
+any more about the specific problems they act in. Their learning mechanisms cannot 
+"expand" any more outside of this static programming: no additional variables of 
+interest, no different data structure formats, no different ordering of deciding on 
+the best decision per timestamp, no different ranking mechanisms for choices. Instead, 
+the only way to improve a solution is through a semi-blind search process that iterates 
+through a candidate list of pseudo-random number generators (PRNGs) for the best PRNG. 
+PRNGs are used in agent decision-making for these graph problems. PRNGs output numbers, 
+and agents map these numbers out to decisions taken by them. The utility of obtaining a 
+high-performing PRNG for a graph problem of specific starting parameters is restricted to 
+that case. There is no software mechanism to automate deriving of further insight into the 
+graph problem example via a high-performing PRNG. This deficit differs from traditional 
+machine-learning problems on fixed and labeled datasets. It is possible to implement 
+further code for these graph problems to be more conducive for machine-learning. However, 
+implementing further code would defeat the purpose of graph problem difficulty. The 
+division of partial information between agents in every one of these graph problems was 
+deliberate in fulfillment of maintaining a high baseline of difficulty for an agent 
+to improve its solution (PRNG). Unlike the highly vectorizable (input,output) samples 
+of traditional machine-learning, finding a high-scoring solution does not easily lead 
+to a better solution derived from that one. 

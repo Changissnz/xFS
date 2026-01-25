@@ -112,6 +112,14 @@ class PTBot(PoisonDeliveryNetwork):
 
     def __init__(self,G:defaultdict,source_map,target_map,verbose:bool=False):  
         super().__init__(G,source_map,target_map,verbose)
+        self.auto_agent = None 
+
+    """
+    used in <SimulationSolutionSearch> to search for best PRNG solution 
+    """
+    def set_one_auto(self,q): 
+        assert q in self.target_map  
+        self.auto_agent = q  
         return
 
     @staticmethod 

@@ -1,6 +1,7 @@
 from .snb import * 
 from types import MethodType,FunctionType
 
+# NOTE: 
 # functions implemented for exactly 1 autonomous agent 
 
 def SNB_env_prng_assignment_function(snbot:SNBot,prg):

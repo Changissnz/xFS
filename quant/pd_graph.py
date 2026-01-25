@@ -102,15 +102,20 @@ class PoisonDeliveryNetwork:
         for x_ in x: 
             q = self.target_map[x_] 
             
+            x = self.target_perf(x_) 
+
             if display: 
-                print("idn: ",q.node_idn) 
-                print("number of terminations: ",q.target_idn) 
-                print("number of guesses: ",q.guess_count) 
-                print("number of poisonings: ",q.poison_count)
+                print("idn: ",x_) 
+                print("number of terminations: ",x[0]) 
+                print("number of guesses: ",x[1]) 
+                print("number of poisonings: ",x[2])
                 print()
-            d[q.node_idn] = (q.target_idn,q.guess_count,q.poison_count) 
+            d[x_] = x  
         return d 
 
+    def target_perf(self,t_idn): 
+        q = self.target_map[t_idn] 
+        return (q.target_idn,q.guess_count,q.poison_count)
 
     def __next__(self): 
         self.move_sources() 
