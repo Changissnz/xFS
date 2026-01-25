@@ -31,7 +31,7 @@ Here is a list of graph problems in the project:
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
-developer results. As of this time in writing, developer python version is 3.14.2. 
+developer results. As of this time in writing, developer Python version is 3.14.2. 
 
 ## The Machine-Learning Aspect 
 
