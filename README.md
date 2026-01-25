@@ -2,7 +2,7 @@
 
 This project is allocated for algorithms I have attempted in some of my past projects, 
 as well as some emerging ideas of mine. 
- 
+
 The projects `puissec` and `r2apart`, in particular, are not fully functional and were 
 developed by me only in conjunction with my research efforts. Technicalities in both 
 hardware and those projects' code implementation have pressured me to cease their 
@@ -13,20 +13,24 @@ further development.
 Here is a list of graph problems in the project: 
 - Respondent Network Bot (Alpha) 
     - vantage point for learning: Q, the questioner. 
+    - file: `graph_problems/rnb.py`
 - Hidden Threat Exposure Bot (Alpha) 
     - vantage point for learning: navigator of network containing threats. 
+    - file: `graph_problems/hte.py`
 - Slander Net Bot (Alpha)  
     - vantage point for learning: agent that determines what communication 
       ports to open and close to maximize objective function score. 
     - code has non-deterministic elements to it. Required to set seeds for 
     Python and Numpy random. 
+    - file: `graph_problems/snb.py`
 - Poison Trace Bot (Pre-Alpha) 
     - vantage point for learning: agent (poison target), in a network, that 
     has to position alert relays to help it know (poison source, poison identity) 
     of poison delivered to it. Accurate knowledge allows for poison target to 
     negate poison before its termination. 
     - code has non-deterministic elements to it. Required to set seeds for 
-    Python and Numpy random. 
+    Python and Numpy random.
+    - file: `graph_problems/ptb.py`  
 - MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
 - BK (Bull Killer) (Planned, 50/50 of publishing) 
 - Homo Frame Bot (Planned, 50/50 of publishing)
