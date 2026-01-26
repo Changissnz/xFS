@@ -17,7 +17,7 @@ LEMMA: Suppose in a Poison Trace Bot simulation, there are s number of
     Suppose a Poison Target T_i has knowledge of all q PRNG reactors corresponding 
     to every (poison identifier, source identifier) hypothesis. A Poison Source S_j 
     delivers poison, of dimension n x n, to T_i. If 
-        n^2 > q, 
+        n^2 + 1 > q, 
     then S_j is guaranteed to halt the poison and avoid termination. 
 ------------------------------------------------------------------------------------  
 

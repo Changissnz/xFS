@@ -4,7 +4,8 @@ from quant.pd_graph import *
 Poison Trace Bot. 
 
 Poison Trace Bot is a construct with rather simple rules, outside of the computation 
-necessary to transform a <PoisonModelSNT> n x n square matrix through its n^2 reactions. 
+necessary to transform a <PoisonModelSNT> n x n square matrix through its (n^2 + 1) 
+reactions. 
 
 These simple rules do not grant any <PoisonTarget> the potential to calculate with 
 certainty and ahead of time the <PoisonSource>s that deliver poison to it through a 
@@ -23,7 +24,7 @@ The steps a <PoisonSource> S_i takes to poison a <PoisonTarget> T_j:
 - Once p_i reaches node of T_j, p_i is registered by T_j. T_j recognizes its state of 
   being poisoned. 
 - For every timestamp afterwards with regards to p_i poisoning T_j, p_i `reacts` in T_j. 
-  A poison of square matrix n x n will take n^2 reactions, one reaction per timestamp, 
+  A poison of square matrix n x n will take (n^2 + 1) reactions, one reaction per timestamp, 
   until completion, such that T_j is terminated. 
 
   During the course of these reactions, for timestamp t_q, if T_j is able to predict the 
