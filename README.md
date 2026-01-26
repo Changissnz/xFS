@@ -71,3 +71,21 @@ G2: x0,x42,x2,x56,x4,x5,...
 
 But this is a cumbersome process, and there is no guarantee making tweaks to a high-performing 
 generator would result in a better solution. 
+
+## User Access to the Graybox 
+
+The computer code for these bots in these graph problems is open for view. This is not a 
+blackbox arrangement. Users, in their attempts to guess high-performing PRNGs for any 
+graph problem example, can carefully review how the automata decision-making pipelines 
+work. These pipelines follow a general form, and descriptions are provided for each of 
+these graph problem bots. But these implementations rests on arbitrary design. 
+
+In a blackbox system, users would not know what the graph problem is, let alone the general 
+form of it. They would only be able to enter in a PRNG for the automaton to use for 
+decision-making. They would not be able to ascertain the end results from the PRNG. In these 
+graybox implementations, users would know the end results from the PRNG. But since a 
+PRNG only outputs real numbers for decision-making, users would not be able to easily know 
+what decisions the PRNG was responsible for. Thus, users would have a relatively difficult 
+time knowing what decisions are sub-optimal. Users can analyze the code implementation to 
+determine the specific decisions the PRNG mapped to, post-simulation. But code is not 
+provided in this project to convenience that.  
