@@ -27,7 +27,7 @@ mirrors the Poison Sources' Poison Path moves. This simulation is a basic inform
 that separates vital variables, that is, the Poison Path moves from the realm of ascertainable 
 knowledge available to Poison Targets. Simulation results are rather unremarkable. Rather, 
 the logistics of Poison Trace Bot is more essential in interest, subjectively speaking. 
-Next, there are two trials provided to showcase solution-finding in Poison Trace Bot. 
+Next, there are three trials provided to showcase solution-finding in Poison Trace Bot. 
 
 Use this code below for the first trial.  
 ------------------------------------------------------------------------------------
