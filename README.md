@@ -23,7 +23,7 @@ Here is a list of graph problems in the project:
     - code has non-deterministic elements to it. Required to set seeds for 
     Python and Numpy random. 
     - file: `graph_problems/snb.py`
-- Poison Trace Bot (Pre-Alpha) 
+- Poison Trace Bot (Alpha) 
     - vantage point for learning: agent (poison target), in a network, that 
     has to position alert relays to help it know (poison source, poison identity) 
     of poison delivered to it. Accurate knowledge allows for poison target to 
@@ -56,7 +56,7 @@ that case. There is no software mechanism provided to automate deriving of furth
 into any graph problem example via a high-performing PRNG. This deficit differs from 
 traditional machine-learning problems on fixed and labeled datasets, where feedback loops 
 of training iterations can be guaranteed to yield incrementally better solutions, until 
-the global optima is found. This guarantee, of course, is theoretical and cannot be stated for 
+the global optimum is found. This guarantee, of course, is theoretical and cannot be stated for 
 deep learning problems on highly variable datasets. It is possible to implement further 
 code for these graph problems to be more conducive for machine-learning. However, 
 implementing further code would defeat the purpose of graph problem difficulty. The 
