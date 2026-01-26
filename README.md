@@ -46,7 +46,7 @@ programmed with functionalities that are static. This implies the agents cannot 
 any more, past their programming, about the specific problems they act in. Their learning 
 mechanisms cannot "expand" any more outside of this static programming: no additional 
 variables of interest, no different data structure formats, no different ordering scheme 
-of deciding on the best decision per timestamp, no different ranking mechanisms for choices. 
+of deciding on the best choice per timestamp, no different ranking mechanisms for choices. 
 Instead, the only way to improve a solution is through a semi-blind search process that iterates 
 through a candidate list of pseudo-random number generators (PRNGs) for the best PRNG. 
 PRNGs are used in agent decision-making for these graph problems. PRNGs output numbers, 
