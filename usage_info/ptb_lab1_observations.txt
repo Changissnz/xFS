@@ -22,7 +22,7 @@ LEMMA: Suppose in a Poison Trace Bot simulation, there are s number of
 ------------------------------------------------------------------------------------  
 
 The objective of a Poison Target involves placing relays at node locations in ways that 
-best anticipate sources of poison. The best sequence of relay placements is essentially 
+best anticipate sources of poison. The best sequence of relay placements essentially 
 mirrors the Poison Sources' Poison Path moves. This simulation is a basic information game 
 that separates vital variables, that is, the Poison Path moves from the realm of ascertainable 
 knowledge available to Poison Targets. Simulation results are rather unremarkable. Rather, 
