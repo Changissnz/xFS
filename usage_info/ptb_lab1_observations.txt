@@ -1,0 +1,158 @@
+Poison Trace Bot operates by a fairly straightforward algorithm. There seems 
+to be code in the implementation that depends on Python random and numpy.random. 
+As a result, consistency in results demand setting seeds for these two Python 
+libraries. Developer output and general user output may differ. 
+
+-----------------------------------------------------------------------------------
+Here is a useful lemma. 
+
+LEMMA: Suppose in a Poison Trace Bot simulation, there are s number of 
+       Poison Sources. Every source s_i has p_i poisons. Then there are 
+
+    q = SUM       (p_i) 
+        s_i in S 
+
+       possible hypotheses for (poison identifier, source identifier). 
+
+    Suppose a Poison Target T_i has knowledge of all q PRNG reactors corresponding 
+    to every (poison identifier, source identifier) hypothesis. A Poison Source S_j 
+    delivers poison, of dimension n x n, to T_i. If 
+        n^2 > q, 
+    then S_j is guaranteed to halt the poison and avoid termination. 
+------------------------------------------------------------------------------------  
+
+The objective of a Poison Target involves placing relays at node locations in ways that 
+best anticipate sources of poison. The best sequence of relay placements is essentially 
+mirrors the Poison Sources' Poison Path moves. This simulation is a basic information game 
+that separates vital variables, that is, the Poison Path moves from the realm of ascertainable 
+knowledge available to Poison Targets. Simulation results are rather unremarkable. Rather, 
+the logistics of Poison Trace Bot is more essential in interest, subjectively speaking. 
+Next, there are two trials provided to showcase solution-finding in Poison Trace Bot. 
+
+Use this code below for the first trial.  
+------------------------------------------------------------------------------------
+
+from graph_problems.ptb_ext import * 
+from graph_problems.sim_solution_search import *
+import time 
+
+# declare the bot 
+num_source_nodes = 2
+num_targets = 10 
+num_poisons = 3 
+poison2source_ratio_range = [1.,1.] 
+poison_matrix_square_dim = 4 
+expressive_mode = False   
+prg = prg__LCG(56.54,-100.32,455.3,197.55)
+
+prg2 = prg__LCG(-456.54,-32.32,1455.3,-3197.55)
+prngs = prg_to_prg__LCG_sequence(prg2,10,4.02) 
+
+seed_pair = (57,568) 
+relays_per_source = 2 
+relay_accuracy_range = [0.75,0.9]#[1.,1.]
+pdn = PTBot.generate_instance(num_source_nodes,num_targets,\
+    num_poisons,poison2source_ratio_range,poison_matrix_square_dim,\
+    expressive_mode,prg,seed_pair,relays_per_source=relays_per_source,verbose=False)
+
+# set different PRNGs for <PoisonTarget>s
+prng_map = {}
+for i,k in enumerate(pdn.target_map.keys()): 
+    prng_map[k] = prngs[i] 
+pdn.set_target_prngs(prng_map) 
+
+auto_agent = 13 
+pdn.set_one_auto(auto_agent)
+
+sim_env_run_function = PTB_env_run_(5000) 
+
+prng_seq = [prg] 
+for i in range(20): 
+    j = (i * 21) % len(prng_seq)
+    pseq = prg_to_prg__LCG_sequence(prng_seq[j],10) 
+    prng_seq.extend(pseq)
+
+sim_env_prng_assignment_function = PTB_env_prng_assignment_function 
+sim_mode_shift_function = PTB_env_mode_shift_function
+simsol_fetch_function = PTB_env_solution_fetch_function
+simsol_cmp_function = PTB_env_cmp_solution
+
+S = SimulationSolutionSearch(pdn,sim_env_run_function,prng_seq,\
+        sim_env_prng_assignment_function,sim_mode_shift_function,\
+        simsol_fetch_function,simsol_cmp_function,verbose=True)
+
+i = 0 
+t = time.time() 
+while not S.fin_stat: 
+    S.process_one()
+    i += 1 
+print("runtime: ", time.time() - t) 
+
+ascore = np.mean([PTB_env_solution_score(q[1]) for q in S.results])
+tp = S.best[1].target_perf(auto_agent) 
+
+x = [] 
+for q in S.results: 
+    tp_ = q[1].target_perf(auto_agent) 
+    x.append(tp_) 
+x = np.array(x) 
+x = np.mean(x,axis=0)
+
+print("highest score: ",PTB_env_solution_score(S.best[1])) 
+print("average score: ",ascore)
+print("BEST terminations: {}  guesses: {}  poisonings: {}".format(tp[0],tp[1],tp[2])) 
+print("AVERAGE terminations: {}  guesses: {}  poisonings: {}".format(x[0],x[1],x[2])) 
+
+#--------------------------------------------------------------------------------- 
+### ENDING OUTPUT: on developer's device
+
+runtime:  1791.7826759815216
+highest score:  2336.5379746835442
+average score:  2779.132591558299
+BEST terminations: 3  guesses: 2293  poisonings: 158
+AVERAGE terminations: 3.855721393034826  guesses: 2718.776119402985  poisonings: 173.24378109452735
+
+#---------------------------------------------------------------------------------  
+
+For the second trial, change line 45 in the code above from 
+
+expressive_mode = False   
+    to 
+expressive_mode = True 
+
+#---------------------------------------------------------------------------------
+### ENDING OUTPUT: on developer's device
+
+runtime:  1361.80211019516
+highest score:  1550.8987341772151
+average score:  1824.4212228703336
+BEST terminations: 3  guesses: 1522  poisonings: 158
+AVERAGE terminations: 3.855721393034826  guesses: 1784.810945273632  poisonings: 173.24378109452735
+
+#---------------------------------------------------------------------------------
+
+For the third trial, starting with the code from Trial 1, change lines 40-42 from 
+
+num_source_nodes = 2
+num_targets = 10 
+num_poisons = 3 
+
+    to 
+
+num_source_nodes = 10
+num_targets = 15
+num_poisons = 5
+
+Comment out lines 59-62. 
+
+Poison is inexpresive for this trial. Running this revised code produced these 
+results. 
+
+#----------------------------------------------------------------------------------
+### ENDING OUTPUT: on developer's device
+
+runtime:  14656.392204523087
+highest score:  33942.966507177036
+average score:  39456.04308816573
+BEST terminations: 111  guesses: 22169  poisonings: 209
+AVERAGE terminations: 123.2636815920398  guesses: 24889.965174129353  poisonings: 210.92537313432837

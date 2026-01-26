@@ -16,15 +16,16 @@ def PTB_env_mode_shift_function(ptbot:PTBot):
 def PTB_env_solution_fetch_function(ptbot:PTBot): 
     return ptbot.target_perf(ptbot.auto_agent)
 
+def PTB_env_solution_score(ptbot:PTBot): 
+    t0,g0,p0 = PTB_env_solution_fetch_function(ptbot) 
+    return g0 + g0 * zero_div(t0,p0,0.0) 
+
 """
 maximal score for autonomous agent 
 """
 def PTB_env_cmp_solution(ptbot1:PTBot,ptbot2:PTBot,verbose=True): 
-    t0,g0,p0 = PTB_env_solution_fetch_function(ptbot1)
-    t1,g1,p1 = PTB_env_solution_fetch_function(ptbot2) 
-
-    s0 = g0 + g0 * zero_div(t0,p0,0.0) 
-    s1 = g1 + g1 * zero_div(t1,p1,0.0) 
+    s0 = PTB_env_solution_score(ptbot1) 
+    s1 = PTB_env_solution_score(ptbot2 ) 
 
     if verbose: 
         print("now {}\nbest {}".format(round(s0,5),round(s1,5))) 
