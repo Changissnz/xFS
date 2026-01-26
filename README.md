@@ -31,9 +31,6 @@ Here is a list of graph problems in the project:
     - code has non-deterministic elements to it. Required to set seeds for 
     Python and Numpy random.
     - file: `graph_problems/ptb.py`  
-- MK (Mob/Mass Killer) Bot (Planned, 50/50 of publishing)
-- BK (Bull Killer) (Planned, 50/50 of publishing) 
-- Homo Frame Bot (Planned, 50/50 of publishing)
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
