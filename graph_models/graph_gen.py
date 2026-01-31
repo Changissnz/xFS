@@ -1,7 +1,10 @@
 from .micrograph import * 
 from math import ceil 
 from morebs2.graph_basics import * 
-    
+from morebs2.matrix_methods import is_valid_range
+from morebs2.numerical_generator import modulo_in_range
+from types import FunctionType,MethodType
+
 """
 given number of vertices for simple,undirected graph 
 """
@@ -55,6 +58,32 @@ def directed_to_undirected_graph(d):
                 continue 
             d[v_] |= {k} 
     return d 
+
+
+"""
+counts the number of pairs of edges 
+    (u,v) (v,u) 
+with non-equal weights. 
+"""
+def nonequal_edge_weight_counts(G,wf): 
+    assert type(G) == defaultdict  
+
+    non_identical_weights = 0  
+    number_bidirectional = 0 
+
+    for k,v in G.items(): 
+        for v_ in v: 
+            w = wf(k,v_) 
+
+            try: 
+                w_ = wf(v_,k) 
+            except: 
+                continue 
+            
+            if w != w_: 
+                non_identical_weights += 1 
+            number_bidirectional += 1 
+    return non_identical_weights,number_bidirectional
 
 #
 """
@@ -234,6 +263,48 @@ class GraphGen:
 
     def to_file(self,fp): 
         dict_to_file(self.d,fp)
+
+#----------------------------------------------------------------------------------------- 
+
+class GraphWeightGen: 
+
+    def __init__(self,G,prg,is_dsg:bool,weight_range): 
+        assert type(G) == defaultdict 
+        assert type(prg) in {MethodType,FunctionType} 
+        assert type(is_dsg) == bool 
+        assert is_valid_range(weight_range,True,False) or \
+            is_valid_range(weight_range,False,False) 
+
+        self.G = G 
+        self.G_ = deepcopy(G)
+        self.prg = prg 
+        self.is_dsg = is_dsg 
+        self.weight_range = weight_range 
+
+        self.W = None 
+        self.generate() 
+
+    def generate(self): 
+        self.W = defaultdict(float)
+
+        keys = sorted(self.G_.keys())
+        for k in keys:
+            v = self.G_[k] 
+            for v_ in v: 
+                w = modulo_in_range(self.prg(),self.weight_range) 
+                self.W[(k,v_)] = w 
+
+                if not self.is_dsg: 
+                    if k in self.G_[v_]: 
+                        self.W[(v_,k)] = w 
+                        self.G_[v_] -= {k} 
+            del self.G_[k] 
+        return 
+
+    def weight(self,u,v): 
+        assert (u,v) in self.W 
+        return self.W[(u,v)] 
+
 
 #-----------------------------------------------------------------------------------------
 

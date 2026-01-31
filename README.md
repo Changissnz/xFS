@@ -31,7 +31,8 @@ Here is a list of graph problems in the project:
     - code has non-deterministic elements to it. Required to set seeds for 
     Python and Numpy random.
     - file: `graph_problems/ptb.py`  
-
+- Bull Killer Bot (work in progress) 
+    
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
 developer results. As of this time in writing, developer Python version is 3.14.2. 
@@ -78,7 +79,7 @@ The computer code for these bots in these graph problems is open for view. This 
 blackbox arrangement. Users, in their attempts to guess high-performing PRNGs for any 
 graph problem example, can carefully review how the automata decision-making pipelines 
 work. These pipelines follow a general form, and descriptions are provided for each of 
-these graph problem bots. But these implementations rests on arbitrary design. 
+these graph problem bots. But these implementations rest on arbitrary design. 
 
 In a blackbox system, users would not know what the graph problem is, let alone the general 
 form of it. They would only be able to enter in a PRNG for the automaton to use for 

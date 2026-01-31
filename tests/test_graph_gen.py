@@ -117,5 +117,26 @@ class GraphGenClass(unittest.TestCase):
         assert abs(gg.edge_connectivity_() - 0.1) < 2 * 10 ** -2 
         assert len(gg.d) == vertex_degree
 
+class GraphWeightGenClass(unittest.TestCase):
+
+    def test__GraphWeightGen__generate__case_1(self): 
+
+        prg = prg__LCG(67.4,-100,89.6,9196.66)
+        is_realtime_gen = True 
+        vertex_degree = 35 
+        edge_connectivity = 0.2  
+        gg = GraphGen(is_dsg=False,prg=prg,is_realtime_gen=is_realtime_gen,\
+                vertex_degree=vertex_degree,edge_connectivity=edge_connectivity,\
+                verbose=False)
+        gg.full_run() 
+
+        gw = GraphWeightGen(gg.d,prg,is_dsg=True,weight_range=[-10.,10.]) 
+        niw,nb = nonequal_edge_weight_counts(gg.d,gw.weight) 
+        assert niw == nb == 238 
+
+        gw2 = GraphWeightGen(gg.d,prg,is_dsg=False,weight_range=[-10.,10.]) 
+        niw2,nb2 = nonequal_edge_weight_counts(gg.d,gw2.weight) 
+        assert niw2 == 0 == nb2 - 238 
+
 if __name__ == '__main__':
     unittest.main()
