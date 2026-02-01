@@ -1,6 +1,7 @@
 from .shortest_paths import * 
 from .micrograph import * 
 from morebs2.graph_basics import flatten_setseq
+from morebs2.numerical_generator import prg__single_to_int
 from math import ceil 
 
 # TODO: work in progress. More testing needed. 
@@ -203,12 +204,17 @@ class ShortestPathsApproximator:
     approximation of shortest path using direct subgraph-to-subgraph 
     tracing. 
     """ 
-    def paths(self,source,target): 
+    def paths(self,source,target,store_paths:bool=False): 
         ps = self.paths_(source,target) 
-        if len(ps) > 0: return ps
+        if len(ps) == 0:
+            ps = self.paths_(target,source) 
+            ps = [p.invert() for p in ps] 
 
-        ps = self.paths_(target,source) 
-        return [p.invert() for p in ps]  
+        ps = prg_seqsort_ties(ps,prg__single_to_int(self.prg),\
+            vf = lambda x: x.cost())  
+        if len(ps) > 0 and store_paths:  
+            self.nodepair_path_info[(source,target)] = ps[0]      
+        return ps 
 
     def paths_(self,source,target): 
 
@@ -237,7 +243,7 @@ class ShortestPathsApproximator:
     approximation of shortest path using intermediary subgraph-to-subgraph 
     tracing. 
     """ 
-    def deduce_path(self,source,target): 
+    def deduce_path(self,source,target,store_paths:bool=False):  
         KS = prg_seqsort(sorted(self.G.keys() - {source,target}),\
             self.prg)
         
@@ -250,13 +256,44 @@ class ShortestPathsApproximator:
                     P.append(p_)
             return P 
 
+        q = [] 
         for k in KS: 
             p0 = self.paths(source,k)
             if len(p0) == 0: continue 
             p1 = self.paths(k,target) 
             if len(p1) == 0: continue 
-            return merge_paths(p0,p1) 
-        return [] 
+            q = merge_paths(p0,p1)
+            break  
+
+        q = prg_seqsort_ties(q,prg__single_to_int(self.prg),\
+            vf = lambda x: x.cost())  
+        if len(q) > 0 and store_paths: 
+            self.nodepair_path_info[(source,target)] = q[0]  
+        return q  
+
+    """
+    main method #4
+
+    """
+    def shortest_path(self,source,target,by_weight:bool): 
+        vf = None 
+        if by_weight: 
+            vf = lambda x: x.cost() 
+        else: 
+            vf = lambda x: len(x.pweights) 
+        
+        ps = self.paths(source,target)
+
+        if len(ps) > 0:
+            ps = prg_seqsort_ties(ps,prg__single_to_int(self.prg),vf)  
+            return ps[0] 
+
+        ps = self.deduce_path(source,target)
+        if len(ps) > 0: 
+            ps = prg_seqsort_ties(ps,prg__single_to_int(self.prg),vf)  
+            return ps[0] 
+
+        return None 
     
     #---------------------------------- auxiliary methods for shortest paths approximation 
 
@@ -359,17 +396,13 @@ class ShortestPathsApproximator:
             if c >= max_num_paths: 
                 break 
             if (n,x) not in self.nodepair_path_info: 
-                p = self.paths(n,x) 
+                p = self.paths(n,x,True) 
                 if len(p) != 0:
-                    qi = np.argmin([p_.cost() for p_ in p]) 
-                    self.nodepair_path_info[(n,x)] = p[qi]
                     c += 1 
                     continue 
                 
-                p = self.deduce_path(n,x) 
+                p = self.deduce_path(n,x,True)  
                 if len(p) != 0:
-                    qi = np.argmin([p_.cost() for p_ in p]) 
-                    self.nodepair_path_info[(n,x)] = p[qi]
                     c += 1 
                     continue 
         return c 

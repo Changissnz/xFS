@@ -1,15 +1,30 @@
 from graph_models.eb_graph_navigator import * 
 
 """
-
+for Chaser agent 
 """
-class CaptureFormation: 
+class CaptureFormationDecider: 
 
-    def __init__(self,chaser,target):  
+    def __init__(self,chaser):  
         self.chaser = chaser 
-        self.target = target   
         return
 
+    def partition_review(self): 
 
+        return -1 
 
-    
+    def bull_partition_review(self): 
+
+        return -1 
+
+"""
+for Bull agent 
+"""
+class EscapePathDecider: 
+
+    def __init__(self,bull):  
+        self.bull = bull  
+        return
+
+    def partition_review(self): 
+        return -1 

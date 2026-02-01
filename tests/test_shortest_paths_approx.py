@@ -84,15 +84,15 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
         X3 = spa2.paths(0,11) 
 
         path_ans2 = [\
-            [0, 2, 3, 4, 6, 7, 5],\
-            [0, 1, 3, 4, 6, 7, 5]] 
+            [0, 1, 3, 4, 6, 7, 5],\
+            [0, 2, 3, 4, 6, 7, 5]]  
 
         for x,p in zip(X2,path_ans2): 
-            assert x.p == p 
+            assert x.p == p, "got {}".format(x.p) 
 
         path_ans3 = [\
-            [0, 2, 3, 4, 6, 7, 8, 9, 11],\
-            [0, 1, 3, 4, 6, 7, 8, 9, 11]]
+            [0, 1, 3, 4, 6, 7, 8, 9, 11],\
+            [0, 2, 3, 4, 6, 7, 8, 9, 11]]
 
         for (x,p) in zip(X3,path_ans3): 
             assert x.p == p 
