@@ -174,3 +174,10 @@ class NodeObjectiveNavigator:
     def add_take(self,take_nodeset):
         assert type(take_nodeset) == set  
         self.take |= take_nodeset
+
+    def clear_mainvars(self): 
+        self.possible_avoid.clear() 
+        self.take.clear() 
+        self.absolute_avoid.clear() 
+        self.encountered = defaultdict(int,{self.loc: 1}) 
+        self.path_log.clear() 
