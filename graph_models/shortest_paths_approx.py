@@ -4,6 +4,20 @@ from morebs2.graph_basics import flatten_setseq
 from morebs2.numerical_generator import prg__single_to_int
 from math import ceil 
 
+def average_edge_distance_to_nodeset(node,nodeset,min_paths,is_weighted:bool): 
+    if len(nodeset) == 0: 
+        return float('inf') 
+        
+    d = 0 
+    for n in nodesets: 
+        p = min_paths[(node,n)]
+        if is_weighted: 
+            x = p.cost() 
+        else: 
+            x = len(p.pweights)
+        d += x 
+    return d / len(nodesets)  
+
 # TODO: work in progress. More testing needed. 
 """
 Approximates shortest paths for graphs. Useful for finding paths between connected 
@@ -35,6 +49,7 @@ class ShortestPathsApproximator:
 
         self.preproc() 
         self.next_ref_queue = [] 
+        self.cache = [] 
         self.fin_stat = False 
         return 
 
@@ -110,6 +125,7 @@ class ShortestPathsApproximator:
         if len(self.next_ref_queue) > 0: 
             q = self.next_ref_queue.pop(0)
             self.ref_node = q[0]
+            #self.cache.append(q[0]) 
             self.ref_sg_parent = q[1]
         else: 
             S = sorted(set(self.G.keys()) - self.covered_nodes) 
@@ -142,7 +158,13 @@ class ShortestPathsApproximator:
         peripheral_nodes = prg_seqsort(peripheral_nodes,self.prg)
         
         ##?? 
-        peripheral_parent_nodes = [(p,l) for p in peripheral_nodes] 
+        #peripheral_parent_nodes = [(p,l) for p in peripheral_nodes]
+        peripheral_parent_nodes = [] 
+        for p in peripheral_nodes: 
+            if p in self.cache: continue 
+            self.cache.append(p) 
+            peripheral_parent_nodes.append((p,l)) 
+
         self.next_ref_queue.extend(peripheral_parent_nodes) 
 
     """
@@ -184,11 +206,11 @@ class ShortestPathsApproximator:
         mg.subgraph_nodeset_exclusion(relevant_nodeset - {ref_node})
         D = mg.dg 
 
+        # using <BDFSCache>  
         bdfs = BDFSCache(ref_node,D,is_bfs=not self.is_dfs,\
             prg=self.prg,edge_cost_function=self.edge_cost_function,num_paths_per_node=1,\
             max_search_radius=self.max_subgraph_radius) 
         bdfs.exec() 
-
         Q = bdfs.min_paths
         ks = set(Q.keys()) 
         for k in ks: 
@@ -276,12 +298,15 @@ class ShortestPathsApproximator:
 
     """
     def shortest_path(self,source,target,by_weight:bool): 
+        if (source,target) in self.nodepair_path_info: 
+            return self.nodepair_path_info[(source,target)]  
+
         vf = None 
         if by_weight: 
             vf = lambda x: x.cost() 
         else: 
             vf = lambda x: len(x.pweights) 
-        
+
         ps = self.paths(source,target)
 
         if len(ps) > 0:
@@ -294,6 +319,16 @@ class ShortestPathsApproximator:
             return ps[0] 
 
         return None 
+
+    def shortest_paths_from_node_to_nodeset(self,node,nodeset,by_weight:bool): 
+        d = {} 
+
+        for n in nodeset: 
+            p = self.shortest_path(node,n,by_weight)
+            if type(p) != type(None): 
+                d[(node,n)] = p 
+        return d 
+
     
     #---------------------------------- auxiliary methods for shortest paths approximation 
 

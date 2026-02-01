@@ -5,23 +5,6 @@ DEFAULT_BULLKILLER_AGENT_MODES = {\
     "chaser": {"search","capture"}}
 
 """
-"""
-class NavigatorSyncTag:
-
-    def __init__(self,tag_target:int):  
-        self.tag_target = tag_target 
-        self.location = None 
-        self.next_location = None 
-        self.next_path = None 
-        return
-
-    def update(self,loc,next_loc,next_path): 
-        assert type(next_path) == NodePath 
-        self.loc = self.location 
-        self.next_location = next_loc 
-        self.next_path = next_path 
-
-"""
 Graph navigator operates on finite energy. Once energy 
 reaches non-positive real number, navigator terminates. 
 
@@ -55,7 +38,6 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         self.context = None 
         self.min_paths = None 
         self.current_path = None 
-        self.sync_tags = {} 
 
         if is_bull: 
             self.mode = "idle" 
@@ -68,16 +50,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         # chaser perspective 
             # int 
         self.bull_loc = None 
-            # NavigatorSyncTag
-        self.bull_tag = None 
             # chaser idn -> (location,nodeset of chaser's visual subgraph)
         self.other_chasers = None 
-        return 
-
-    def add_tag_target(self,nst:NavigatorSyncTag):
-        assert type(nst) == NavigatorSyncTag
-        assert not self.is_bull 
-        self.bull_tag = nst  
         return 
 
     def receive_context(self,sg:defaultdict,min_paths,bull_loc,chaser_locs):  
@@ -114,16 +88,113 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
                 self.mode = "idle" 
         return
 
-    def add_other_chasers_info(self,other_chasers): 
+    """
+    other_chasers := dict, chaser idn -> (location, nodeset) 
+    """
+    def add_other_chasers_info(self,other_chasers,min_paths): 
         assert type(other_chasers) == dict 
         for v in other_chasers.values(): 
             assert type(v[0]) == int and \
                 type(v[1]) == set and len(v) == 2 
-
         self.other_chasers = other_chasers  
+        self.min_paths.update(min_paths) 
 
-    def process_context(self): 
-        return -1 
+    """
+    adversary_location := int::node | None 
+    adversary_paths := list<path> 
+    co_op_info := list<(path,status)> | None 
+    """
+    def agent_predicts_best_path__chaser(self,adversary_location,adversary_path,co_op_info):  
+        assert not self.is_bull 
+
+        self.current_path = None 
+
+        # review co-op info 
+        ci = dict() 
+        for v,v2 in co_op_info: 
+            k2 = (v.head(),v.tail())
+            ci[k2] = v2  
+
+        # case: adversary is not sighted 
+        #       choose a co-op agent to follow 
+        if type(adversary_location) == type(None) and type(adversary_paths) == type(None): 
+            candidates = set()  
+            for k,v in ci.items(): 
+                if v == "chase": 
+                    candidates |= {k[0]}
+            candidates = sorted(candidates) 
+
+            if len(candidates) == 0: 
+                return self.current_path  
+
+            i = int(self.prg()) % len(candidates)
+            c = candidates[i]
+
+            p = (self.location(), candidates[c])
+            self.current_path = self.min_paths[p]
+            return self.current_path 
+
+        # iterate through co_op_info for 
+        next_candidates = self.next_possible_nodes() 
+        exclude = set([k[1] for k in ci.keys()]) 
+        next_candidates_ = next_candidates - exclude 
+
+        # case: all possible next nodes will be occupied by at least 1 co-agent 
+        if len(next_candidates_) == 0: 
+            next_candidates_ = next_candidates 
+
+        if len(next_candidates_) == 0: 
+            return self.current_path 
+
+        next_candidates_ = sorted(next_candidates_) 
+        i = int(self.prg()) % len(next_candidates_) 
+        c = next_candidates_[i]
+        self.current_path = self.min_paths[(self.location(),c)] 
+        return self.current_path  
+
+    def agent_predicts_best_path__bull(self,adversary_locations,adversary_paths): 
+        if len(adversary_locations) == 0: 
+            self.current_path = None 
+            return self.current_path 
+
+        # case: agent does not know any adversary paths 
+        #       rely on adversary locations
+        loc = self.location() 
+        avoid_nodes = set(adversary_locations)
+        if type(adversary_paths) != type(None):
+            avoid_nodes = set([p.tail() for p in adversary_paths])
+
+        d = []  
+        possible_next = self.next_possible_nodes()
+        for p in possible_next: 
+            a = (p,average_edge_distance_to_nodeset(p,avoid_nodes,self.min_paths,is_weighted=False)) 
+            d.append(a)
+
+        vf = lambda x: x[1] 
+        d = prg_seqsort_ties(d,prg__single_to_int(self.prg),vf) 
+        x = d.pop(-1) 
+        xs = [x] 
+
+        while len(d) > 0: 
+            x2 = d.pop(-1) 
+            if x2[1] == x[1]: 
+                xs.append(x2) 
+            else: 
+                break 
+
+        i = int(self.prg()) % len(xs) 
+        x = xs[i][0] 
+
+        self.current_path = self.min_paths[(loc,x)] 
+        return self.current_path
+
+    def next_possible_nodes(self): 
+        l = self.location()
+        nodes = set() 
+        for k in self.min_paths.keys(): 
+            if k[0] == l: 
+                nodes |= {k[1]} 
+        return nodes 
 
     def update_loc(self,loc): 
         assert type(loc) in {int,tuple} 

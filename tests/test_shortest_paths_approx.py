@@ -32,12 +32,12 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
         spa = ShortestPathsApproximator(D,is_dfs=False,max_subgraph_radius=R,prg=prg,verbose=False)
         spa.exec() 
 
-        path_ans = [[0, 2, 3, 4, 5],\
-                    [0, 1, 3, 4, 5]]
+        path_ans = [[0, 1, 3, 4, 5],\
+                [0, 2, 3, 4, 5]]
 
         X = spa.paths(0,5)
         for x,p in zip(X,path_ans): 
-            assert x.p == p 
+            assert x.p == p,"got {}".format(x.p)
 
         for p in spa.nodepair_path_info.values(): 
             assert p.cost() <= R 
