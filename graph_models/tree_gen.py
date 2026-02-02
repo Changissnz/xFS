@@ -110,6 +110,39 @@ class TreeGen:
             q = int(self.prg()) % len(self.leaves) 
             leaf = self.leaves.pop(q) 
         return leaf 
+
+    """
+    deletes nodes starting with leaves
+    """
+    def delete_n_nodes(self,n): 
+        for _ in range(n): 
+            stat = self.delete_one_leaf() 
+            if not stat: break 
+        return
+
+    def delete_one_leaf(self): 
+        if len(self.leaves) == 0: 
+            return False 
+
+        # choose a l
+        q = int(self.prg()) % len(self.leaves) 
+        leaf = self.leaves.pop(q) 
+        del self.d[leaf] 
+        
+        p = self.parent_of(leaf)
+        self.d[p] -= {leaf} 
+
+        if len(self.d[p]) == 0: 
+            self.leaves.append(p) 
+        self.node_count -= 1 
+        return True 
+
+    def parent_of(self,n): 
+        for k,v in self.d.items(): 
+            if n in v: 
+                return k 
+        return None 
+
     
     @staticmethod
     def generate_tree__mroot_n_leaves(starting_nodeset,num_leaves,prg,is_dsg:bool=False,growth_type="ordered",\

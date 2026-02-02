@@ -156,5 +156,28 @@ class TreeGenClass(unittest.TestCase):
             58: {27}, 59: {27}, 60: {29}, 61: {29}, \
             62: {29}, 64: {28}, 63: {28}})
 
+    def test__TreeGen__delete_n_nodes__case_1(self): 
+
+        prg = prg__LCG(44.5,-99.8,-7777,9015)
+
+        tg = TreeGen(starting_nodeset = {0},is_dsg=False,prg=prg,branching_range=DEFAULT_TREE_BRANCHING_RANGE,\
+                growth_type="ordered")
+
+        r = 100 
+
+        while tg.node_count < r: 
+            next(tg) 
+
+        next(tg),next(tg),next(tg)  
+        assert tg.node_count == 111 
+
+        l_ = deepcopy(tg.leaves) 
+        tg.delete_n_nodes(11) 
+        l = tg.leaves
+        assert tg.node_count == len(tg.d) == 100 
+        
+        assert len(l_) == 83 
+        assert len(l) == 72 
+
 if __name__ == '__main__':
     unittest.main()
