@@ -1,9 +1,15 @@
 from graph_models.eb_graph_navigator import * 
 from graph_models.radial_subgraph import * 
 from graph_models.shortest_paths_approx import * 
+from graph_models.sparse_graph_gen import * 
+from graph_models.graph_gen import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
 
 DEFAULT_BULL_NETWORK_MAX_EDGES = 10000 
 
+# NOTE: shortest paths approximator used first uses default edge distance of 1 for 
+#       all edges. As a result, paths between pairs of nodes may not be the cheapest in 
+#       weight. 
 class BullNetwork: 
 
     def __init__(self,G,edge_cost_function,entry_points,bull,agents,visual_radius,c2c_distance,prg,\
@@ -42,10 +48,9 @@ class BullNetwork:
     calculates approximate shortest paths 
     """
     def preproc(self): 
-        self.spa = ShortestPathsApproximator(self.G,is_dfs=False,max_subgraph_radius=3,prg=self.prg,max_periphery=50,\
-                edge_cost_function=self.edge_cost_function) 
+        self.spa = ShortestPathsApproximator(self.G,is_dfs=False,max_subgraph_radius=5,prg=self.prg,max_periphery=50,\
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False)   
         self.spa.exec() 
-        self.spa.add_12000_new_paths() 
         return 
 
     # NOTE: somewhat inefficient method. Calculates shortest paths twice. 
@@ -87,6 +92,8 @@ class BullNetwork:
 
         loc = self.agents[agent_idn].location() 
         q = self.spa.shortest_paths_from_node_to_nodeset(loc,entire_nodeset,True)
+        for k,v in q.items(): 
+            q[k] = v.adjust_weights(self.edge_cost_function) 
 
         A = self.agents[agent_idn]
         A.add_other_chasers_info(D,q) 
@@ -103,7 +110,7 @@ class BullNetwork:
             px = self.spa.shortest_path(loc_,loc,False) 
             if type(px) == type(None): 
                 continue 
-
+            px = px.adjust_weights(self.edge_cost_function)
             if len(px.pweights) <= self.c2c_distance: 
                 nodeset = set(self.agents[a2].context.keys())            
                 d[a2] = (loc,nodeset) 
@@ -118,6 +125,7 @@ class BullNetwork:
                 # case: path already exists 
                 if (k,k2) in self.spa.nodepair_path_info: 
                     dx[(k,k2)] = self.spa.nodepair_path_info[(k,k2)] 
+                    dx[(k,k2)] = dx[(k,k2)].adjust_weights(self.edge_cost_function)
                     continue 
 
                 # case: inverse of path exists 
@@ -132,6 +140,7 @@ class BullNetwork:
                     continue 
                 else: 
                     dx[(k,k2)] = self.spa.nodepair_path_info[(k,k2)]
+                    dx[(k,k2)] = dx[(k,k2)].adjust_weights(self.edge_cost_function)
         return dx 
 
     def premove(self): 
@@ -144,9 +153,62 @@ class BullNetwork:
         return -1 
 
     @staticmethod 
-    def generate_instance(G,num_entry_points,num_agents,visual_radius):
-        return -1 
+    def generate_instance(num_nodes,growth_type,num_entry_points,\
+        num_agents,visual_radius,c2c_distance,prg,open_info_mode,\
+        bull_is_2nd_premover,bull_energy,chaser_energy,\
+        weight_range=[1,10]):
+
+        G = BullNetwork.generate_base_graph(num_nodes,prg,growth_type) 
+        return BullNetwork.generate_instance_(G,num_entry_points,num_agents,\
+            visual_radius,c2c_distance,prg,open_info_mode,bull_is_2nd_premover,\
+            bull_energy,chaser_energy,weight_range)
+
+
+    @staticmethod 
+    def generate_instance_(G,num_entry_points,num_agents,visual_radius,\
+        c2c_distance,prg,open_info_mode,bull_is_2nd_premover,bull_energy,\
+        chaser_energy,weight_range=[1,10]): 
+        assert len(G) >= num_agents + 1 
+
+        # choose the entry points 
+        q = sorted(G.keys())
+        entry_points = prg_choose_n(q,num_entry_points,prg__single_to_int(prg),is_unique_picker=False) 
+        entry_points = set(entry_points)
+
+        # make the edge cost function 
+        gw = GraphWeightGen(G,prg,is_dsg=False,weight_range=weight_range)
+        edge_cost_function = gw.weight 
+
+        # choose the agent and bull locations 
+        n = num_agents + 1
+        q = sorted(G.keys())
+        locations = prg_choose_n(q,n,prg__single_to_int(prg),is_unique_picker=False) 
+
+        prgs = prg_to_prg__LCG_sequence(prg,num_agents+1,3.4123) 
+
+        # make the agents 
+        bull_idn = 0 
+        bull_loc = locations.pop(0)
+        bull = EnergyBasedGraphNavigator(bull_idn,bull_loc,bull_energy,prgs.pop(0),True)
+
+        agents = {}
+        for i in range(1,num_agents+1): 
+            loc = locations.pop(0)
+            agent = EnergyBasedGraphNavigator(i,loc,chaser_energy,prgs.pop(0),False) 
+            agents[i] =agent 
+
+        return BullNetwork(G,edge_cost_function,entry_points,bull,agents,\
+            visual_radius,c2c_distance,prg,open_info_mode,bull_is_2nd_premover)
 
     @staticmethod
-    def generate_base_graph(): 
-        return -1 
+    def generate_base_graph(num_nodes,prg,growth_type): 
+
+        leaf_backtrack_conn_ratio_range = [0.05,0.15] 
+        backtrack_conn_range = [3,7]
+        branching_range = [1,4] 
+
+        sgg = SparseConnectedGraphGen(num_nodes,leaf_backtrack_conn_ratio_range,backtrack_conn_range,\
+            is_dsg=False,prg=prg,branching_range=branching_range,\
+            growth_type=growth_type)
+        sgg.make() 
+        return sgg.d 

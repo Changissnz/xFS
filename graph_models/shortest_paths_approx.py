@@ -94,6 +94,7 @@ class ShortestPathsApproximator:
         spa.add_12000_new_paths() 
         return spa 
 
+    # CAUTION: there is a bug in this. 
     def add_12000_new_paths(self): 
         for i in range(12): 
             self.add_new_paths_to_info(1000) 
@@ -158,13 +159,14 @@ class ShortestPathsApproximator:
         peripheral_nodes = prg_seqsort(peripheral_nodes,self.prg)
         
         ##?? 
-        #peripheral_parent_nodes = [(p,l) for p in peripheral_nodes]
+        peripheral_parent_nodes = [(p,l) for p in peripheral_nodes]
+        '''
         peripheral_parent_nodes = [] 
         for p in peripheral_nodes: 
             if p in self.cache: continue 
             self.cache.append(p) 
             peripheral_parent_nodes.append((p,l)) 
-
+        ''' 
         self.next_ref_queue.extend(peripheral_parent_nodes) 
 
     """
@@ -197,7 +199,7 @@ class ShortestPathsApproximator:
 
         if self.verbose: print("# of peripheral nodes: ",len(peripheral_nodes))
 
-        subgraph_nodeset = set([x[1] for x in nodepair_path_info.keys()]) 
+        subgraph_nodeset = set([x[1] for x in nodepair_path_info.keys()]) | {ref_node} 
         return nodepair_path_info,subgraph_nodeset,peripheral_nodes[:self.max_periphery]
 
     def bdfs_on_node(self,ref_node,exclusive_index):  
@@ -242,7 +244,7 @@ class ShortestPathsApproximator:
 
         # fetch all subgraph indices of target 
         subgraph_indices = self.subgraph_indices_of_node(target)
-        assert len(subgraph_indices) > 0 
+        assert len(subgraph_indices) > 0 , "no subgraph indices for {}".format(target) 
 
         # get the subgraph path 
         ps = [] 

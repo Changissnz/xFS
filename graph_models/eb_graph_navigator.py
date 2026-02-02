@@ -17,8 +17,8 @@ Used for Bull Killer Simulation.
 """
 class EnergyBasedGraphNavigator(NodeObjectiveNavigator): 
 
-    def __init__(self,idn,loc,energy,max_speed,prg,is_bull:bool):  
-        assert energy > 0 and max_speed > 0 
+    def __init__(self,idn,loc,energy,prg,is_bull:bool):  
+        assert energy > 0
 
         super().__init__(loc,avoid_nodeset=set(),take_nodeset=set(),\
             objective_nodeset=set(),prg=prg,path_log_length=100,\
@@ -29,10 +29,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         #       OR 
         # ((int,int),float) -> halfway between two nodes, on edge  
         self.idn = idn 
-        self.loc_ = self.location() 
         self.update_loc(loc)  
         self.energy = energy 
-        self.max_speed = max_speed 
         self.is_bull = is_bull 
 
         self.context = None 

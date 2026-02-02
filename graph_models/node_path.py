@@ -14,6 +14,13 @@ class NodePath:
         self.pweights = []
         self.index = 0 
 
+    def adjust_weights(self,fx): 
+        pw = [] 
+        for i in range(len(self.p) -1): 
+            u,v = self.p[i],self.p[i]
+            pw.append(fx(u,v)) 
+        return NodePath.preload(deepcopy(self.p),pw) 
+
     @staticmethod
     def preload(p,pw):
         assert len(p) == len(pw) + 1
