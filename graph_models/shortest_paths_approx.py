@@ -3,25 +3,35 @@ from .micrograph import *
 from morebs2.graph_basics import flatten_setseq
 from morebs2.numerical_generator import prg__single_to_int
 from math import ceil 
+from morebs2.measures import zero_div
 
+# NOTE: for any v in nodeset s.t. (node,v) not in min_paths, skips v. 
 def average_edge_distance_to_nodeset(node,nodeset,min_paths,is_weighted:bool): 
     if len(nodeset) == 0: 
         return float('inf') 
         
     d = 0 
-    for n in nodesets: 
+    d2 = 0 
+    for n in nodeset:
+        if (node,n) not in min_paths: 
+            continue 
+
         p = min_paths[(node,n)]
         if is_weighted: 
             x = p.cost() 
         else: 
             x = len(p.pweights)
         d += x 
-    return d / len(nodesets)  
+        d2 += 1 
+    q = zero_div(d,d2,float('inf'))   
+    return q 
 
 # TODO: work in progress. More testing needed. 
 """
 Approximates shortest paths for graphs. Useful for finding paths between connected 
 nodes in large graphs (>= 1000 nodes).  
+
+NOTE: sometimes, it does not produce shortest paths on basic cases such as neighboring nodes. 
 
 NOTE: designed for only undirected graphs
 """

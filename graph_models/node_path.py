@@ -17,7 +17,7 @@ class NodePath:
     def adjust_weights(self,fx): 
         pw = [] 
         for i in range(len(self.p) -1): 
-            u,v = self.p[i],self.p[i]
+            u,v = self.p[i],self.p[i+1] 
             pw.append(fx(u,v)) 
         return NodePath.preload(deepcopy(self.p),pw) 
 

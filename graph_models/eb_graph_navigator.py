@@ -1,4 +1,6 @@
 from .base_node import * 
+from .node_path import * 
+from graph_models.shortest_paths_approx import * 
 
 DEFAULT_BULLKILLER_AGENT_MODES = {\
     "bull": {"idle","flee"}, \
@@ -17,13 +19,14 @@ Used for Bull Killer Simulation.
 """
 class EnergyBasedGraphNavigator(NodeObjectiveNavigator): 
 
-    def __init__(self,idn,loc,energy,prg,is_bull:bool):  
+    def __init__(self,idn,loc,energy,prg,is_bull:bool,verbose:bool=False):  
         assert energy > 0
 
         super().__init__(loc,avoid_nodeset=set(),take_nodeset=set(),\
             objective_nodeset=set(),prg=prg,path_log_length=100,\
             absolute_avoid=False,risk_possible_avoid=False)
-        assert type(is_bull) == bool 
+        assert type(is_bull) == bool
+        assert type(verbose) == bool 
 
         # int -> node 
         #       OR 
@@ -50,6 +53,9 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         self.bull_loc = None 
             # chaser idn -> (location,nodeset of chaser's visual subgraph)
         self.other_chasers = None 
+
+        self.fin_stat = False 
+        self.verbose = verbose 
         return 
 
     #------------------------------ traversal 
@@ -58,10 +64,21 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
     main method 
     """
     def __next__(self): 
+        if self.fin_stat: 
+            return 
+        
+        if self.verbose: print("agent: {}  status: {}  location: {}".format(self.idn,self.mode,self.location())) 
+
         if self.is_bull: 
-            self.next__bull()
+            _,c = self.next__bull()
         else: 
-            self.next__chaser() 
+            _,c = self.next__chaser() 
+
+        if type(c) != type(None): 
+            self.energy -= c 
+        
+        if self.energy <= 0: 
+            self.fin_stat = True 
         return
 
     def next__bull(self): 
@@ -76,16 +93,23 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             q = self.make_choice()
             self.update_loc(q)             
             px = self.min_paths[(start,q)]
-
+            if self.verbose: 
+                print("agent {} moves from node={} to node={},weight={}".format(\
+                self.idn,start,q,px.cost()))
             return q,px.cost() 
         else: 
             self.clear_mainvars()
             return self.next_by_current_path()
 
     def next_by_current_path(self):
+        start = self.location() 
         q = self.current_path[-1] 
         c = self.current_path.cost()
         self.update_loc(q) 
+        if self.verbose: 
+            print("agent {} moves from node={} to node={},weight={}".format(\
+                self.idn,start,q,c))
+        self.current_path = None 
         return q,c 
 
     #---------------------------------------- methods for receiving contextual graph information 
@@ -94,7 +118,6 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
     def receive_context(self,sg:defaultdict,min_paths,bull_loc,chaser_locs):  
         assert type(sg) == defaultdict 
         assert self.location() in sg  
-        assert set(sg.keys()) == set(min_paths.keys()) 
 
         for v in min_paths.values(): 
             assert type(v) == NodePath 
@@ -139,9 +162,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
     #--------------------------------------- planning out the next path for agent to take 
 
     """
-    adversary_location := int::node | None 
-    adversary_paths := list<path> 
-    co_op_info := list<(path,status)> | None 
+    adversary_path := NodePath | None 
+    co_op_info := list<(path,status)>
     """
     def agent_predicts_best_path__chaser(self,adversary_path,co_op_info):  
         assert not self.is_bull 
@@ -159,7 +181,7 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         if type(self.bull_loc) == type(None) and type(adversary_path) == type(None): 
             candidates = set()  
             for k,v in ci.items(): 
-                if v == "chase": 
+                if v == "capture":  
                     candidates |= {k[0]}
             candidates = sorted(candidates) 
 
@@ -168,14 +190,21 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
 
             i = int(self.prg()) % len(candidates)
             c = candidates[i]
-
-            p = (self.location(), candidates[c])
+            p = (self.location(), c)
             self.current_path = self.min_paths[p]
             return self.current_path 
 
         # iterate through co_op_info for 
         next_candidates = self.next_possible_nodes() 
         exclude = set([k[1] for k in ci.keys()]) 
+
+        # case: go to expected next location of bull 
+        if type(adversary_path) != type(None): 
+            t = adversary_path.tail() 
+            if t not in exclude: 
+                self.current_path = self.min_paths[(self.location(),t)]
+            return self.current_path
+
         next_candidates_ = next_candidates - exclude 
 
         # case: all possible next nodes will be occupied by at least 1 co-agent 

@@ -235,7 +235,7 @@ class BDFSCache(XFSCache):
         def one_bfs(start_node):
             if verbose: print("breadth-first search from node ",start_node) 
             bc = BDFSCache(start_node,G,is_bfs=True,prg=prg,\
-                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,num_paths_per_node=1,\
+                edge_cost_function=edge_cost_function,num_paths_per_node=1,\
                 max_search_radius=max_search_radius,verbose=verbose)
             bc.exec() 
 

@@ -99,7 +99,7 @@ class NodeObjectiveNavigator:
 
     def next_move(self):
 
-        q = self.context[self.loc] 
+        q = self.context[self.loc]         
         if len(q) == 0: 
             return 
 
@@ -178,6 +178,5 @@ class NodeObjectiveNavigator:
     def clear_mainvars(self): 
         self.possible_avoid.clear() 
         self.take.clear() 
-        self.absolute_avoid.clear() 
         self.encountered = defaultdict(int,{self.loc: 1}) 
         self.path_log.clear() 

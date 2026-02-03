@@ -301,8 +301,15 @@ class GraphWeightGen:
             del self.G_[k] 
         return 
 
-    def weight(self,u,v): 
-        assert (u,v) in self.W 
+    """
+    NOTE: 
+    edges (u,u) always output 0 
+    """
+    def weight(self,u,v):
+        if u == v: return 0 
+
+        ks = [x for x in self.W if x[0] == u] 
+        assert (u,v) in self.W, "({},{}) not found".format(u,v) 
         return self.W[(u,v)] 
 
 

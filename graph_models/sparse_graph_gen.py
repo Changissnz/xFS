@@ -18,8 +18,11 @@ class SparseConnectedGraphGen(TreeGen):
 
     def make(self): 
         self.form_tree()
+        self.phase_two_edges() 
+        return
+
+    def phase_two_edges(self): 
         num_leaves = len(self.leaves) 
-        
         r = modulo_in_range(int(self.prg()),self.lbc_range)
         n = ceil(num_leaves * r) 
 
@@ -28,7 +31,6 @@ class SparseConnectedGraphGen(TreeGen):
         for x in X: 
             pl = modulo_in_range(int(self.prg()),self.bc_range)
             self.connect_path_from_leaf(x,pl) 
-        return
 
     def form_tree(self): 
 
