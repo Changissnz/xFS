@@ -86,6 +86,13 @@ target nodes (predicted next location of Bull) by these rules:
 
 See the algorithms for class<EnergyBasedGraphNavigator> in file<eb_graph_navigator>. The method used by 
 Bull is <next__Bull> and that by Chaser is <next__chaser>. 
+
+NOTE: 
+The generation scheme to produce base graphs for this <BullNetwork> was programmed in consideration of the 
+relatively long Python runtimes for bread-first search on densely connected graphs of 100 nodes or more. The 
+scheme starts off by generating a tree of branching degree in range [1,4]. This tree is the minumum spanning tree 
+for the base graph. Scheme then adds edges between the tree leaves and the other nodes, and edges between those 
+nodes and other nodes. See class<SparseConnectedGraphGen> for more details. 
 """ 
 class BullNetwork: 
 
