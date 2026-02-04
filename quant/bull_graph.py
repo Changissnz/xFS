@@ -71,6 +71,18 @@ travels its next path). This is a coordination logistic that allows one Chaser, 
 guide other Chasers, in 'search' mode, in order to route more Chasers closer to the Bull, increasing the 
 odds of the Bull being captured. 
 
+For a set of k Chasers in 'capture' mode, the programming determines each of these Chasers' predicted 
+target nodes (predicted next location of Bull) by these rules: 
+- The reference node is current node location of Bull, if information mode is (0,*) or if Bull is last 
+  pre-mover. Otherwise, the reference node is the last node of the Bull's next path. 
+- For every Chaser: 
+    If reference node has not already been selected by any Chaser as a predicted target node, set Chaser 
+    target node to reference node. Otherwise, set the Chaser's target node to a node that satisfies these 
+    conditions: 
+    - node has not yet been selected by any Chaser to be a target node. 
+    - node, out of the remaining options, is closest to the reference node. There could be ties for 
+      closest to reference node. 
+
 See the algorithms for class<EnergyBasedGraphNavigator> in file<eb_graph_navigator>. The method used by 
 Bull is <next__Bull> and that by Chaser is <next__chaser>. 
 """ 
