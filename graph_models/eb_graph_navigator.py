@@ -165,7 +165,7 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
     #--------------------------------------- planning out the next path for agent to take 
 
     # NOTE: only node with paths to all other nodes is the one that agent is currently located 
-    #       on. 
+    #       on. Uses triangulation to select next path. 
     """
     adversary_path := NodePath | None 
     co_op_info := list<(path,status)>
@@ -245,7 +245,7 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         return self.current_path 
 
     # NOTE: only node with paths to all other nodes is the one that agent is currently located 
-    #       on. 
+    #       on. Uses triangulation to select next path. 
     def agent_predicts_best_path__bull(self,adversary_paths): 
         if type(self.chaser_locs) == type(None):  
             self.current_path = None 
