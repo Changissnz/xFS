@@ -13,10 +13,11 @@ Bull.
 
 G is an undirected graph of one component.  
 
-At every timestamp, every Chaser c is fed the subgraph context C of G. Every node of C is 
-at most `visual_radius` unweighted edge distance to node location of c. This context C 
-is what Chaser c has available as its visual. If the Bull is on another node of C, c 
-would be able to independently detect it.
+At every timestamp, every Chaser c is fed a subgraph context C of G. Every node of C is 
+at most `visual_radius` unweighted edge distance to node location of c. Context C is the 
+maximum spanning subgraph of radius `visual_radius` that centers around c's node location. 
+This context C is what Chaser c has available as its visual. If the Bull is on any node of 
+C, c would be able to independently detect it.
 
 The Chasers can coordinate with each other. For any pair of Chasers c0 and c1, if 
 unweighted edge distance between node locations of c0 and c1 is at most `c2c_distance`, 
