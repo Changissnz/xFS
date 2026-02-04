@@ -1,16 +1,85 @@
 from graph_models.eb_graph_navigator import * 
-from graph_models.radial_subgraph import * 
+from graph_models.community import * 
 from graph_models.sparse_graph_gen import * 
 from graph_models.graph_gen import * 
+
 from morebs2.numerical_generator import prg_to_prg__LCG_sequence,prg_decimal
 
 DEFAULT_BULL_NETWORK_MAX_EDGES = 10000 
 
+"""
+<BullNetwork> is a network with n Chaser agents and 1 Bull agent. The Chasers chase the 
+Bull. 
+
+G is an undirected graph of one component.  
+
+At every timestamp, every Chaser c is fed the subgraph context C of G. Every node of C is 
+at most `visual_radius` unweighted edge distance to node location of c. This context C 
+is what Chaser c has available as its visual. If the Bull is on another node of C, c 
+would be able to independently detect it.
+
+The Chasers can coordinate with each other. For any pair of Chasers c0 and c1, if 
+unweighted edge distance between node locations of c0 and c1 is at most `c2c_distance`, 
+c0 and c1 would pass their graph contexts to each other, resulting in each of c0 and c1 having 
+a larger visual from the combined. Both c0 and c1 would be able to travel to every node 
+in this larger visual, starting from their current locations. 
+
+The objective of the Chasers is to capture the Bull. To do so, a minumum of one Chaser must 
+be located on the same node as that of the Bull. There are four possible information modes for 
+<BullNetwork> (see variable<open_info_mode>), pertinent for when a Chaser and Bull are in vicinity 
+of each other. In terms of the graph, the Bull is in vicinity of a Chaser c if Bull is on a node in 
+the context of c.  
+- (0,0): Chaser c in vicinity is not given the next path of Bull. Bull in vicinity is not given Chaser c's 
+         next path. 
+- (0,1): Chaser c in vicinity is not given the next path of Bull. Bull in vicinity is given Chaser c's 
+         next path. 
+- (1,0): Chaser c in vicinity is given the next path of Bull. Bull in vicinity is not given Chaser c's 
+         next path.
+- (1,1): Chaser c in vicinity is given the next path of Bull. Bull in vicinity is given Chaser c's 
+         next path.
+In the last case of information mode (1,1), the algorithm determines whether the Bull or the Chaser 
+makes the last pre-move (calculation for next path decision). This determination uses float 
+`bull_is_2nd_premover` in [0.,1.], as a threshold variable for a PRNG decimal in [0.,1.]. The party 
+that makes the last pre-move would know the other party's pre-move, and would have perfect knowledge 
+of that other party's next node destination/s. 
+In the case of (0,0) and (1,0), Bull pre-moves first.  
+In the case of (0,1), Bull pre-moves last.  
+
+The Bull and Chasers move in the ordering algorithmically specified. If a Bull is not in the vicinity 
+of any Chaser, it sits at the same node location in 'idle' mode. If a Chaser does not detect any Bull 
+in its vicinity, it is in 'search' mode. Chaser will travel the base graph `G` one edge for every 
+timestamp, according to the rule of preferring nodes least frequently traveled over in its vicinity. 
+See class<NodeObjectiveNavigator> for details on this traveling mechanism. In the event where Chaser 
+does detect Bull in its vicinity, it will switch to 'capture' mode. It stops the traveling mechanism of 
+one node per timestamp, and instead predicts a target node n_t the Bull may be on, and travels a path 
+P from its location to n_t. The predicted target node n_t, in cases of information mode (1,0), is 
+guaranteed to be accurate. In cases of (1,1), there is a probability, corresponding to `bull_is_2nd_premover`, 
+that Bull would know the path calculated by the Chaser and avoid it. When any Chaser switches to 'capture' 
+mode, the Bull would switch from 'idle' to 'flee' mode. At any timestamp in this mode, Bull chooses an 
+escape node n_e that it predicts none of the Chasers in its vicinity will travel to. But sometimes, there 
+are no options. If mode is (0,1), Bull would always know the locations of all Chasers in its vicinity. 
+
+When there are multiple Chasers in the vicinity of the Bull, the Chasers that are in coordination with 
+each other will prefer paths with unique destination nodes, since only one Chaser needs to be at the same 
+location as the Bull to capture it. Two Chasers at one node is wasteful redundancy in this network's 
+rules. 
+
+In the case where two Chasers c0 and c1 are in vicinity of each other, as set by the `c2c_distance`, 
+and Chaser c0 is in 'capture' mode and c1 is in 'search' mode, then c1 does not travel one edge distance 
+as in the normal case, instead c1 chooses a path P from its location to c0's current location (before c0 
+travels its next path). This is a coordination logistic that allows one Chaser, in 'capture' mode, to 
+guide other Chasers, in 'search' mode, in order to route more Chasers closer to the Bull, increasing the 
+odds of the Bull being captured. 
+
+See the algorithms for class<EnergyBasedGraphNavigator> in file<eb_graph_navigator>. The method used by 
+Bull is <next__Bull> and that by Chaser is <next__chaser>. 
+""" 
 class BullNetwork: 
 
     def __init__(self,G,edge_cost_function,entry_points,bull,agents,visual_radius,c2c_distance,prg,\
-        open_info_mode,bull_is_2nd_premover:bool):   
+        open_info_mode,bull_is_2nd_premover:float):   
         assert type(G) == defaultdict and edge_count(G) <= DEFAULT_BULL_NETWORK_MAX_EDGES
+        assert graph_component_size(G) == 1 and is_undirected_graph(G) 
         assert type(prg) in {MethodType,FunctionType} 
         assert type(edge_cost_function) in {MethodType,FunctionType}
         assert entry_points.issubset(set(G.keys())) 

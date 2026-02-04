@@ -15,8 +15,8 @@ algorithm rounds navigator location down to
 node u. 
 
 There are two possible roles this navigator can be: 
-- Bull: attempts to maximize distance to Chasers 
-- Chaser: attempts to be at the same node as Bull. 
+- Bull: attempts to maximize distance to Chasers.  
+- Chaser: attempts to be at the same node as Bull (capture).  
 
 Used for Bull Killer Simulation. 
 """
@@ -225,9 +225,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             t = self.bull_loc 
 
 
-        # sort by closest to farthest 
+        # sort by closest to farthest, via a triangulation calculation 
         tc = self.min_paths[(self.location(),t)].cost() 
-
         next_candidates_ = [(nc,abs(tc - self.min_paths[(self.location(),nc)].cost())) \
             for nc in next_candidates_] 
         q = prg_seqsort_ties(next_candidates_,prg__single_to_int(self.prg),lambda x:x[1]) 
@@ -267,7 +266,7 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
 
         for p in possible_next_: 
             a = (p, abs(ad - len(self.min_paths[(self.location(),p)]) - 1))  
-            #average_edge_distance_to_nodeset(p,avoid_nodes,self.min_paths,is_weighted=False)) 
+            ##average_edge_distance_to_nodeset(p,avoid_nodes,self.min_paths,is_weighted=False)) 
             d.append(a)
 
         vf = lambda x: x[1] 
