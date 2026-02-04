@@ -2,7 +2,7 @@ from graph_models.eb_graph_navigator import *
 from graph_models.radial_subgraph import * 
 from graph_models.sparse_graph_gen import * 
 from graph_models.graph_gen import * 
-from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence,prg_decimal
 
 DEFAULT_BULL_NETWORK_MAX_EDGES = 10000 
 
@@ -22,7 +22,7 @@ class BullNetwork:
         assert 1 <= visual_radius <= c2c_distance 
         assert type(open_info_mode) == tuple and len(open_info_mode) == 2 and \
             set(open_info_mode).issubset({0,1})
-        assert type(bull_is_2nd_premover) == bool
+        assert 0. <= bull_is_2nd_premover <= 1. 
 
         self.G = G 
         self.edge_cost_function = edge_cost_function
@@ -42,7 +42,7 @@ class BullNetwork:
         self.bull_is_2nd_premover = bull_is_2nd_premover 
 
         self.spa = None 
-
+        self.timestamp = 0 
         self.fin_stat = False 
         self.bull_cap = False 
         self.verbose = False 
@@ -63,6 +63,7 @@ class BullNetwork:
     def __next__(self): 
         if self.fin_stat: return 
 
+        if self.verbose: print("\t\tTIMESTAMP {}".format(self.timestamp)) 
         self.feed_contexts()
         self.premove() 
 
@@ -70,11 +71,13 @@ class BullNetwork:
         next(self.bull) 
 
         # move agents 
-        for v in self.agents.values(): 
-            next(v) 
+        akeys = sorted(self.agents.keys())
+        for a in akeys: 
+            next(self.agents[a]) 
 
         if self.verbose: print("------------------------------")
         self.check_stat() 
+        self.timestamp += 1 
 
     def check_stat(self): 
         if self.fin_stat: 
@@ -96,10 +99,15 @@ class BullNetwork:
         
         if len(self.agents) == 0: 
             self.fin_stat = True 
+        
+        if self.bull.fin_stat: 
+            self.fin_stat = True 
         return 
 
     def premove(self):
-        if self.bull_is_2nd_premover and self.oi_mode == (1,1):  
+        bull_is_2nd = prg_decimal(self.prg,[0.,1.]) <= self.bull_is_2nd_premover
+
+        if bull_is_2nd and self.oi_mode == (1,1):  
             self.premove__chasers() 
             self.premove__Bull() 
         elif self.oi_mode == (0,1): 
@@ -126,7 +134,9 @@ class BullNetwork:
             return q 
 
         co_op_info = dict() 
-        for v in self.agents.values(): 
+        akeys = sorted(self.agents.keys())
+        for a in akeys:
+            v = self.agents[a] 
             if v.fin_stat: continue 
 
             ci = co_op_filter(v,co_op_info)
@@ -134,6 +144,17 @@ class BullNetwork:
             p = v.agent_predicts_best_path__chaser(bp_,ci)  
             if not type(p) == type(None): 
                 co_op_info[v.idn] = (p,v.mode)
+            
+            ####
+        """
+        for k,v in co_op_info.items(): 
+            print("K: ",k)
+            print(v[0]) 
+            print(v[1])
+            print()  
+        """
+            #### 
+
         return
 
     def premove__Bull(self):
@@ -156,10 +177,11 @@ class BullNetwork:
         self.context_for_agent(self.bull.idn) 
 
         # chaser premoves 
-        for k in self.agents.keys(): 
+        akeys = sorted(self.agents.keys())
+        for k in akeys: 
             self.context_for_agent(k) 
 
-        for k in self.agents.keys(): 
+        for k in akeys: 
             self.feed_agent_other_contexts(k) 
 
     # NOTE: somewhat inefficient method. Calculates shortest paths twice. 
@@ -239,13 +261,7 @@ class BullNetwork:
     def shortest_paths_of_subgraph(self,sg:defaultdict): 
         pths,_ = BDFSCache.BFS_full(sg,return_type="paths",prg=self.prg,max_search_radius=float('inf'),\
                 edge_cost_function=self.edge_cost_function,verbose=False)
-        return pths 
-
-    def open_info_mode(self): 
-        return -1 
-
-    def pass_info_from(self,bull): 
-        return -1 
+        return pths
 
     @staticmethod 
     def generate_instance(num_nodes,growth_type,num_entry_points,\

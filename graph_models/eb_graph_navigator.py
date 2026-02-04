@@ -161,6 +161,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
 
     #--------------------------------------- planning out the next path for agent to take 
 
+    # NOTE: only node with paths to all other nodes is the one that agent is currently located 
+    #       on. 
     """
     adversary_path := NodePath | None 
     co_op_info := list<(path,status)>
@@ -203,23 +205,45 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             t = adversary_path.tail() 
             if t not in exclude: 
                 self.current_path = self.min_paths[(self.location(),t)]
-            return self.current_path
+                return self.current_path
 
-        next_candidates_ = next_candidates - exclude 
+        next_candidates_ = next_candidates - exclude #(exclude | {self.location()}) 
 
         # case: all possible next nodes will be occupied by at least 1 co-agent 
         if len(next_candidates_) == 0: 
             next_candidates_ = next_candidates 
-
         if len(next_candidates_) == 0: 
             return self.current_path 
 
-        next_candidates_ = sorted(next_candidates_) 
-        i = int(self.prg()) % len(next_candidates_) 
-        c = next_candidates_[i]
-        self.current_path = self.min_paths[(self.location(),c)] 
-        return self.current_path  
+        # target node is either adversary_path[-1] or bull_loc 
+        if type(adversary_path) != type(None): 
+            t = adversary_path.tail() 
+        else: 
+            t = self.bull_loc 
 
+
+        # sort by closest to farthest 
+        tc = self.min_paths[(self.location(),t)].cost() 
+
+        next_candidates_ = [(nc,abs(tc - self.min_paths[(self.location(),nc)].cost())) \
+            for nc in next_candidates_] 
+        q = prg_seqsort_ties(next_candidates_,prg__single_to_int(self.prg),lambda x:x[1]) 
+
+            ####
+        """
+        print("CANDIDATES")
+        print([x[0] for x in q])
+        print("XX")
+        print(q[0][1])
+        """
+            #### 
+
+        t = q[0][0] 
+        self.current_path = self.min_paths[(self.location(),t)]
+        return self.current_path 
+
+    # NOTE: only node with paths to all other nodes is the one that agent is currently located 
+    #       on. 
     def agent_predicts_best_path__bull(self,adversary_paths): 
         if type(self.chaser_locs) == type(None):  
             self.current_path = None 
@@ -232,19 +256,24 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
         if type(adversary_paths) != type(None):
             avoid_nodes = set([p.tail() for p in adversary_paths])
 
+        ad = average_edge_distance_to_nodeset(self.location(),avoid_nodes,self.min_paths,is_weighted=False)
         d = []  
         possible_next = self.next_possible_nodes()
-        for p in possible_next: 
-            a = (p,average_edge_distance_to_nodeset(p,avoid_nodes,self.min_paths,is_weighted=False)) 
+        possible_next_ = possible_next - avoid_nodes 
+        if len(possible_next_) == 0: possible_next_ = possible_next
+
+        for p in possible_next_: 
+            a = (p, abs(ad - len(self.min_paths[(self.location(),p)]) - 1))  
+            #average_edge_distance_to_nodeset(p,avoid_nodes,self.min_paths,is_weighted=False)) 
             d.append(a)
 
         vf = lambda x: x[1] 
-        d = prg_seqsort_ties(d,prg__single_to_int(self.prg),vf) 
-        x = d.pop(-1) 
-        xs = [x] 
+        d = prg_seqsort_ties(d,prg__single_to_int(self.prg),vf)[::-1] 
 
+        x = d.pop(0)  
+        xs = [x] 
         while len(d) > 0: 
-            x2 = d.pop(-1) 
+            x2 = d.pop(0) 
             if x2[1] == x[1]: 
                 xs.append(x2) 
             else: 
