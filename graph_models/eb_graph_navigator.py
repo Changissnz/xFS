@@ -258,6 +258,9 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
 
     # NOTE: only node with paths to all other nodes is the one that agent is currently located 
     #       on. Uses triangulation to select next path. 
+    # NOTE: function has a flaw to it, in the case where `adversary_paths` are not known. Bull 
+    #       could stay at the same node if that node is the farthest from the Chaser/s in vicinity. 
+    #       Staying at the same node guarantees the Bull is captured. 
     def agent_predicts_best_path__bull(self,adversary_paths): 
         if type(self.chaser_locs) == type(None):  
             self.current_path = None 
