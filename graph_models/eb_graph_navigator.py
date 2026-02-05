@@ -57,6 +57,8 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             # chaser idn -> (location,nodeset of chaser's visual subgraph)
         self.other_chasers = None 
 
+        # frequency of "flee" (if Bull) or "capture" (if Chaser)
+        self.active_mode_count = 0 
         self.fin_stat = False 
         self.verbose = verbose 
         return 
@@ -71,6 +73,9 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             return 
         
         if self.verbose: print("agent: {}  status: {}  location: {}".format(self.idn,self.mode,self.location())) 
+
+        if self.mode in {"flee","capture"}: 
+            self.active_mode_count += 1 
 
         if self.is_bull: 
             _,c = self.next__bull()
@@ -114,6 +119,13 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
                 self.idn,start,q,c))
         self.current_path = None 
         return q,c 
+
+    def stat(self): 
+        if self.energy < 0: 
+            energy = 0 
+        else: 
+            energy = self.energy 
+        return (energy,self.active_mode_count) 
 
     #---------------------------------------- methods for receiving contextual graph information 
     #                                         with respect to location.
