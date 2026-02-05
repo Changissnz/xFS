@@ -31,7 +31,10 @@ Here is a list of graph problems in the project:
     - code has non-deterministic elements to it. Required to set seeds for 
     Python and Numpy random.
     - file: `graph_problems/ptb.py`  
-- Bull Killer Bot (work in progress) 
+- Bull Killer Bot (Alpha) 
+    - vantage point for learning: Chaser agents that pursue the Bull along a 
+    network. 
+    - file: `graph_problems/bkb.py` 
     
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
