@@ -1,0 +1,53 @@
+The below Python code is the base code for three trials. These trial results are in the files 
+'bkb_lab2_trial_1.txt','bkb_lab2_trial_2.txt', and 'bkb_lab2_trial_3.txt'. 
+
+The first trial uses the Python code exactly as it is. 
+
+The second trial sets 
+
+    open_info_mode = (1,1) 
+to 
+    open_info_mode = (0,0)
+. 
+
+The third trial sets 
+
+    open_info_mode = (1,1) 
+to 
+    open_info_mode = (0,1)
+. 
+
+The Bull was not captured in the third trial. 
+
+######################## CODE 
+from graph_problems.bkb_ext import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+num_nodes = 2000  
+growth_type = "ordered"
+num_entry_points = 5 
+num_agents = 4 
+visual_radius = 4 
+c2c_distance = 4 
+prg = prg__LCG(45.11,-16.55,144.77,5676) 
+
+
+open_info_mode = (1,1) 
+bull_is_2nd_premover = 0.9  
+bull_energy = 4000 
+chaser_energy = 2000 
+
+t = time.time() 
+bn = BKBot.generate_instance(num_nodes,growth_type,num_entry_points,\
+        num_agents,visual_radius,c2c_distance,prg,open_info_mode,\
+        bull_is_2nd_premover,bull_energy,chaser_energy,\
+        weight_range=[1,10])
+
+t2 = time.time()
+print("generation runtime: ",t2 - t) 
+bn.set_verbosity(True)  
+
+for _ in range(500): next(bn)
+
+print("simulation runtime: ",time.time() - t2) 

@@ -196,6 +196,7 @@ class BullNetwork:
         
         if self.bull.fin_stat: 
             self.fin_stat = True 
+            self.bull_cap = True 
         return 
 
     def premove(self):
