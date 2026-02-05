@@ -68,7 +68,12 @@ rules.
 In the case where two Chasers c0 and c1 are in vicinity of each other, as set by the `c2c_distance`, 
 and Chaser c0 is in 'capture' mode and c1 is in 'search' mode, then c1 does not travel one edge distance 
 as in the normal case, instead c1 chooses a path P from its location to c0's current location (before c0 
-travels its next path). This is a coordination logistic that allows one Chaser, in 'capture' mode, to 
+travels its next path). When there are multiple Chasers in 'capture' mode, 
+    c00,c01,...,c0q, 
+that are in the vicinity of c1 (in 'search' mode), then c1 chooses exactly one of those Chasers c0* to 
+follow by a path P, from its location to c0*'s current location. 
+
+This is a coordination logistic that allows one Chaser, in 'capture' mode, to 
 guide other Chasers, in 'search' mode, in order to route more Chasers closer to the Bull, increasing the 
 odds of the Bull being captured. 
 
