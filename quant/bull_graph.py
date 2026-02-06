@@ -83,11 +83,17 @@ target nodes (predicted next location of Bull) by these rules:
   pre-mover. Otherwise, the reference node is the last node of the Bull's next path. 
 - For every Chaser: 
     If reference node has not already been selected by any Chaser as a predicted target node, set Chaser 
-    target node to reference node. Otherwise, set the Chaser's target node to a node that satisfies these 
-    conditions: 
+    target node to a equivalent triangulated node to reference node. Otherwise, set the Chaser's target node 
+    to a equivalent triangulated node to a node that satisfies these conditions: 
     - node has not yet been selected by any Chaser to be a target node. 
     - node, out of the remaining options, is closest to the reference node. There could be ties for 
       closest to reference node. 
+NOTE: 
+An equivalent triangulated node N_q to reference node N_r, with respect to location node N_l, satisfies 
+this property: 
+    minumum_weighted_edge_distance(N_q,N_l) = minumum_weighted_edge_distance(N_r,N_l). 
+In a graph with highly variable edge weights, there is less likelihood for there to exist equivalent triangulated 
+nodes, besides from the identity node. 
 
 See the algorithms for class<EnergyBasedGraphNavigator> in file<eb_graph_navigator>. The method used by 
 Bull is <next__Bull> and that by Chaser is <next__chaser>. 

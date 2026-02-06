@@ -184,6 +184,25 @@ def ranked_node_distances_from_nodeset(ref_nodeset,candidate_nodeseq,nodepair_pa
     cx = prg_seqsort_ties(cx,prg,lambda x:x[1])
     return cx 
 
+"""
+Fetches all paths in P that are related to nodes in nodeset. 
+
+P := dict, (source node, target node) -> NodePath 
+"""
+def fetch_paths_for_nodeset(P,nodeset): 
+    P2 = {} 
+    for k,v in P.items(): 
+        if k[0] in nodeset and k[1] in nodeset: 
+            P2[k] = v 
+    return P2 
+
+def fetch_paths_from_node_to_nodeset(P,node,nodeset): 
+    P2 = {} 
+    for k,v in P.items(): 
+        if k[0] == node and k[1] in nodeset: 
+            P2[k] = v 
+    return P2 
+
 #-------------------------------------------------------------------------------------------------
 
 """

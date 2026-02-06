@@ -55,7 +55,7 @@ class EnergyBasedGraphNavigator(NodeObjectiveNavigator):
             # int 
         self.bull_loc = None 
             # chaser idn -> (location,nodeset of chaser's visual subgraph)
-        self.other_chasers = None 
+        self.other_chasers = dict()  
 
         # frequency of "flee" (if Bull) or "capture" (if Chaser)
         self.active_mode_count = 0 
