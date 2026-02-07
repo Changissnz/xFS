@@ -85,6 +85,38 @@ def nonequal_edge_weight_counts(G,wf):
             number_bidirectional += 1 
     return non_identical_weights,number_bidirectional
 
+#-------------------------- two elementary graph types 
+
+def generate_graph__path(num_vertices,starting_node_idn:int,is_dsg:bool): 
+    G = defaultdict(set) 
+    if num_vertices == 0: return G 
+
+    c = starting_node_idn
+    G[c] = set() 
+    if num_vertices == 1: return G 
+
+    for i in range(c+1,c+num_vertices):
+        G[i-1] |= {i} 
+        if not is_dsg: 
+            G[i] |= {i-1} 
+    
+    G[c+num_vertices-2] |= {c+num_vertices-1} 
+    if not is_dsg: 
+        G[c+num_vertices-1] |= {c+num_vertices-2}
+    return G 
+
+def generate_graph__complete(num_vertices,starting_node_idn:int): 
+    assert num_vertices >= 1 
+    G = defaultdict(set) 
+
+    N = {i for i in range(starting_node_idn,starting_node_idn+num_vertices)} 
+
+    for i in range(starting_node_idn,starting_node_idn+num_vertices): 
+        G[i] = N - {i}
+    return G 
+
+#---------------------------------------------------------------------------- 
+
 #
 """
 generates a graph,directed or not, according to given 

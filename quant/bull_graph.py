@@ -91,7 +91,7 @@ target nodes (predicted next location of Bull) by these rules:
 NOTE: 
 An equivalent triangulated node N_q to reference node N_r, with respect to location node N_l, satisfies 
 this property: 
-    minumum_weighted_edge_distance(N_q,N_l) = minumum_weighted_edge_distance(N_r,N_l). 
+    minumum_weighted_edge_distance(N_l,N_q) = minumum_weighted_edge_distance(N_l,N_r).  
 In a graph with highly variable edge weights, there is less likelihood for there to exist equivalent triangulated 
 nodes, besides from the identity node. 
 
