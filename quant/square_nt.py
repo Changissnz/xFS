@@ -1,4 +1,4 @@
-from .v2f_solver import * 
+from morebs2.v2f_solver import * 
 from morebs2.search_space_iterator import * 
 
 """
