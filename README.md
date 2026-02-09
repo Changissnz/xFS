@@ -35,7 +35,8 @@ Here is a list of graph problems in the project:
     - vantage point for learning: Chaser agents that pursue the Bull along a 
     network. 
     - file: `graph_problems/bkb.py` 
-    
+- Homo Frame Bot (work in progress) 
+
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
 developer results. As of this time in writing, developer Python version is 3.14.2. 
