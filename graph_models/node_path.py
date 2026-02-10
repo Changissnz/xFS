@@ -23,6 +23,12 @@ class NodePath:
 
     @staticmethod
     def preload(p,pw):
+        if len(p) == 0: 
+            assert len(pw) == 0 
+            npath = NodePath('void')
+            npath.p.clear()
+            return npath 
+
         assert len(p) == len(pw) + 1
         npath = NodePath("void")
         npath.p = p
@@ -94,7 +100,8 @@ class NodePath:
             return 
             
         if len(self) == 0: 
-            self = deepcopy(p) 
+            self.p = p.p 
+            self.pweights = p.pweights
             return 
 
         assert self.tail() == p.head() 
@@ -119,6 +126,39 @@ class NodePath:
 
     def cost(self,cost_func=sum):
         return cost_func(self.pweights) 
+
+    def first_occurrence(self,node): 
+        if node not in self.p: return None 
+        return self.p.index(node) 
+
+    def head_subpath(self,index,include_first:bool=True): 
+        assert 0 <= index < len(self.p) 
+
+        if include_first: 
+            index += 1 
+        
+        p_ = self.p[:index]
+        if index - 1 < 0: 
+            pw_ = [] 
+        else: 
+            pw_ = self.pweights[:index -1]
+
+        return NodePath.preload(p_,pw_) 
+
+    def tail_subpath(self,index,include_first:bool=True):
+        assert 0 <= index < len(self.p) 
+        
+        if not include_first: 
+            index += 1 
+
+        p_ = self.p[index:]
+
+        if index - 1 < 0: 
+            pw_ = [] 
+        else: 
+            pw_ = self.pweights[index:]
+
+        return NodePath.preload(p_,pw_) 
 
 # NOTE: there are some features not yet implemented, such as 
 #           parameter<cost_func> for function<store_minpaths>. 
