@@ -27,7 +27,7 @@ class NodePath:
             assert len(pw) == 0 
             npath = NodePath('void')
             npath.p.clear()
-            return npath 
+            return npath
 
         assert len(p) == len(pw) + 1
         npath = NodePath("void")
@@ -152,11 +152,7 @@ class NodePath:
             index += 1 
 
         p_ = self.p[index:]
-
-        if index - 1 < 0: 
-            pw_ = [] 
-        else: 
-            pw_ = self.pweights[index:]
+        pw_ = self.pweights[index:]
 
         return NodePath.preload(p_,pw_) 
 

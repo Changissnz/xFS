@@ -24,6 +24,7 @@ class PathInduction:
         stat = length_min_threshold > l 
         go_backward = True 
 
+        I = self.possible_intermediaries(target)
         while stat: 
             l = len(p) - 1 
             stat = length_min_threshold > l 
@@ -31,23 +32,40 @@ class PathInduction:
 
             t = p.tail() 
             if go_backward: 
-                I = self.second_order_intermediaries(t,set(p.p) -{t}) 
                 p2 = self.backward_append(t,I)
                 if type(p2) == type(None): break 
                 p_ = deepcopy(p)
                 p.add_path(p2) 
             else: 
-                q = self.node_in_target_paths(target,t) 
+                I = sorted(I)
+                i_ = None 
+                q = []  
+                for i in I: 
+                    q_ = self.node_in_target_paths(i,t) 
+                    if len(q_) == 0: continue 
+                    i_ = i 
+                    q = q_
+                    break 
+
                 if len(q) == 0: 
                     return p_ 
                 else: 
                     j = int(self.prg()) % len(q) 
                     p2 = q[j] 
-                    k = p2.first_occurrence(target)
+                    k = p2.first_occurrence(i_)
                     p2 = p2.tail_subpath(k,True).invert() 
                     p.add_path(p2) 
 
-            go_backward = not go_backward 
+            go_backward = not go_backward
+
+        t = p.tail() 
+        if t != target: 
+            px = self.node_in_target_paths(t,target) 
+            j = int(self.prg()) % len(px) 
+            px = px[j] 
+            j = px.first_occurrence(t)
+            px = px.tail_subpath(j,True) 
+            p.add_path(px)
         return p 
 
     def one_path_(self,target,num_segments,roundabout_first):
@@ -103,6 +121,8 @@ class PathInduction:
             j = int(self.prg()) % len(P)
             p = P[j]
             i = p.first_occurrence(nth_source)
+            #print("I: ",i,nth_source)
+            #print(p) 
             p = p.tail_subpath(i,True)
             return p 
 

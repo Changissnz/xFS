@@ -8,7 +8,7 @@ py -m tests.test_node_path
 """
 class NodePathClass(unittest.TestCase):
 
-    def test__NodePath__subpath_1(self): 
+    def test__NodePath__subpath_case_1(self): 
 
         PX = NodePath.preload([3, 7, 6, 7, 6],\
             [1, 1, 1, 1]) 
@@ -23,6 +23,20 @@ class NodePathClass(unittest.TestCase):
         assert PX01 == PX.tail_subpath(2,True)
         assert PX00 == PX.tail_subpath(2,False)
         return 
+
+    def test__NodePath__subpath_case_2(self): 
+        p = [100,67,78,45,1]
+        pw = [6,7,9,9]
+        N = NodePath.preload(p,pw) 
+
+        T = N.tail_subpath(3,True)
+        T2 = N.tail_subpath(3,False)
+
+        A = NodePath.preload([45, 1],[9]) 
+        A2 = NodePath.preload([1],[])
+
+        assert T == A 
+        assert T2 == A2 
 
 if __name__ == '__main__':
     unittest.main()
