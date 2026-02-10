@@ -15,9 +15,40 @@ class PathInduction:
         self.prg = prg 
         self.num_segment_range = num_segment_range 
 
-    def one_path(self,target,roundabout_first:bool=False): 
+    def one_path(self,target,roundabout_first:bool=False,length_min_threshold = 0): 
         num_segments = modulo_in_range(int(self.prg()),self.num_segment_range)
-        return self.one_path_(target,num_segments,roundabout_first)
+
+        p_ = None
+        p = self.one_path_(target,num_segments,roundabout_first)
+        l = len(p) - 1  
+        stat = length_min_threshold > l 
+        go_backward = True 
+
+        while stat: 
+            l = len(p) - 1 
+            stat = length_min_threshold > l 
+            if not stat: continue 
+
+            t = p.tail() 
+            if go_backward: 
+                I = self.second_order_intermediaries(t,set(p.p) -{t}) 
+                p2 = self.backward_append(t,I)
+                if type(p2) == type(None): break 
+                p_ = deepcopy(p)
+                p.add_path(p2) 
+            else: 
+                q = self.node_in_target_paths(target,t) 
+                if len(q) == 0: 
+                    return p_ 
+                else: 
+                    j = int(self.prg()) % len(q) 
+                    p2 = q[j] 
+                    k = p2.first_occurrence(target)
+                    p2 = p2.tail_subpath(k,True).invert() 
+                    p.add_path(p2) 
+
+            go_backward = not go_backward 
+        return p 
 
     def one_path_(self,target,num_segments,roundabout_first):
         p = NodePath.preload([],[]) 
@@ -32,6 +63,9 @@ class PathInduction:
             p = self.select_one_path_to_target(t) 
         num_segments -= 1 
 
+        if num_segments == 0: 
+            return p 
+
         nth_source = p.tail() 
 
         while num_segments > 1: 
@@ -45,10 +79,7 @@ class PathInduction:
 
             num_segments -= 1 
 
-        if len(p) == 0: 
-            t = self.reference 
-        else: 
-            t = p.tail() 
+        t = p.tail() 
 
         q = self.node_in_target_paths(t,target)
         assert len(q) > 0 
@@ -76,6 +107,19 @@ class PathInduction:
             return p 
 
         return None 
+
+    def backward_append(self,target,intersection_nodes): 
+        I = prg_seqsort(sorted(intersection_nodes),prg__single_to_int(self.prg)) 
+        for n in I: 
+            q = self.node_in_target_paths(n,target)
+            if len(q) == 0: continue 
+
+            j = int(self.prg()) % len(q)
+            p = q[j]
+            k = p.first_occurrence(n)
+            return p.tail_subpath(k,True).invert() 
+        return None 
+
 
     #---------------------------- calculations to find nodes available to be 
     #---------------------------- intermediaries to target nodes. 
