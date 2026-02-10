@@ -73,6 +73,8 @@ class PathInduction:
 
         nth_source = None 
         I = self.possible_intermediaries(target)
+
+        # add the first segment 
         if roundabout_first: 
             p.add_path(self.select_one_path_to_target(target)) 
         else: 
@@ -86,6 +88,7 @@ class PathInduction:
 
         nth_source = p.tail() 
 
+        # append remaining segments 
         while num_segments > 1: 
             p2 = self.next_segment(nth_source,I - {nth_source})
             if type(p2) == type(None): 
@@ -121,8 +124,6 @@ class PathInduction:
             j = int(self.prg()) % len(P)
             p = P[j]
             i = p.first_occurrence(nth_source)
-            #print("I: ",i,nth_source)
-            #print(p) 
             p = p.tail_subpath(i,True)
             return p 
 
