@@ -123,7 +123,7 @@ class PathInductionClass(unittest.TestCase):
             q = PI.one_path(target,True,100)
             assert q.tail() == target 
             lengths |= {len(q)}
-        assert lengths == {104, 102, 103},"got {}".format(lengths)
+        assert lengths == {101, 102, 103, 104, 105},"got {}".format(lengths)
 
     def test__PathInduction__one_path_case_4(self):
         prg = prg__LCG(0,0,1,2)

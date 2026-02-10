@@ -37,7 +37,7 @@ class PathInduction:
                 p_ = deepcopy(p)
                 p.add_path(p2) 
             else: 
-                I = sorted(I)
+                I = prg_seqsort(sorted(I),prg__single_to_int(self.prg))
                 i_ = None 
                 q = []  
                 for i in I: 
