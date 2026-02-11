@@ -183,3 +183,13 @@ class PathInduction:
         px = self.P[target_node] 
         i = int(self.prg()) % len(px) 
         return deepcopy(px[i])
+
+#-------------------------------------------------------------------------------
+
+class PathSelector: 
+
+    def __init__(self,P,st_nodemap):
+        # source node -> target node 
+        self.st_nodemap = st_nodemap
+        return
+        
