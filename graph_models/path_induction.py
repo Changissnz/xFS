@@ -15,6 +15,9 @@ class PathInduction:
         self.prg = prg 
         self.num_segment_range = num_segment_range 
 
+    """
+    main method #1 
+    """
     def one_path(self,target,roundabout_first:bool=False,length_min_threshold = 0): 
         num_segments = modulo_in_range(int(self.prg()),self.num_segment_range)
 
@@ -183,6 +186,54 @@ class PathInduction:
         px = self.P[target_node] 
         i = int(self.prg()) % len(px) 
         return deepcopy(px[i])
+
+    #-------------------------------------------------------------------------- 
+
+    # TODO: not fully tested yet. 
+    """
+    main method #2 
+
+    if G is the reference graph for the paths given, uses G to check 
+    if backtraced paths are valid. Otherwise, assumes reference graph 
+    is undirected. 
+    """
+    def induce_paths_from_other_references(self,G:defaultdict): 
+        D = dict() 
+
+        for v in self.P.values(): 
+            for v_ in v: 
+                D = self.path_induction_by_backtrace(G,D,v_)  
+        return D 
+
+    def path_induction_by_backtrace(self,G,D,p): 
+
+        def check_edge(s,t): 
+            if type(G) != type(None): 
+                if s not in G: return False 
+                if t not in G[s]: return False 
+            return True 
+        
+        p_ = p.invert() 
+
+        for i in range(len(p_)): 
+            q = p_.head_subpath(i,True)
+            st = (q.head(),q.head())
+            D[st] = q 
+        
+            for j in range(1,len(q)): 
+                if not check_edge(q[j-1],q[j]): 
+                    print("edge {},{} does not exist".format(q[j-1],q[j]))
+                    break 
+                
+                st = (q.head(),q[j]) 
+                subq = q.head_subpath(j,True)
+                if st not in D: 
+                    D[st] = subq 
+                else: 
+                    c = D[st].cost() 
+                    if subq.cost() < c: 
+                        D[st] = subq 
+        return D 
 
 #-------------------------------------------------------------------------------
 

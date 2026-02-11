@@ -83,7 +83,25 @@ def nonequal_edge_weight_counts(G,wf):
             if w != w_: 
                 non_identical_weights += 1 
             number_bidirectional += 1 
-    return non_identical_weights,number_bidirectional
+    return non_identical_weights,number_bidirectional 
+
+def does_path_exist(G,p): 
+    assert type(G) == defaultdict  
+    assert type(p) == list 
+
+    if len(p) == 0: 
+        return True 
+    
+    if len(p) == 1: 
+        return p[0] in G
+
+    for i in range(len(p) - 1): 
+        st = (p[i],p[i+1]) 
+        if p[i] not in G: 
+            return False 
+        if p[i+1] not in G[p[i]]: 
+            return False 
+    return True 
 
 #-------------------------- two elementary graph types 
 

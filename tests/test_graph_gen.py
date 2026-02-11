@@ -152,5 +152,20 @@ class OtherGraphGeneratorFunctionsClass(unittest.TestCase):
         assert P2 == defaultdict(set, {5: set()})
         assert G_c == defaultdict(set, {4: {5, 6, 7}, 5: {4, 6, 7}, 6: {4, 5, 7}, 7: {4, 5, 6}})
 
+    def test__does_path_exist__case_1(self): 
+
+        G = generate_graph__path(4,0,True) 
+
+        assert does_path_exist(G,[0,1,2])
+        assert not does_path_exist(G,[0,1,3])
+        assert does_path_exist(G,[1,2,3]) 
+        assert not does_path_exist(G,[3,2,1])
+        assert not does_path_exist(G,[3,2]) 
+
+        G2 = generate_graph__path(4,0,False) 
+        assert does_path_exist(G2,[0,1,2])
+        assert does_path_exist(G2,[3,2,1])
+        assert does_path_exist(G2,[3,2]) 
+
 if __name__ == '__main__':
     unittest.main()

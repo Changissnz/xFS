@@ -28,6 +28,9 @@ class SpanningTree:
         self.fin_stat = False 
         return
 
+    """
+    pre-main method 
+    """
     def init_head(self,head=None):
         if type(head) == type(None):  
             K = sorted(self.G.keys())
@@ -53,28 +56,9 @@ class SpanningTree:
         self.fin_stat = False 
         return
 
-    def tree_to_paths(self,key_is_st_pair:bool=False): 
-
-        F = lambda u,v,c: self.edge_cost_function(u,v) 
-        bfsc = BFSCache(self.head,self.tree(),\
-            edge_cost_function=F,nextnode_priority_function=None,\
-            no_duplicate_touch_nodes=False)
-        bfsc.exec() 
-        bfsc.store_minpaths()
-
-        D = dict() 
-        for k,v in bfsc.min_paths.items(): 
-            k_ = (self.head,k) if key_is_st_pair else k 
-            D[k_] = v[0] 
-        return D
-
-    def tree(self): 
-        D = defaultdict(set) 
-        for k,v in self.T.items(): 
-            if type(v[0]) == type(None): continue 
-            D[v[0]] |= {k} 
-        return D 
-
+    """
+    main method 
+    """
     def make(self):
         while not self.fin_stat: next(self) 
 
@@ -133,3 +117,28 @@ class SpanningTree:
             self.T[current_node] = [predecessor_node,q,s2]
             return True 
         return False 
+
+    """
+    post-main method 
+    """
+    def tree_to_paths(self,key_is_st_pair:bool=False): 
+
+        F = lambda u,v,c: self.edge_cost_function(u,v) 
+        bfsc = BFSCache(self.head,self.tree(),\
+            edge_cost_function=F,nextnode_priority_function=None,\
+            no_duplicate_touch_nodes=False)
+        bfsc.exec() 
+        bfsc.store_minpaths()
+
+        D = dict() 
+        for k,v in bfsc.min_paths.items(): 
+            k_ = (self.head,k) if key_is_st_pair else k 
+            D[k_] = v[0] 
+        return D
+
+    def tree(self): 
+        D = defaultdict(set) 
+        for k,v in self.T.items(): 
+            if type(v[0]) == type(None): continue 
+            D[v[0]] |= {k} 
+        return D 
