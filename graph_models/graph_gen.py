@@ -51,7 +51,9 @@ def graph_to_one_component(G:defaultdict,prg,verbose=False):
 def directed_to_undirected_graph(d): 
     assert type(d) in {defaultdict,dict}
 
-    for k,v in d.items(): 
+    keys = sorted(d.keys())
+    for k in keys:
+        v = d[k]  
         for v_ in v: 
             if v_ not in d: 
                 d[v_] = {k}

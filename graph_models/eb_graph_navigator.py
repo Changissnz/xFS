@@ -11,8 +11,7 @@ Graph navigator operates on finite energy. Once energy
 reaches non-positive real number, navigator terminates. 
 
 If navigator lands on an edge (u,v) instead of node u or v, 
-algorithm rounds navigator location down to 
-node u. 
+algorithm rounds navigator location down to node u. 
 
 There are two possible roles this navigator can be: 
 - Bull: attempts to maximize distance to Chasers.  

@@ -200,7 +200,10 @@ class PathInduction:
     def induce_paths_from_other_references(self,G:defaultdict): 
         D = dict() 
 
-        for v in self.P.values(): 
+        keys = sorted(self.P.keys())
+        for k in keys:
+            #print("k: ",k) 
+            v = self.P[k]  
             for v_ in v: 
                 D = self.path_induction_by_backtrace(G,D,v_)  
         return D 

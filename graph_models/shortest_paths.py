@@ -184,6 +184,8 @@ def ranked_node_distances_from_nodeset(ref_nodeset,candidate_nodeseq,nodepair_pa
     cx = prg_seqsort_ties(cx,prg,lambda x:x[1])
     return cx 
 
+#----------------------------------------  fetch functions for map of maps 
+
 """
 Fetches all paths in P that are related to nodes in nodeset. 
 
@@ -196,12 +198,47 @@ def fetch_paths_for_nodeset(P,nodeset):
             P2[k] = v 
     return P2 
 
+"""
+P := dict, (source node, target node) -> NodePath 
+"""
 def fetch_paths_from_node_to_nodeset(P,node,nodeset): 
     P2 = {} 
     for k,v in P.items(): 
         if k[0] == node and k[1] in nodeset: 
             P2[k] = v 
     return P2 
+
+"""
+P := dict, (source node, target node) -> NodePath 
+"""
+def fetch_paths_for_source_or_target(P,nodeset,is_source:bool): 
+    i = 0 if is_source else 1 
+    P2 = {} 
+    for k,v in P.items(): 
+        if k[i] in nodeset: 
+            P2[k] = v 
+    return P2 
+
+"""
+Union of cheapest paths between maps P1 and P2.
+
+P1 := dict, (source node, target node) -> NodePath 
+P2 := dict, (source node, target node) -> NodePath 
+"""
+def update_shortest_paths_map(P1,P2): 
+    D = P1 
+    keys = sorted(P2.keys())
+    for k in keys: 
+        v = P2[k] 
+        if k not in D: 
+            D[k] = v 
+            continue 
+        c1 = D[k].cost() 
+        c2 = v.cost() 
+        if c2 < c1: 
+            D[k] = v 
+    return D 
+
 
 #-------------------------------------------------------------------------------------------------
 
