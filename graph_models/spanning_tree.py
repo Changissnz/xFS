@@ -3,6 +3,10 @@ from types import MethodType,FunctionType
 import random 
 from morebs2.numerical_generator import prg__single_to_decimal
 
+"""
+NOTE: in `prg` mode, algorithm not guaranteed to produce one component 
+      during tree search. 
+"""
 class SpanningTree: 
 
     def __init__(self,G,edge_cost_function=lambda u,v:1 if u != v else 0,\
