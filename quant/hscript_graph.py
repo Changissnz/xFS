@@ -211,6 +211,18 @@ class HomoScriptNetwork:
             d[k] = [q[0],q[1],None] 
         return d 
 
+    """
+    return:
+    - dict, agent idn -> | (path of agent's chosen req) - admin.paths[agent idn][agent's chosen req] |
+    """
+    def default_path_differences(self): 
+        d = {} 
+        for k,v in self.agents.items(): 
+            q0,q1 = v.exec()
+            p = self.admin.demand_map[k][q0]
+            d[k] = simple_string_cmp_metric(q1,p) 
+        return d 
+
     #--------------------------------- phase 1 of agent decisions: agents deciding on paths to 
     #--------------------------------- take, based on swap scores. 
 
@@ -345,8 +357,8 @@ class HomoScriptNetwork:
             bdfsc.exec() 
             path_ind = PathInduction(s,bdfsc.min_paths,prg,[2,4]) 
             spaths[s] = path_ind 
-        
-        #     def __init__(self,requirements,demand_map,open_info:bool): 
+
+        # calculate paths for every agent         
         prgs = prg_to_prg__LCG_sequence(prg,num_agents,3.111+2/97) 
         sources_ = prg_seqsort(sorted(sources),prg__single_to_int(prg)) 
         agents = {} 
