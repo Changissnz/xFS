@@ -156,7 +156,12 @@ class HomoScriptNetwork:
         self.verbose = verbose 
         self.fin_stat = len(self.agents) == 0  
         self.timestamp = 0 
+
+        self.weighted = False 
         return
+
+    def set_weighted_mode(self,is_weighted:bool): 
+        self.weighted = is_weighted 
 
     def set_prgs_for_agents(self,base_prng): 
         q = sorted(self.agents.keys()) 
@@ -220,6 +225,9 @@ class HomoScriptNetwork:
 
     def deduct_scores(self,delta_map):
         terminated = []  
+        if self.weighted: 
+            delta_map = self.add_weights_to_delta_map(delta_map) 
+
         for k,v in delta_map.items(): 
             self.agents[k].score -= v 
             if self.agents[k].score <= 0.: 
@@ -229,6 +237,28 @@ class HomoScriptNetwork:
             self.terminated_agents[d] = self.agents[d] 
             del self.agents[d] 
         self.fin_stat = len(self.agents) == 0 
+
+    def add_weights_to_delta_map(self,delta_map): 
+        q = sorted(delta_map.keys()) 
+
+        s = 0 
+        w = {} 
+        for q_ in q: 
+            x = self.agents[q_].prg() 
+            x = abs(x) 
+            s += x 
+            w[q_] = x 
+
+        # case: 0-weights. no delta 
+        if s == 0: return delta_map 
+
+        for k in w.keys(): 
+            w[k] = w[k] / s 
+
+        for k in delta_map.keys(): 
+            delta_map[k] = w[k] * s 
+
+        return delta_map 
         
     """
     agent_action_map := agent idn -> (requirement idn,path,idn of other agent imitated)
@@ -275,12 +305,14 @@ class HomoScriptNetwork:
             d0,d1 = self.admin.approximate_swap_difference(ai1,ai2)
             decision,two_way = self.swap_decision(agent_idn1,agent_idn2,d0,d1) 
 
-            if decision and two_way: 
-                print("swap {} <<---->> {}".format(agent_idn1,agent_idn2)) 
+            if decision and two_way:
+                if self.verbose:  
+                    print("swap {} <<---->> {}".format(agent_idn1,agent_idn2)) 
                 agent_info_1[0],agent_info_2[0] = agent_info_2[0],agent_info_1[0]  
                 agent_info_1[1],agent_info_2[1] = agent_info_2[1],agent_info_1[1] 
             elif decision: 
-                print("swap {} <<---- {}".format(agent_idn1,agent_idn2)) 
+                if self.verbose: 
+                    print("swap {} <<---- {}".format(agent_idn1,agent_idn2)) 
                 agent_info_1[0] = agent_info_2[0] 
                 agent_info_1[1] = agent_info_2[1] 
                 agent_info_1[2] = agent_idn2 

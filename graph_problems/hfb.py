@@ -29,7 +29,7 @@ its requirement expectations with respect to each agent. The naming of this bot,
 to this penalizing mechanism that is based on administrator demands, M_d. 
 
         ** Agent role divergence ** 
-        --------------------- 
+        ---------------------------
 At every timestamp, agent A can attempt to swap its (<chosen_req>,wanted path) with that of another 
 agent B. Let C(A),C(B) be the chosen requirements for A and B,respectively. If swap occurs, then 
 the agent A executes (requirement C(B), path P0 = B.M_r[C(B)]) and agent B executes 
@@ -48,7 +48,7 @@ its assigned requirement by 'imitating' agent B. In cases of imitation, administ
 from A based on F(B.M_r[C(B)],M_d[A][C(B)]) instead. 
 
         ** Administrator deductions on imitation **
-        ---------------------------------------------------------  
+        -------------------------------------------  
 The first kind of deduction, path execution deduction, has just been mentioned. Another kind of 
 deduction has to do with 'imitation' deduction. For an imitating agent A of agent B, administrator 
 deducts 
@@ -56,7 +56,7 @@ deducts
 from agent B after agent A imitates B. 
 
         ** Administrator deductions on missing requirements ** 
-        ----------------------------- 
+        -------------------------------------------------------
 Administrator expects for the agents to complete the n requirements every timestamp. This expectation 
 remains even when one or more of the original n agents terminate due to score reaching 0 or below. 
 The remaining agents are given the opportunity to take up extra roles for each of the terminated 
@@ -72,8 +72,23 @@ Then administrator deducts |U| / |agents|^2 from every agent.
 Simulation focuses on the economical decision-making of n agents to fulfill n requirements from an 
 administrator. The administrator has a map of demands, expectations for the agents to fulfill those 
 requirements. This relates to the theme of homomorphisms. 
+
+NOTE: 
+Bot can run in either unweighted or weighted mode. In weighted mode, the deduction process is 
+different. For a delta score map, 
+    D: agent idn -> delta, 
+first have every non-terminated agent output a value from its PRNG. These values are normalized 
+to sum up to 1.0, 
+    W: agent idn -> weight. 
+Sum up the delta from D for float S. Then the weighted delta score map is 
+    D_w: agent idn -> W[agent idn] * S. 
+
+NOTE: 
+Weighted mode tends to produce higher variance in performance of agents, measured by the 
+number of timestamps the bot has elapsed before all agents are terminated. Variance is 
+measured across different PRNGs the agents are assigned to use for decision-making. 
 """
-class HomoFrameBot: 
+class HomoFrameBot(HomoScriptNetwork): 
 
     def __init__(self,admin,agents,prg,info_mode_is_open:bool=False,verbose:bool=False): 
         super().__init__(admin,agents,prg,info_mode_is_open,verbose) 
