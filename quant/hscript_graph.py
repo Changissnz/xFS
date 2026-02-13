@@ -241,22 +241,23 @@ class HomoScriptNetwork:
     def add_weights_to_delta_map(self,delta_map): 
         q = sorted(delta_map.keys()) 
 
-        s = 0 
+        s1,s2 = 0,0  
         w = {} 
         for q_ in q: 
             x = self.agents[q_].prg() 
             x = abs(x) 
-            s += x 
+            s1 += x 
+            s2 += delta_map[q_]
             w[q_] = x 
 
         # case: 0-weights. no delta 
-        if s == 0: return delta_map 
+        if s1 == 0: return delta_map 
 
         for k in w.keys(): 
-            w[k] = w[k] / s 
+            w[k] = w[k] / s1  
 
         for k in delta_map.keys(): 
-            delta_map[k] = w[k] * s 
+            delta_map[k] = w[k] * s2 
 
         return delta_map 
         
