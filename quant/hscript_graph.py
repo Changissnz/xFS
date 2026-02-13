@@ -155,16 +155,33 @@ class HomoScriptNetwork:
         self.open_info = info_mode_is_open 
         self.verbose = verbose 
         self.fin_stat = len(self.agents) == 0  
+        self.timestamp = 0 
         return
+
+    def set_prgs_for_agents(self,base_prng): 
+        q = sorted(self.agents.keys()) 
+        l = len(q) 
+        prngs = prg_to_prg__LCG_sequence(base_prng,l,2+771/980) 
+
+        for q_ in q: 
+            agent = self.agents[q_] 
+            agent.prg = prngs.pop(0)
+        return 
 
     def __next__(self):
         if self.fin_stat: return 
+        if self.verbose: 
+            print("---------------------------------------------------------------------------")
+            print("\t\tTIMESTAMP ",self.timestamp)
+            print("---------------------------------------------------------------------------")
+
+        self.timestamp += 1 
 
         dmap = self.premove__path_swap() 
         if self.verbose: 
             print("-- planned moves")
             for k,v in dmap.items(): 
-                print("* agent: {}".format(k))
+                print("* agent: {}  score: {}".format(k,self.agents[k].score)) 
                 print("* default requirement: {}".format(self.agents[k].chosen_req))
                 print("* requirement: {}".format(v[0]))
                 ##print("path: {}".format(v[1])) 
@@ -178,14 +195,22 @@ class HomoScriptNetwork:
         satisfied_reqs = set([v[0] for v in dmap.values()])
         remaining_reqs = self.admin.requirements - satisfied_reqs 
 
-        erm = self.extra_role_map(remaining_reqs) 
-        satisfied_reqs2 = set([v[0] for v in erm.values()]) 
-        dx = self.admin.register_agent_actions(erm)
-        self.deduct_scores(dx)
+        erm,rem_reqs = self.extra_role_map(remaining_reqs) 
+        if self.verbose and len(erm) > 0: 
+            print("-- extra roles") 
+            for k,v in erm.items(): 
+                print("* agent: {}  extra roles: {}".format(k,[v_[0] for v_ in v])) 
+                print() 
+
+        sat_reqs = self.register_extra_roles(erm) 
         if self.fin_stat: return 
 
-        satisfied_reqs = satisfied_reqs | satisfied_reqs2 
+        satisfied_reqs = satisfied_reqs | sat_reqs 
         dx = self.admin.missing_requirements_deduction(set(self.agents.keys()),satisfied_reqs)
+        if self.verbose and len(dx) > 0: 
+            q = set(dx.values()) 
+            d = len(self.admin.requirements) - len(satisfied_reqs)
+            print("[!] missing {} requirements. deducting {} from each agent".format(d,q.pop())) 
         self.deduct_scores(dx) 
 
 
@@ -247,9 +272,11 @@ class HomoScriptNetwork:
             decision,two_way = self.swap_decision(agent_idn1,agent_idn2,d0,d1) 
 
             if decision and two_way: 
+                print("swap {} <<---->> {}".format(agent_idn1,agent_idn2)) 
                 agent_info_1[0],agent_info_2[0] = agent_info_2[0],agent_info_1[0]  
                 agent_info_1[1],agent_info_2[1] = agent_info_2[1],agent_info_1[1] 
             elif decision: 
+                print("swap {} <<---- {}".format(agent_idn1,agent_idn2)) 
                 agent_info_1[0] = agent_info_2[0] 
                 agent_info_1[1] = agent_info_2[1] 
                 agent_info_1[2] = agent_idn2 
@@ -284,14 +311,41 @@ class HomoScriptNetwork:
     
     #--------------------------------- phase 2 of agent decisions: taking up extra roles 
 
+    def register_extra_roles(self,erm): 
+        sat_reqs = [] 
+        while len(erm) > 0: 
+            d = dict() 
+            empty = [] 
+            for k,v in erm.items(): 
+                d[k] = v.pop(0) 
+                if len(v) == 0: 
+                    empty.append(k) 
+            for t in empty: 
+                del erm[t] 
+            
+            terminated = [] 
+            for k,v in d.items(): 
+                if k in self.terminated_agents: 
+                    terminated.append(k)
+                else: 
+                    sat_reqs.append(v[0]) 
+            for t in terminated: del d[t] 
+
+            dx = self.admin.register_agent_actions(d)
+            self.deduct_scores(dx)
+        return set(sat_reqs) 
+
     def extra_role_map(self,remaining_reqs): 
-        rem_req_map = {} 
+        rem_req_map = defaultdict(list) 
         q = sorted(remaining_reqs) 
+        rem_reqs = [] 
         for q_ in q: 
             x = self.extra_role_decision(q_) 
             if type(x) != type(None): 
-                rem_req_map[x[0]] = [q_,x[1],None] 
-        return rem_req_map 
+                rem_req_map[x[0]].append([q_,x[1],None]) 
+            else: 
+                rem_reqs.append(q_)
+        return rem_req_map,set(rem_reqs)
 
     def extra_role_decision(self,req_idn):
         agent_candidates = prg_seqsort(sorted(self.agents.keys()),prg__single_to_int(self.prg)) 
