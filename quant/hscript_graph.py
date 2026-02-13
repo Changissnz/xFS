@@ -1,6 +1,12 @@
 from graph_models.graph_gen import * 
 from graph_models.path_induction import * 
 from .levenschtein import * 
+from morebs2.numerical_generator import prg_choose_n,prg_to_prg__LCG_sequence,\
+    prg_decimal,prg__single_to_decimal
+
+DEFAULT_HOMO_FRAME_BOT_GRAPH_NODE_RANGE = [500,2000] 
+DEFAULT_HOMO_FRAME_BOT_GRAPH_CONNECTIVITY = [0.00005,0.01]
+DEFAULT_HOMO_FRAME_BOT_PATH_LENGTH_RANGE = [5,55] 
 
 """
 administrative agent in simulation Homo Frame Bot 
@@ -27,7 +33,7 @@ class HomoScriptAdmin:
     agent_action_map := agent idn -> (requirement idn,path,idn of other agent imitated)
     """
     def register_agent_actions(self,agent_action_map): 
-        if len(agent_action_map) == 0: return 
+        if len(agent_action_map) == 0: return dict() 
 
         dx = defaultdict(float) 
         redundancy = defaultdict(float)
@@ -49,8 +55,8 @@ class HomoScriptAdmin:
 
     def path_difference(self,agent_idn,req_idn,agent_path): 
         actual_path = self.demand_map[agent_idn][req_idn]
-        return levenschtein_distance(actual_path,agent_path) 
-
+        s = simple_string_cmp_metric(actual_path,agent_path) 
+        return s 
 
     """
     agent_info_* := (agent idn, req idn, path)
@@ -73,18 +79,15 @@ class HomoScriptAdmin:
 
     #------------------------- phase two of admin actions: registering agent extra roles 
 
-    def missing_requirements_deduction(self,agent_actionset_map): 
-        satisfied_reqs = set() 
-        for v in agent_actionset_map.values(): 
-            satisfied_reqs |= v 
-
+    def missing_requirements_deduction(self,active_agent_set,satisfied_reqs): 
+    
         # deduction #3: missing requirements deduction, evenly distributed 
         q = self.missing_requirements_deduction_(satisfied_reqs)
-        q = q / len(agent_actionset_map) 
+        q = q / len(active_agent_set) 
 
         dx = dict() 
-        for k in agent_actionset_map.keys(): 
-            dx[k] += q 
+        for k in active_agent_set: 
+            dx[k] = q 
         return dx
 
     def missing_requirements_deduction_(self,satisfied_reqs):
@@ -121,6 +124,10 @@ class HomoScriptAgent:
         self.score = score 
         return
 
+    def __str__(self): 
+        s = "agent idn: {}, chosen req: {}, score: {}".format(self.idn,self.chosen_req,self.score) + "\n" 
+        return s 
+
     def exec(self): 
         return (self.chosen_req,self.demand_map[self.chosen_req]) 
 
@@ -132,14 +139,18 @@ class HomoScriptNetwork:
     def __init__(self,admin,agents,prg,info_mode_is_open:bool=False,verbose:bool=False): 
         assert type(admin) == HomoScriptAdmin
         assert type(agents) == dict 
-        for k,v in agents.values(): 
+        for k,v in agents.items(): 
             assert k == v.idn 
             assert type(v) == HomoScriptAgent
+            qd = set(v.demand_map.keys())
+            assert qd == admin.requirements
+
         assert type(prg) in {MethodType,FunctionType}
         assert type(info_mode_is_open) == bool 
 
         self.admin = admin 
         self.agents = agents 
+        self.prg = prg 
         self.terminated_agents = dict() 
         self.open_info = info_mode_is_open 
         self.verbose = verbose 
@@ -150,6 +161,16 @@ class HomoScriptNetwork:
         if self.fin_stat: return 
 
         dmap = self.premove__path_swap() 
+        if self.verbose: 
+            print("-- planned moves")
+            for k,v in dmap.items(): 
+                print("* agent: {}".format(k))
+                print("* default requirement: {}".format(self.agents[k].chosen_req))
+                print("* requirement: {}".format(v[0]))
+                ##print("path: {}".format(v[1])) 
+                print("* imitating: {}".format(v[2])) 
+                print() 
+
         dx = self.admin.register_agent_actions(dmap) 
         self.deduct_scores(dx)
         if self.fin_stat: return 
@@ -164,7 +185,7 @@ class HomoScriptNetwork:
         if self.fin_stat: return 
 
         satisfied_reqs = satisfied_reqs | satisfied_reqs2 
-        dx = self.missing_requirements_deduction(satisfied_reqs)
+        dx = self.admin.missing_requirements_deduction(set(self.agents.keys()),satisfied_reqs)
         self.deduct_scores(dx) 
 
 
@@ -195,7 +216,7 @@ class HomoScriptNetwork:
 
     def premove__path_swap(self):
         bmap = self.base_action_map() 
-        agent_keys = sorted(sorted(set(agent_action_map.keys()))) 
+        agent_keys = sorted(sorted(set(bmap.keys()))) 
 
         for agent_idn in agent_keys: 
             self.initiate_path_swap(agent_idn,bmap) 
@@ -206,13 +227,15 @@ class HomoScriptNetwork:
         agent_info_1 = agent_action_map[agent_idn1] 
 
         for agent_idn2 in agent_keys:
-            agent_info_2 = agent_keys[agent_idn2]         
+            agent_info_2 = agent_action_map[agent_idn2]         
             d0,d1 = self.admin.approximate_swap_difference(agent_info_1,agent_info_2)
             decision,two_way = self.swap_decision(agent_idn1,agent_idn2,d0,d1) 
 
             if decision and two_way: 
+                agent_info_1[0],agent_info_2[0] = agent_info_2[0],agent_info_1[0]  
                 agent_info_1[1],agent_info_2[1] = agent_info_2[1],agent_info_1[1] 
             elif decision: 
+                agent_info_1[0] = agent_info_2[0] 
                 agent_info_1[1] = agent_info_2[1] 
                 agent_info_1[2] = agent_idn2 
             else: 
@@ -223,17 +246,22 @@ class HomoScriptNetwork:
         dec1 = d1 > 0 
         dec2 = d2 > 0 
         
-        # case: both agents individually agree to swap 
+        # case: open info, both agents individually agree to swap 
         if dec1 and dec2: 
             return True,True  
 
-        # case: through PRNG output comparison, agents go with 
-        #       decision of the agent with the higher PRNG output.  
         prg1 = self.agents[agent_idn1].prg 
         prg2 = self.agents[agent_idn2].prg 
+
+        # case: agents make decision to swap based on PRNG 
+        if not self.open_info: 
+            dec1 = prg_decimal(prg1,[0.,1.]) >= 0.5 
+            dec2 = prg_decimal(prg2,[0.,1.]) >= 0.5 
+
         d1 = prg_decimal(prg1,[0.,1.])
         d2 = prg_decimal(prg2,[0.,1.])
 
+        # go with decision of the agent with the higher PRNG output.  
         if d1 >= d2: 
             return dec1,False 
         return dec2,False 
@@ -285,3 +313,73 @@ class HomoScriptNetwork:
 
         possible_paths = prg_seqsort_ties(possible_paths,prg__single_to_int(self.prg),vf=lambda x:x[1]) 
         return possible_paths[-1][0]
+
+    #------------------------------------------------------------------------------ 
+
+    @staticmethod 
+    def generate_instance(num_agents,prg,agent_score,open_info): 
+        assert num_agents <= 200 
+
+        # generate the graph 
+        is_dsg = False 
+        is_realtime_gen = bool(int(prg()) % 2) 
+        vertex_degree = modulo_in_range(int(prg()),DEFAULT_HOMO_FRAME_BOT_GRAPH_NODE_RANGE)
+        edge_connectivity = modulo_in_range(prg(),DEFAULT_HOMO_FRAME_BOT_GRAPH_CONNECTIVITY)
+        verbose = False 
+        gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,\
+            edge_connectivity,verbose=False)
+        gg.full_run() 
+        G = graph_to_one_component(gg.d,prg)
+
+        # choose `num_agents` sources and `num_agents` targets 
+        X = prg_choose_n(sorted(G.keys()),num_agents * 2,prg__single_to_int(prg),True)
+        sources = X[:num_agents] 
+        targets = X[num_agents:] 
+
+        # calculate shortest paths for each source 
+        spaths = {} 
+        for s in sources: 
+            bdfsc = BDFSCache(s,G,is_bfs=True,prg=prg,\
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,num_paths_per_node=3,\
+                max_search_radius=float('inf'),verbose=False)
+            bdfsc.exec() 
+            path_ind = PathInduction(s,bdfsc.min_paths,prg,[2,4]) 
+            spaths[s] = path_ind 
+        
+        #     def __init__(self,requirements,demand_map,open_info:bool): 
+        prgs = prg_to_prg__LCG_sequence(prg,num_agents,3.111+2/97) 
+        sources_ = prg_seqsort(sorted(sources),prg__single_to_int(prg)) 
+        agents = {} 
+        admin_demand_map = {} 
+        for j,idn in enumerate(range(num_agents)): 
+            demand_map = {} 
+            admin_demand_map[idn] = dict() 
+            for (i,requirement) in enumerate(sources): 
+                # path for agent 
+                path_length = modulo_in_range(int(prg()),DEFAULT_HOMO_FRAME_BOT_PATH_LENGTH_RANGE)
+                target = targets[i]
+                pinduction = spaths[requirement] 
+                roundabout_first = int(prg()) % 2
+                P = pinduction.one_path(target,roundabout_first,path_length)
+                demand_map[requirement] = P.p 
+
+                # path for admin 
+                path_length2 = modulo_in_range(int(prg()),DEFAULT_HOMO_FRAME_BOT_PATH_LENGTH_RANGE)
+                roundabout_first2 = int(prg()) % 2
+                q = pinduction.prg 
+                pinduction.prg = prgs[j] 
+                P2 = pinduction.one_path(target,roundabout_first2,path_length2) 
+                pinduction.prg = q 
+
+                admin_demand_map[idn][requirement] = P2.p 
+            
+            # initialize the agent 
+            chosen_req = sources_[j] 
+            prg_ = prgs[j] 
+            agent = HomoScriptAgent(idn,demand_map,chosen_req,prg_,agent_score)
+            agents[idn] = agent 
+
+        # initialize the admin 
+        admin = HomoScriptAdmin(set(sources),admin_demand_map,open_info)
+        hsn = HomoScriptNetwork(admin,agents,prg,info_mode_is_open=open_info,verbose=False)
+        return hsn 
