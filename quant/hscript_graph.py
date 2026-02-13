@@ -83,7 +83,7 @@ class HomoScriptAdmin:
     
         # deduction #3: missing requirements deduction, evenly distributed 
         q = self.missing_requirements_deduction_(satisfied_reqs)
-        q = q / len(active_agent_set) 
+        q = q / (len(active_agent_set) ** 2) 
 
         dx = dict() 
         for k in active_agent_set: 
@@ -203,9 +203,13 @@ class HomoScriptNetwork:
                 print() 
 
         sat_reqs = self.register_extra_roles(erm) 
+        if self.verbose and len(sat_reqs) > 0: 
+            print("** null extra roles: {}".format(sat_reqs)) 
         if self.fin_stat: return 
 
         satisfied_reqs = satisfied_reqs | sat_reqs 
+        if self.verbose:
+            print("** satisfied these requirements: {}".format(satisfied_reqs))
         dx = self.admin.missing_requirements_deduction(set(self.agents.keys()),satisfied_reqs)
         if self.verbose and len(dx) > 0: 
             q = set(dx.values()) 
@@ -327,10 +331,10 @@ class HomoScriptNetwork:
             for k,v in d.items(): 
                 if k in self.terminated_agents: 
                     terminated.append(k)
-                else: 
-                    sat_reqs.append(v[0]) 
+                #else: 
+                #    sat_reqs.append(v[0]) 
             for t in terminated: del d[t] 
-
+            sat_reqs.extend([v[0] for v in d.values()])
             dx = self.admin.register_agent_actions(d)
             self.deduct_scores(dx)
         return set(sat_reqs) 

@@ -65,7 +65,7 @@ agent imitation of another implies a missing requirement. Deduction also occurs 
 For every missing requirement R_i, administrator calculates the cumulative sum of R_i's path lengths, 
     U =   SUM      |M_d[a][R_i]|. 
        a in agents 
-Then administrator deducts |U| / |agents| from every agent. 
+Then administrator deducts |U| / |agents|^2 from every agent. 
 
 ------------------------------------------------------------------------------------------------------
 
