@@ -68,7 +68,7 @@ class HomoScriptAdmin:
     def approximate_swap_difference(self,agent_info_1,agent_info_2):
         if not self.open_info: 
             return 0,0 
-
+        
         pd1 = self.path_difference(agent_info_1[0],agent_info_1[1],agent_info_1[2])
         pd2 = self.path_difference(agent_info_2[0],agent_info_2[1],agent_info_2[2])
 
@@ -219,8 +219,7 @@ class HomoScriptNetwork:
         d = {} 
         for k,v in self.agents.items(): 
             q0,q1 = v.exec()
-            p = self.admin.demand_map[k][q0]
-            d[k] = simple_string_cmp_metric(q1,p) 
+            d[k] = self.admin.path_difference(k,q0,q1) 
         return d 
 
     #--------------------------------- phase 1 of agent decisions: agents deciding on paths to 
@@ -239,8 +238,12 @@ class HomoScriptNetwork:
         agent_info_1 = agent_action_map[agent_idn1] 
 
         for agent_idn2 in agent_keys:
-            agent_info_2 = agent_action_map[agent_idn2]         
-            d0,d1 = self.admin.approximate_swap_difference(agent_info_1,agent_info_2)
+            agent_info_2 = agent_action_map[agent_idn2]   
+
+            ai1 = [agent_idn1,agent_info_1[0],agent_info_1[1]] 
+            ai2 = [agent_idn2,agent_info_2[0],agent_info_2[1]] 
+
+            d0,d1 = self.admin.approximate_swap_difference(ai1,ai2)
             decision,two_way = self.swap_decision(agent_idn1,agent_idn2,d0,d1) 
 
             if decision and two_way: 
@@ -265,7 +268,8 @@ class HomoScriptNetwork:
         prg1 = self.agents[agent_idn1].prg 
         prg2 = self.agents[agent_idn2].prg 
 
-        # case: agents make decision to swap based on PRNG 
+        # case: agents make decision to swap based on PRNG, due to 
+        #       no open info. 
         if not self.open_info: 
             dec1 = prg_decimal(prg1,[0.,1.]) >= 0.5 
             dec2 = prg_decimal(prg2,[0.,1.]) >= 0.5 
