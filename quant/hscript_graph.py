@@ -195,7 +195,7 @@ class HomoScriptNetwork:
         satisfied_reqs = set([v[0] for v in dmap.values()])
         remaining_reqs = self.admin.requirements - satisfied_reqs 
 
-        erm,rem_reqs = self.extra_role_map(remaining_reqs) 
+        erm,rem_reqs = self.extra_role_map() 
         if self.verbose and len(erm) > 0: 
             print("-- extra roles") 
             for k,v in erm.items(): 
@@ -252,7 +252,7 @@ class HomoScriptNetwork:
 
     def premove__path_swap(self):
         bmap = self.base_action_map() 
-        agent_keys = sorted(sorted(set(bmap.keys()))) 
+        agent_keys = prg_seqsort(sorted(set(bmap.keys())),prg__single_to_int(self.prg)) 
 
         for agent_idn in agent_keys: 
             self.initiate_path_swap(agent_idn,bmap) 
@@ -335,16 +335,20 @@ class HomoScriptNetwork:
             self.deduct_scores(dx)
         return set(sat_reqs) 
 
-    def extra_role_map(self,remaining_reqs): 
+    def extra_role_map(self): 
+        if len(self.terminated_agents)  == 0: 
+            return dict(),set() 
+
         rem_req_map = defaultdict(list) 
-        q = sorted(remaining_reqs) 
+        q = sorted(self.terminated_agents.keys()) 
         rem_reqs = [] 
         for q_ in q: 
-            x = self.extra_role_decision(q_) 
-            if type(x) != type(None): 
-                rem_req_map[x[0]].append([q_,x[1],None]) 
+            x = self.terminated_agents[q_].chosen_req 
+            d = self.extra_role_decision(x) 
+            if type(d) != type(None): 
+                rem_req_map[d[0]].append([x,d[1],None]) 
             else: 
-                rem_reqs.append(q_)
+                rem_reqs.append(x) 
         return rem_req_map,set(rem_reqs)
 
     def extra_role_decision(self,req_idn):
