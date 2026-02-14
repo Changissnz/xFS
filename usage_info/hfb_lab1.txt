@@ -19,11 +19,11 @@ timestamps that elapse before all n agents are terminated. When agents are re-as
 PRNGs, one PRNG is used to create n linear congruential generators, one assigned to each of the 
 agents. Based on the specifications. 
 
-LEMMA: Homo Frame Bot is a probably terminal simulation. In cases where the administrator sub-map 
+LEMMA: Homo Frame Bot is a probably terminal automaton. In cases where the administrator sub-map 
        of expectations exactly matches the paths of the chosen requirements for the agents, there 
        is no score deduction at all. This is a stasis. In cases where there is at least one agent 
        A_q that executes a chosen requirement with path not equal to the expectation of the 
-       administrator, there is a likelihood the simulation will terminate. This likelihood is 
+       administrator, there is a likelihood the automaton will terminate. This likelihood is 
        stronger when the other agents that have to eventually take an extra role of that of 
        terminated agent A_q do not have paths equal to administrator expectations for requirement 
        C(A_q). 
