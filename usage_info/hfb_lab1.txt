@@ -1,13 +1,15 @@
+@ approximately 10:00PM, 2/13/2026 
+
 An important feature about the `open_info` mode in Homo Frame Bot is that when it 
 is set to True, computation time is much greater than in cases of `open_info` being 
-False. To understand why this is the case, there are two areas when `open_info` is 
+False. To understand why this is the case, there are two areas where `open_info` is 
 relevant. The first is in the computation involved in function<HomoScriptNetwork.premove__path_swap>. 
 The function<HomoScriptAdmin.approximate_swap_difference> is called in that function. When 
-`open_info` is set to False, method outputs the pair (0,0). Potential swapping agents 
-A and B will go ahead to determine whether to swap XOR for one to imitate the other, via a 
-stochastic process of comparing the two agents' PRNG output values. The second area is 
-in function<HomoScriptNetwork.extra_role_decision>. An agent A that is queried by the 
-network to accept an extra role R_i would choose a path in the set 
+`open_info` is set to False, method outputs the pair (0,0) without any additional computation. 
+Potential swapping agents A and B will go ahead to determine whether to swap XOR for one to 
+imitate the other, via a stochastic process of comparing the two agents' PRNG output values. 
+The second area is in function<HomoScriptNetwork.extra_role_decision>. An agent A that is 
+queried by the network to accept an extra role R_i would choose a path in the set 
     S = {A.M_r[R_i]} UNION {A_t.M_r[R_i] for A_t in set of terminated agents}. 
 In the case of `open_info` being True, algorithm calls function<HomoScriptAdmin.path_difference> 
 to determine the path in set S of lowest difference to administrator expectations. 
@@ -17,13 +19,14 @@ timestamps that elapse before all n agents are terminated. When agents are re-as
 PRNGs, one PRNG is used to create n linear congruential generators, one assigned to each of the 
 agents. Based on the specifications. 
 
-LEMMA: Homo Frame Bot is a probably terminal simulation. In cases where the administrator map 
-       of expectations exactly matches the paths for each of the agents, there is no score 
-       deduction at all. This is a stasis. In cases where there is at least one agent A_q that 
-       executes a chosen requirement not equal to the expectation of the administrator, there is 
-       a likelihood the simulation will terminate. This likelihood is stronger when the other 
-       agents that have to eventually take an extra role of that of terminated agent A_q do not 
-       have paths equal to administrator expectations for requirement C(A_q). 
+LEMMA: Homo Frame Bot is a probably terminal simulation. In cases where the administrator sub-map 
+       of expectations exactly matches the paths of the chosen requirements for the agents, there 
+       is no score deduction at all. This is a stasis. In cases where there is at least one agent 
+       A_q that executes a chosen requirement with path not equal to the expectation of the 
+       administrator, there is a likelihood the simulation will terminate. This likelihood is 
+       stronger when the other agents that have to eventually take an extra role of that of 
+       terminated agent A_q do not have paths equal to administrator expectations for requirement 
+       C(A_q). 
 
 In these trials, there is not a lot of variance in PRNG performance, relatively speaking. There 
 are occasional solutions that greatly exceed mean performance. The variance is suppressed through 

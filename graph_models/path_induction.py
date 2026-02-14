@@ -18,6 +18,9 @@ class PathInduction:
     """
     main method #1 
     """
+    # NOTE: not guaranteed to satisfy `length_min_threshold`, in cases where there 
+    #       are not options to extend a path past its current tail. 
+    #       The `stasis_count` variable breaks out of possible infinite loops. 
     def one_path(self,target,roundabout_first:bool=False,length_min_threshold = 0): 
         num_segments = modulo_in_range(int(self.prg()),self.num_segment_range)
 
@@ -28,8 +31,16 @@ class PathInduction:
         go_backward = True 
 
         I = self.possible_intermediaries(target)
+        stasis_count = -1 
+        l_ = len(p) - 1 
         while stat: 
-            l = len(p) - 1 
+            l = len(p) - 1
+
+            if l == l_: 
+                stasis_count += 1 
+            if stasis_count >= 15: break 
+            l_ = l 
+
             stat = length_min_threshold > l 
             if not stat: continue 
 

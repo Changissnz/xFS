@@ -313,7 +313,7 @@ class HomoScriptNetwork:
                 agent_info_1[1],agent_info_2[1] = agent_info_2[1],agent_info_1[1] 
             elif decision: 
                 if self.verbose: 
-                    print("swap {} <<---- {}".format(agent_idn1,agent_idn2)) 
+                    print("imitator {} <<---- {}".format(agent_idn1,agent_idn2)) 
                 agent_info_1[0] = agent_info_2[0] 
                 agent_info_1[1] = agent_info_2[1] 
                 agent_info_1[2] = agent_idn2 
@@ -437,6 +437,7 @@ class HomoScriptNetwork:
         vertex_degree = modulo_in_range(int(prg()),DEFAULT_HOMO_FRAME_BOT_GRAPH_NODE_RANGE)
         edge_connectivity = modulo_in_range(prg(),DEFAULT_HOMO_FRAME_BOT_GRAPH_CONNECTIVITY)
         verbose = False 
+        print("generating base graph of {} nodes, {} connectivity".format(vertex_degree,edge_connectivity))
         gg = GraphGen(is_dsg,prg,is_realtime_gen,vertex_degree,\
             edge_connectivity,verbose=False)
         gg.full_run() 
@@ -450,6 +451,7 @@ class HomoScriptNetwork:
         # calculate shortest paths for each source 
         spaths = {} 
         for s in sources: 
+            print("-- shortest paths for source node={}".format(s)) 
             bdfsc = BDFSCache(s,G,is_bfs=True,prg=prg,\
                 edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,num_paths_per_node=3,\
                 max_search_radius=float('inf'),verbose=False)
@@ -465,12 +467,15 @@ class HomoScriptNetwork:
         for j,idn in enumerate(range(num_agents)): 
             demand_map = {} 
             admin_demand_map[idn] = dict() 
+            print("++ calculating requirements for agent={}".format(idn)) 
             for (i,requirement) in enumerate(sources): 
                 # path for agent 
                 path_length = modulo_in_range(int(prg()),DEFAULT_HOMO_FRAME_BOT_PATH_LENGTH_RANGE)
                 target = targets[i]
                 pinduction = spaths[requirement] 
                 roundabout_first = int(prg()) % 2
+
+                print("\t++ requirement {} target {} path length {}".format(requirement,target,path_length))
                 P = pinduction.one_path(target,roundabout_first,path_length)
                 demand_map[requirement] = P.p 
 
