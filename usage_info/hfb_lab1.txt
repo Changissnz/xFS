@@ -142,3 +142,6 @@ best score:  1021
 
 # TRIAL 4 (open info = True, weighted = True) 
 
+average score:  738.835
+min score:  609
+best score:  1063
