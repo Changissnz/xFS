@@ -35,7 +35,10 @@ Here is a list of graph problems in the project:
     - vantage point for learning: Chaser agents that pursue the Bull along a 
     network. 
     - file: `graph_problems/bkb.py` 
-- Homo Frame Bot (work in progress) 
+- Homo Frame Bot (Alpha) 
+    - vantage point for learning: n agents expected to act according to 
+    homomorphic demands, set by administrator. 
+    - file: `graph_problems/hfb.py` 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

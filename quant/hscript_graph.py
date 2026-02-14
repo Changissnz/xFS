@@ -423,7 +423,7 @@ class HomoScriptNetwork:
                 possible_paths.append((p,score2))
 
         possible_paths = prg_seqsort_ties(possible_paths,prg__single_to_int(self.prg),vf=lambda x:x[1]) 
-        return possible_paths[-1][0]
+        return possible_paths[0][0]
 
     #------------------------------------------------------------------------------ 
 

@@ -1,0 +1,144 @@
+An important feature about the `open_info` mode in Homo Frame Bot is that when it 
+is set to True, computation time is much greater than in cases of `open_info` being 
+False. To understand why this is the case, there are two areas when `open_info` is 
+relevant. The first is in the computation involved in function<HomoScriptNetwork.premove__path_swap>. 
+The function<HomoScriptAdmin.approximate_swap_difference> is called in that function. When 
+`open_info` is set to False, method outputs the pair (0,0). Potential swapping agents 
+A and B will go ahead to determine whether to swap XOR for one to imitate the other, via a 
+stochastic process of comparing the two agents' PRNG output values. The second area is 
+in function<HomoScriptNetwork.extra_role_decision>. An agent A that is queried by the 
+network to accept an extra role R_i would choose a path in the set 
+    S = {A.M_r[R_i]} UNION {A_t.M_r[R_i] for A_t in set of terminated agents}. 
+In the case of `open_info` being True, algorithm calls function<HomoScriptAdmin.path_difference> 
+to determine the path in set S of lowest difference to administrator expectations. 
+
+Performance of the n agents in every Homo Frame Bot simulation is measured by the number of 
+timestamps that elapse before all n agents are terminated. When agents are re-assigned new 
+PRNGs, one PRNG is used to create n linear congruential generators, one assigned to each of the 
+agents. Based on the specifications. 
+
+LEMMA: Homo Frame Bot is a probably terminal simulation. In cases where the administrator map 
+       of expectations exactly matches the paths for each of the agents, there is no score 
+       deduction at all. This is a stasis. In cases where there is at least one agent A_q that 
+       executes a chosen requirement not equal to the expectation of the administrator, there is 
+       a likelihood the simulation will terminate. This likelihood is stronger when the other 
+       agents that have to eventually take an extra role of that of terminated agent A_q do not 
+       have paths equal to administrator expectations for requirement C(A_q). 
+
+In these trials, there is not a lot of variance in PRNG performance, relatively speaking. There 
+are occasional solutions that greatly exceed mean performance. The variance is suppressed through 
+the homomorphic expectations of the administrator, specifically the penalizing mechanism that 
+encourages agents to react via swapping and imitating other agents, resulting in more possible 
+score deductions. 
+
+Below is the base code used to conduct four trials on a specific Homo Frame Bot instance. There 
+are 200 PRNGs used as source PRNGs for assignment to the agents, by the LCG scheme mentioned. 
+Each of these 200 PRNGs are LCGs themselves. 
+
+The trials are 
+(1) open info = False, weighted = False 
+(2) open info = False, weighted = True  
+(3) open info = True, weighted = False 
+(4) open info = True, weighted = True  
+
+--------------------------------------------------------------------------------------------------
+
+############# BASE CODE (open info = False, weighted = False) 
+
+
+from graph_problems.hfb_ext import * 
+from morebs2.numerical_generator import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+num_agents = 10 
+prg = prg__LCG(34,133.3,-44.44,2000.11)
+agent_score = 100000
+open_info = False     
+
+hsn = HomoFrameBot.generate_instance(num_agents,prg,agent_score,open_info)
+hsn.set_weighted_mode(True) 
+
+zero_div_ = lambda x,y: zero_div(x,y,1.)
+
+prg1 = prg__LCG(-456.55,73.12,-891.55,-9010.595) 
+prg2 = prg__LCG(857.55,-173.12,-91.55,2819.595)
+prg3 = merge_two_prgs(prg1,prg2,zero_div_) 
+prg4 = merge_two_prgs(prg2,prg3,mul) 
+
+# 20 
+prngs = prg_to_prg__LCG_sequence(prg3,20,1+771/777) 
+
+# 40  
+prngs_ = prg_to_prg__LCG_sequence(prg4,20,3-771/777) 
+prngs.extend(prngs_) 
+
+# 60  
+prngs2_ = prg_to_prg__LCG_sequence(prngs[5],20,5-9771/9977) 
+prngs.extend(prngs2_) 
+
+# 80  
+prngs3_ = prg_to_prg__LCG_sequence(prngs[-12],20,4-3333/4000) 
+prngs.extend(prngs3_) 
+
+# 100 
+prngs4_ = prg_to_prg__LCG_sequence(prngs[-22],20,7-1333/4000) 
+prngs5_ = prg_to_prg__LCG_sequence(prngs[7],20,6+2333/4000) 
+prngs6_ = [] 
+operations = [add,mul,sub,zero_div_] 
+for i,(p0,p1) in enumerate(zip(prngs4_,prngs5_)): 
+    oper = operations[i % len(operations)] 
+    prngs6_.append(merge_two_prgs(p0,p1,oper)) 
+prngs.extend(prngs6_) 
+
+# 150 
+prngs7_ = [] 
+for i,(p0,p1) in enumerate(zip(prngs[:50],prngs[50:])): 
+    oper = operations[i % len(operations)] 
+    prngs7_.append(merge_two_prgs(p0,p1,oper))
+prngs.extend(prngs7_) 
+
+# 200 
+prngs8_ = [] 
+for i,(p0,p1) in enumerate(zip(prngs[50:100],prngs[100:150])): 
+    oper = operations[i % len(operations)] 
+    prngs8_.append(merge_two_prgs(p0,p1,oper))
+prngs.extend(prngs8_)
+
+S = SimulationSolutionSearch(hsn,HFB_env_run,prngs,\
+    HFB_env_prng_assignment_function,HFB_env_mode_shift_function,\
+    HFB_env_solution_fetch_function,HFB_env_cmp_solution,verbose=True)
+
+while not S.fin_stat: 
+    S.process_one()
+
+q = np.mean([x[2] for x in S.results]) 
+print("__" * 50,"\n")
+print("average score: ",q)
+print("min score: ", np.min([x[2] for x in S.results]))
+print("best score: ",S.best[2])
+
+###################################################################################################### 
+
+NOTE: change lines 57 and 60 in the base code below for trials 2-4. 
+
+# TRIAL 1 (open info = False, weighted = False)
+
+average score:  804.195
+min score:  574
+best score:  7302
+
+# TRIAL 2 (open info = False, weighted = True) 
+
+average score:  723.815
+min score:  532
+best score:  4952
+
+# TRIAL 3 (open info = True, weighted = False) 
+
+average score:  735.185
+min score:  707
+best score:  1021
+
+# TRIAL 4 (open info = True, weighted = True) 
+

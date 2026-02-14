@@ -60,14 +60,25 @@ from agent B after agent A imitates B.
 Administrator expects for the agents to complete the n requirements every timestamp. This expectation 
 remains even when one or more of the original n agents terminate due to score reaching 0 or below. 
 The remaining agents are given the opportunity to take up extra roles for each of the terminated 
-agents' assigned requirements. Additionally, even when none of the agents have been terminated, 
-agent imitation of another implies a missing requirement. Deduction also occurs in these instances. 
-For every missing requirement R_i, administrator calculates the cumulative sum of R_i's path lengths, 
+agents' assigned requirements, a maximum of one remaining agent for one terminated agents' assignment 
+requirement. Score deduction proceeds according to F(A_e[R_t],M_d[A_e][R_t]); A_e the agent that 
+takes up a terminated agent's role and R_t the terminated role. Additionally, even when none of the 
+agents have been terminated, agent imitation of another implies a missing requirement. Deduction also 
+occurs in these instances. For every missing requirement R_i, administrator calculates the cumulative 
+sum of R_i's path lengths, 
     U =   SUM      |M_d[a][R_i]|. 
        a in agents 
 Then administrator deducts |U| / |agents|^2 from every agent. 
 
-------------------------------------------------------------------------------------------------------
+______________________________________________________________________________________________________
+ 
+        *Automaton synopsis*
+        --------------------
+For every active timestamp of Homo Frame Bot, 
+- remaining agents decide on the (requirements, paths) to take, via default or swap or imitation. 
+- remaining agents decide on taking extra roles to fulfill terminated agents' requirements. 
+
+______________________________________________________________________________________________________
 
 Simulation focuses on the economical decision-making of n agents to fulfill n requirements from an 
 administrator. The administrator has a map of demands, expectations for the agents to fulfill those 
@@ -82,11 +93,6 @@ to sum up to 1.0,
     W: agent idn -> weight. 
 Sum up the delta from D for float S. Then the weighted delta score map is 
     D_w: agent idn -> W[agent idn] * S. 
-
-NOTE: 
-Weighted mode tends to produce higher variance in performance of agents, measured by the 
-number of timestamps the bot has elapsed before all agents are terminated. Variance is 
-measured across different PRNGs the agents are assigned to use for decision-making. 
 """
 class HomoFrameBot(HomoScriptNetwork): 
 
