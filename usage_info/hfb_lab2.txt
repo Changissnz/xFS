@@ -1,0 +1,86 @@
+This is another lab for Homo Frame Bot. There are 20 agents in this instance. Results are 
+displayed in the section after the code. 
+
+######### CODE ###################################################################################
+
+from graph_problems.hfb_ext import * 
+from morebs2.numerical_generator import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+num_agents = 20 
+prg = prg__LCG(952,2121.3,-477.44,22222.11) 
+
+prg = prg__LCG(3,4,1,15) 
+agent_score = 50000
+
+open_info = True   
+
+hsn = HomoFrameBot.generate_instance(num_agents,prg,agent_score,open_info)
+hsn.set_weighted_mode(False) 
+
+zero_div_ = lambda x,y: zero_div(x,y,1.)
+
+def merge_two_prgs_into_LCG_sequence(prg1,prg2,num_lcg,mod_mult_range=[1.333,5.999],\
+    operations = [add,mul,sub,zero_div_]): 
+    q1 = prg_to_prg__LCG_sequence(prg1,num_lcg,modulo_in_range(prg1(),mod_mult_range))  
+    q2 = prg_to_prg__LCG_sequence(prg2,num_lcg,modulo_in_range(prg2(),mod_mult_range))  
+
+    q = [] 
+    for i,(p0,p1) in enumerate(zip(q1,q2)): 
+        oper = operations[i % len(operations)] 
+        q.append(merge_two_prgs(p0,p1,oper)) 
+    return q 
+
+prg1 = prg__LCG(-6.55,31.12,-1891.55,-19010.595) # 7 # 454 # 74 # 4446
+prg2 = prg__LCG(7.55,-3.12,-91.55,22819.595)
+prg3 = merge_two_prgs(prg1,prg2,zero_div_) 
+prg4 = merge_two_prgs(prg2,prg3,mul) 
+
+prngs = [prg1,prg2,prg3,prg4] 
+
+while len(prngs) < 300: 
+    i0 = int(prngs[-1]()) % len(prngs)
+    i1 = int(prngs[-1]()) % len(prngs)
+    p0,p1 = prngs[i0],prngs[i1] 
+    prngs_ = merge_two_prgs_into_LCG_sequence(p0,p1,10) 
+    prngs.extend(prngs_) 
+
+print("number of prngs: ",len(prngs)) 
+
+S = SimulationSolutionSearch(hsn,HFB_env_run,prngs,\
+    HFB_env_prng_assignment_function,HFB_env_mode_shift_function,\
+    HFB_env_solution_fetch_function,HFB_env_cmp_solution,verbose=True)
+
+t = time.time()
+while not S.fin_stat: 
+    t_ = time.time() 
+    S.process_one()
+    print("\t\tsim. runtime: {}".format(time.time() - t_)) 
+
+q = np.mean([x[2] for x in S.results]) 
+print("__" * 50,"\n")
+print("runtime: {}".format(time.time() - t)) 
+print("average score: ",q)
+print("min score: ", np.min([x[2] for x in S.results]))
+print("best score: ",S.best[2])
+
+################## END RESULTS 
+
+open info := True 
+
+runtime: 11085.415699481964
+average score:  2791.128289473684
+min score:  2450
+best score:  4026
+
+----------------------------------------------
+
+NOTE: change line 17 
+
+open info := False 
+
+runtime: 2466.095132827759
+average score:  2858.4473684210525
+min score:  2520
+best score:  5391
