@@ -49,8 +49,10 @@ class USGController:
             if x[1] in self.search_target_nodeset[search_index]:
                 found_nodes |= {x[1]}
                 self.found_target_nodeset[search_index] |= {x[1]}
-
         return tcost,stat1,found_nodes 
+
+    def recent_edges(self,search_index): 
+        return self.searches[search_index].previous_edges
 
     def set_no_duplicate_touch(self,index): 
         #assert type(self.searches[index]) == BFSCache

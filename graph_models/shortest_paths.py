@@ -1,5 +1,5 @@
 from .node_path import * 
-from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort,prg_seqsort_ties
+from morebs2.numerical_generator import default_std_Python_prng,prg_seqsort_ties
 from morebs2.graph_basics import is_undirected_graph
 from types import MethodType,FunctionType
 

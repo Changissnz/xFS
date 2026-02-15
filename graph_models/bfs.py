@@ -11,8 +11,7 @@ class BFSCache(XFSCache):
         nextnode_priority_function=None,no_duplicate_touch_nodes:bool=False): 
 
         super().__init__(start_node,d,edge_cost_function,\
-            nextnode_priority_function)
-        self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
+            nextnode_priority_function,no_duplicate_touch_nodes)
 
     def move_one(self):
         self.previous_edges.clear() 

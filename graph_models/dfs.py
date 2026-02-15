@@ -18,8 +18,7 @@ class DFSCache(XFSCache):
         assert search_head_type in {1,2}
         self.search_head_type = search_head_type
         super().__init__(start_node,d,edge_cost_function,\
-            nextnode_priority_function)
-        self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
+            nextnode_priority_function,no_duplicate_touch_nodes)
 
     def move_one(self):
         self.previous_edges.clear() 
@@ -39,14 +38,13 @@ class DFSCache(XFSCache):
         # case: move to the next reference
         if stat1: 
             self.reference = self.reference_varcache.pop(0)
-            return self.move_one()
+            return True 
 
         # case: move to random available node
         if type(self.nnpf) != type(None): 
             q = self.nnpf(self.reference,available) 
         else: 
             q = available.pop()
-
         cost = self.fetch_edge_cost(self.reference,q)
         
         self.costfrom_table[self.reference][q] = cost 
@@ -54,16 +52,18 @@ class DFSCache(XFSCache):
             # update reference
         self.ref_neighbors_travelled[self.reference] = self.ref_neighbors_travelled[\
             self.reference] | {q}
-        self.previous_edges.append((self.reference,q))
 
         if self.search_head_type == 2:
             self.ref_neighbors_travelled[q] = self.ref_neighbors_travelled[q]\
                 | {self.reference}
 
         # case: node has already been touched 
-        if q in self.touched_nodes: 
-            return True 
-            
+        if self.no_duplicate_touch_nodes: 
+            if q in self.touched_nodes: 
+                return True 
+
+        self.previous_edges.append((self.reference,q))
+
         if self.no_duplicate_touch_nodes: 
             self.touched_nodes |= {q} 
 

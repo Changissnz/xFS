@@ -1,11 +1,29 @@
 from collections import defaultdict 
 from copy import deepcopy
 import numpy as np 
+from morebs2.numerical_generator import prg_seqsort,prg__single_to_int
 
 DEFAULT_EDGE_COST_FUNCTION = lambda u,v,c: 1
 DEFAULT_EDGE_COST_FUNCTION_2 = lambda u,v:1 if u != v else 0
 CUMULATIVE_EDGE_COST_FUNCTION = lambda u,v,c: 1 + c  
 CUMULATIVE_PATH_COST_FUNC = lambda x: len(x) 
+
+def DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__BFS(prg): 
+
+    def f(reference,q): 
+        q = sorted(q) 
+        return prg_seqsort(q,prg__single_to_int(prg)) 
+    
+    return f 
+
+def DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__DFS(prg): 
+
+    def f(reference,q): 
+        q = sorted(q) 
+        i = int(prg()) % len(q) 
+        return q[i]  
+    
+    return f
 
 class NodePath:
 
@@ -165,12 +183,13 @@ class XFSCache:
 
     def __init__(self,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,
-        nextnode_priority_function=None):
+        nextnode_priority_function=None,no_duplicate_touch_nodes:bool=False):
         assert type(d) == defaultdict 
         self.start_node = start_node
         self.d = d
         self.ecf = edge_cost_function
         self.nnpf = nextnode_priority_function
+        self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
         self.reference = None
         self.reference_varcache = []
 
@@ -253,9 +272,12 @@ class XFSCache:
         return results 
 
     # NOTE: `cost_func`not fully implemented yet. 
-    def store_minpaths(self,ns=None,num_paths=1,cost_func=sum):
+    def store_minpaths(self,ns=None,num_paths=1,cost_func=sum,prg=None):
         if type(ns) == type(None):
             ns = set(self.ref_neighbors_travelled.keys())
+        
+        if type(prg) != type(None): 
+            ns = prg_seqsort(sorted(ns),prg__single_to_int(prg)) 
 
         for k in ns:
             paths = self.paths_to_head(k,num_paths)
