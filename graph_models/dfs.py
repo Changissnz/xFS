@@ -13,12 +13,13 @@ class DFSCache(XFSCache):
 
     def __init__(self,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
-        search_head_type=1,nextnode_priority_function=None):
+        search_head_type=1,nextnode_priority_function=None,no_duplicate_touch_nodes:bool=False):
 
         assert search_head_type in {1,2}
         self.search_head_type = search_head_type
         super().__init__(start_node,d,edge_cost_function,\
             nextnode_priority_function)
+        self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
 
     def move_one(self):
         self.previous_edges.clear() 
@@ -58,6 +59,14 @@ class DFSCache(XFSCache):
         if self.search_head_type == 2:
             self.ref_neighbors_travelled[q] = self.ref_neighbors_travelled[q]\
                 | {self.reference}
+
+        # case: node has already been touched 
+        if q in self.touched_nodes: 
+            return True 
+            
+        if self.no_duplicate_touch_nodes: 
+            self.touched_nodes |= {q} 
+
         self.reference_varcache.insert(0,deepcopy(self.reference))
         self.reference = q
         return True 

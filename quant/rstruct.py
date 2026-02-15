@@ -33,7 +33,7 @@ class DelegationRuleOperator:
         usg = USGController() 
         #print("SET NEW SEARCH: ",self.d)
         usg.set_new_search(False,n,self.d)
-        usg.set_no_duplicate_touch__BFS(0)
+        usg.set_no_duplicate_touch(0)
 
         stat = True 
         D = set()

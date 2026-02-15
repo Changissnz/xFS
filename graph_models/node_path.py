@@ -185,7 +185,10 @@ class XFSCache:
         self.previous_edges = [] 
 
         self.min_paths = defaultdict(list)
+        self.no_duplicate_touch_nodes = False 
         self.init_cache() 
+        self.touched_nodes = set([self.reference]) 
+
 
     def init_cache(self):
         self.reference = deepcopy(self.start_node)
@@ -236,7 +239,7 @@ class XFSCache:
             q = cft_copy[t]
 
             # check to see if path is result
-            stat1 = p.tail() == self.start_node            
+            stat1 = p.tail() == self.start_node          
             if stat1:
                 results.append(p)
                 continue
@@ -285,3 +288,8 @@ class XFSCache:
 
         if len(self.reference_varcache) > 0:
             self.reference = self.reference_varcache.pop(0)
+
+    def filter_no_duplicate_touch_nodes(self,q): 
+        if not self.no_duplicate_touch_nodes: 
+            return q 
+        return [q_ for q_ in q if q_ not in self.touched_nodes] 

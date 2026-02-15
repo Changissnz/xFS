@@ -52,6 +52,6 @@ class USGController:
 
         return tcost,stat1,found_nodes 
 
-    def set_no_duplicate_touch__BFS(self,index): 
-        assert type(self.searches[index]) == BFSCache
+    def set_no_duplicate_touch(self,index): 
+        #assert type(self.searches[index]) == BFSCache
         self.searches[index].no_duplicate_touch_nodes = True 

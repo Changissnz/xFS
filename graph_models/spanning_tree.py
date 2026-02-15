@@ -6,6 +6,8 @@ from morebs2.numerical_generator import prg__single_to_decimal
 """
 NOTE: in `prg` mode, algorithm not guaranteed to produce one component 
       during tree search. 
+
+NOTE: code is somewhat redundant to the <XFSCache> classes. 
 """
 class SpanningTree: 
 

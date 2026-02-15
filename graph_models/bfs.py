@@ -13,7 +13,6 @@ class BFSCache(XFSCache):
         super().__init__(start_node,d,edge_cost_function,\
             nextnode_priority_function)
         self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
-        self.touched_nodes = set([self.reference]) 
 
     def move_one(self):
         self.previous_edges.clear() 
@@ -61,8 +60,3 @@ class BFSCache(XFSCache):
             return False 
         self.reference = self.reference_varcache.pop(0)
         return True 
-
-    def filter_no_duplicate_touch_nodes(self,q): 
-        if not self.no_duplicate_touch_nodes: 
-            return q 
-        return [q_ for q_ in q if q_ not in self.touched_nodes] 
