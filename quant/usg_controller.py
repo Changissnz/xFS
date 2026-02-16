@@ -16,14 +16,15 @@ class USGController:
 
     def set_new_search(self,is_dfs:bool,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
-        nextnode_priority_function=None,search_target_nodeset:set=set()):
+        nextnode_priority_function=None,search_target_nodeset:set=set(),\
+        no_duplicate_touch_nodes=False):
 
         if is_dfs: 
             q = DFSCache(start_node,d,edge_cost_function,2,\
-                nextnode_priority_function)
+                nextnode_priority_function,no_duplicate_touch_nodes)
         else: 
             q = BFSCache(start_node,d,edge_cost_function,\
-                nextnode_priority_function)
+                nextnode_priority_function,no_duplicate_touch_nodes)
 
         self.searches[self.search_ctr] = q 
         self.search_target_nodeset[self.search_ctr] = search_target_nodeset 

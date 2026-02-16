@@ -204,7 +204,6 @@ class XFSCache:
         self.previous_edges = [] 
 
         self.min_paths = defaultdict(list)
-        self.no_duplicate_touch_nodes = False 
         self.init_cache() 
         self.touched_nodes = set([self.reference]) 
 

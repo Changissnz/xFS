@@ -14,7 +14,6 @@ class DFSCache(XFSCache):
     def __init__(self,start_node,d:defaultdict,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
         search_head_type=1,nextnode_priority_function=None,no_duplicate_touch_nodes:bool=False):
-
         assert search_head_type in {1,2}
         self.search_head_type = search_head_type
         super().__init__(start_node,d,edge_cost_function,\
@@ -23,7 +22,6 @@ class DFSCache(XFSCache):
     def move_one(self):
         self.previous_edges.clear() 
         ##print("moving {}".format(len(self.reference_varcache))) 
-
         # move to a random available node from the reference
         q = self.ref_neighbors_travelled[self.reference]
         available = set(self.d[self.reference]) - self.ref_neighbors_travelled[self.reference]

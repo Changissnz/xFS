@@ -34,14 +34,14 @@ class AntiMobUnit:
 
 class MobAgent: 
 
-    def __init__(self,idn,score,prg): 
+    def __init__(self,idn,score,prg,weight=1): 
         assert score > 0 
         assert type(prg) in {MethodType,FunctionType}
 
         self.idn = idn 
         self.score = score 
         self.prg = prg 
-        self.weight = 1 
+        self.weight = weight  
         self.boolie = None  
         return
 
@@ -67,18 +67,21 @@ class MobAgent:
 
 class MobGraph: 
 
-    def __init__(self,G,antimob:AntiMobUnit,mob_agent_map:dict,prg,verbose=False):
+    def __init__(self,G,antimob:AntiMobUnit,mob_agent_map:dict,prg,mutable_weight_function,\
+        verbose=False):
         assert type(G) == defaultdict 
         assert set(G.keys()) == set(mob_agent_map.keys())
         assert type(antimob) == AntiMobUnit
         for k,v in mob_agent_map.items(): 
             assert k == v.idn 
         assert type(prg) in {MethodType,FunctionType}
+        assert type(mutable_weight_function) in {MethodType,FunctionType}
 
         self.G = G 
         self.antimob = antimob 
         self.mob_agent_map = mob_agent_map
         self.prg = prg 
+        self.mutable_weight_function = mutable_weight_function
         self.verbose = verbose 
         self.tmob_map = dict() 
         self.graphtrav = None 
@@ -110,10 +113,10 @@ class MobGraph:
         # NOTE: there is never a tie 
         if self.antimob.score <= 0.: 
             self.fin_stat = True 
-            self.result_stat = "anti-mob win" 
+            self.result_stat = "mob win" 
         elif len(self.mob_agent_map) == 0: 
             self.fin_stat = True 
-            self.result_stat = "mob win" 
+            self.result_stat = "anti-mob win" 
 
         if self.verbose: 
             print("anti-mob: ",self.antimob.score) 
@@ -141,7 +144,7 @@ class MobGraph:
     def distribute_vector(self,a,b,q): 
         # start with first agent 
         agent = self.mob_agent_map[a]
-        agent.weight += 1 
+        agent.weight = self.mutable_weight_function(agent.weight) 
         accept_stat = bool(ceil(agent.output() + q) % 2) 
         agent.receive_bool(b,accept_stat)
 
@@ -152,7 +155,8 @@ class MobGraph:
         self.graphtrav.set_new_search(is_dfs=True,start_node=a,d=self.G,\
             edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
             nextnode_priority_function=\
-            DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__DFS(self.antimob.prg))
+            DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__DFS(self.antimob.prg),\
+            no_duplicate_touch_nodes=True) 
 
         prev_bool = agent.boolie 
         agent_index = 1
@@ -177,11 +181,11 @@ class MobGraph:
 
         w = sum(self.top_n_agent_attr(agent_index,True)) 
         f_t = cumulative_weight / w 
-
         agent = self.mob_agent_map[r]
         f = agent.output_decimal()
-
         accept_stat = f <= f_t 
+        #print("-- prev bool {}, {}'th agent response {}, output {}, threshold {}".format(prev_bool,\
+        #    agent_index,accept_stat,f,f_t))
         agent.receive_bool(prev_bool,accept_stat)  
         return agent.boolie,cumulative_weight+agent.weight 
 
@@ -234,7 +238,8 @@ class MobGraph:
             self.G = graph_to_one_component(self.G,self.prg) 
 
     @staticmethod 
-    def generate_instance(num_agents,prg,antimob_score,mob_agent_uniform_score): 
+    def generate_instance(num_agents,prg,antimob_score,mob_agent_uniform_score,mob_agent_weight_range=[1,200],\
+        mutable_weight_function = lambda x: x + 0):   
 
         if num_agents < 100: 
             connectivity_range = [0.005,0.2] 
@@ -255,8 +260,8 @@ class MobGraph:
 
         for i in range(num_agents): 
             prg_ = lcg_seq[i] 
-            ma = MobAgent(i,mob_agent_uniform_score,prg_)
+            ma = MobAgent(i,mob_agent_uniform_score,prg_,modulo_in_range(prg(),mob_agent_weight_range)) 
             mob_agent_map[i] = ma 
 
         amu = AntiMobUnit(antimob_score,prg) 
-        return MobGraph(G,amu,mob_agent_map,prg)
+        return MobGraph(G,amu,mob_agent_map,prg,mutable_weight_function)
