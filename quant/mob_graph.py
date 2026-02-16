@@ -3,6 +3,9 @@ from morebs2.numerical_generator import modulo_in_range,prg_to_prg__LCG_sequence
     merge_two_prgs_into_LCG_sequence,prg_decimal
 from graph_models.graph_gen import * 
 
+"""
+the anti-mob faction in simulation Mob Killer Bot 
+"""
 class AntiMobUnit: 
 
     def __init__(self,score,prg): 
@@ -32,6 +35,9 @@ class AntiMobUnit:
     def output(self): 
         return self.prg()     
 
+"""
+member of the mob faction in simulation Mob Killer Bot 
+"""
 class MobAgent: 
 
     def __init__(self,idn,score,prg,weight=1): 
@@ -65,7 +71,10 @@ class MobAgent:
     def delta_score(self,delta): 
         self.score += delta  
 
-class MobGraph: 
+"""
+the network used for simulation Mob Killer Bot 
+"""
+class MobNetwork: 
 
     def __init__(self,G,antimob:AntiMobUnit,mob_agent_map:dict,prg,mutable_weight_function,\
         verbose=False):
@@ -89,6 +98,24 @@ class MobGraph:
         self.result_stat = None 
         return 
 
+    def assign_prng_to_antimob(self,prg): 
+        self.antimob.prg = prg  
+
+    def assign_prngs_to_mob_agents(self,d): 
+        for k,v in d.items(): 
+            assert k in self.mob_agent_map
+            assert type(v) in {MethodType,FunctionType}
+            self.mob_agent_map[k].prg = v 
+        return 
+
+    def assign_uniform_mob_agent_weight(self,w=1): 
+        for v in self.mob_agent_map.values(): 
+            v.weight = w 
+        return 
+        
+    """
+    main function 
+    """
     def __next__(self): 
         if self.fin_stat: return 
 
@@ -140,6 +167,8 @@ class MobGraph:
             c += int(a.boolie)
         if self.verbose: print("mob vote: +  {},  -  {}".format(c,len(self.mob_agent_map) - c)) 
         return c >= len(self.mob_agent_map) / 2 
+
+    ############################### anti-mob vector distribution to mob agents 
 
     def distribute_vector(self,a,b,q): 
         # start with first agent 
@@ -207,6 +236,8 @@ class MobGraph:
                 w += a.weight 
         return w  
 
+    ################################# distribution of negative delta to mob agents 
+
     def distribute_delta_to_mob_agents(self,delta,mob_vote,is_inversely_prop:bool): 
         if len(self.mob_agent_map) == 0: 
             return 
@@ -264,4 +295,4 @@ class MobGraph:
             mob_agent_map[i] = ma 
 
         amu = AntiMobUnit(antimob_score,prg) 
-        return MobGraph(G,amu,mob_agent_map,prg,mutable_weight_function)
+        return MobNetwork(G,amu,mob_agent_map,prg,mutable_weight_function)
