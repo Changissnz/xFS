@@ -1,0 +1,90 @@
+Mob Killer Bot, although serving purposes of interest in the area of computation, is quite 
+self-explanatory. Here is the base code for three trials. 
+
+########################################### CODE 
+
+from graph_problems.mkb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg__LCG 
+import time 
+
+num_agents = 1000 
+prg = prg__LCG(44,3,1.11,666.77) 
+antimob_score = 500000 
+mob_agent_uniform_score = 50000 
+mg = MKBot.generate_instance(num_agents,prg,antimob_score,mob_agent_uniform_score)
+
+prngs = prg_to_prg__LCG_sequence(prg,30,4.141414)
+prngs2 = prg_to_prg__LCG_sequence(prngs[-1],30,7.75757575) 
+prngs.extend(prngs2)
+prngs3 = prg_to_prg__LCG_sequence(prngs[-2],30,7.75757575) 
+prngs.extend(prngs3) 
+
+for i in range(90): 
+    j0 = int(prg()) % len(prngs) 
+    j1 = int(prg()) % len(prngs) 
+    p0,p1 = prngs[j0],prngs[j1] 
+    prngs_ = merge_two_prgs_into_LCG_sequence(p0,p1,2,[1.010101,4.5454545]) 
+    prngs.extend(prngs_)
+
+neg_to_zero = True 
+S = SimulationSolutionSearch(mg,MKB_env_run,prngs,\
+    MKB_env_prng_assignment_function,MKB_env_mode_shift_function,\
+    MKB_env_solution_fetch_function_(neg_to_zero),\
+    MKB_env_cmp_solution_(neg_to_zero),verbose=True)
+
+t = time.time() 
+
+while not S.fin_stat: 
+    S.process_one()
+
+print("runtime: ",time.time() - t) 
+
+q = np.array([r[2][0] for r in S.results])
+q2 = np.array([sum(list(r[2][1].values())) for r in S.results])
+
+mx0 = np.mean(q)
+mx1 = np.mean(q2) 
+mx2 = np.mean(q - q2)
+
+best = S.best[2] 
+best = best[0] - sum(best[1].values())
+
+print("mean anti-mob score: {}".format(mx0)) 
+print("mean mob score: {}".format(mx1)) 
+print("mean game score: {}".format(mx2)) 
+print("best score: {}".format(best))
+
+############################### RESULTS 
+
+##### CASE 1
+>>> 
+runtime:  959.7107424736023
+mean anti-mob score: 53320.26738884293
+mean mob score: 4088865.0639321627
+mean game score: -4035544.79654332
+best score: 379132.90296239
+
+##### CASE 2 
+Add this line, 
+    mg.assign_mscaled_mob_agent_weight(1.5) 
+AT line 16. 
+
+>>>
+runtime:  261.0999686717987
+mean anti-mob score: 11244.744444444445
+mean mob score: 31654895.085185185
+mean game score: -31643650.34074074
+best score: 345731.0
+
+##### CASE 3 
+Add this line, 
+    mg.assign_uniform_mob_agent_weight(100) 
+AT line 16. 
+
+>>>
+runtime:  247.82075142860413
+mean anti-mob score: 331481.48148148146
+mean mob score: 7380000.0
+mean game score: -7048518.518518519
+best score: 500000

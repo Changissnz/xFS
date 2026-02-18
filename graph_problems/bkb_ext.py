@@ -38,7 +38,6 @@ def BKB_env_solution_score_(bkbot:BKBot,verbose=False):
     A = sum([a[0] * a[1] + (a[0] + a[1]) for a in ascore])  
     return -B + A 
 
-#def BKB_env_cmp_solution_(active_mode_weight,verbose=True): 
 def BKB_env_cmp_solution_(verbose=True): 
 
     def f(bkbot1:BKBot,bkbot2:BKBot): 

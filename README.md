@@ -39,8 +39,11 @@ Here is a list of graph problems in the project:
     - vantage point for learning: n agents expected to act according to 
     homomorphic demands, set by administrator. 
     - file: `graph_problems/hfb.py` 
+- Mob Killer Bot (Alpha) 
+    - vantage point for learning: anti-mob unit acting against `n` Mob agents in 
+    a reactive system. 
+    - file: `graph_problems/mkb.py` 
 - Surround & Corner Bot (planned)
-- Mob Killer Bot (planned)  
 - Strangle Bot (planned)  
 
 #### NOTE: 

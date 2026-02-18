@@ -53,6 +53,10 @@ the score of a <MobAgent> M is deducted by
 
 Scores for either faction are non-increasing. Any agent with non-positive score is eliminated. Automaton 
 is guaranteed to produce exactly one winning faction for any simulation. 
+
+NOTE: Weights from a PRNG are assigned to each <MobAgent> when <MKBot> is instantiated. The 
+      `mutable_weight_function` is used to update the weight of the first <MobAgent> 
+      point of contact with the <AntiMobUnit>, during every iteration. 
 """
 class MKBot(MobNetwork): 
 
@@ -65,8 +69,8 @@ class MKBot(MobNetwork):
     def generate_instance(num_agents,prg,antimob_score,mob_agent_uniform_score,\
         mob_agent_weight_range=[1,200],mutable_weight_function = lambda x: x + 0): 
 
-        mn = MobNetwork(num_agents,prg,antimob_score,mob_agent_uniform_score,\
+        mn = MobNetwork.generate_instance(num_agents,prg,antimob_score,mob_agent_uniform_score,\
             mob_agent_weight_range,mutable_weight_function) 
 
-        return MobKillerBot(mn.G,mn.antimob,mn.mob_agent_map,mn.prg,\
+        return MKBot(mn.G,mn.antimob,mn.mob_agent_map,mn.prg,\
             mn.mutable_weight_function,mn.verbose)

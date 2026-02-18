@@ -78,7 +78,7 @@ class MobNetwork:
 
     def __init__(self,G,antimob:AntiMobUnit,mob_agent_map:dict,prg,mutable_weight_function,\
         verbose=False):
-        assert type(G) == defaultdict 
+        assert type(G) == defaultdict, "got {}".format(type(G))
         assert set(G.keys()) == set(mob_agent_map.keys())
         assert type(antimob) == AntiMobUnit
         for k,v in mob_agent_map.items(): 
@@ -98,6 +98,8 @@ class MobNetwork:
         self.result_stat = None 
         return 
 
+    ##################################### weight and PRNG assignment 
+
     def assign_prng_to_antimob(self,prg): 
         self.antimob.prg = prg  
 
@@ -112,7 +114,40 @@ class MobNetwork:
         for v in self.mob_agent_map.values(): 
             v.weight = w 
         return 
+
+    """
+    assigns every i'th mob agent in iteration a weight of 
+        w * i 
+    """
+    def assign_mscaled_mob_agent_weight(self,w=1): 
+        A = prg_seqsort(sorted(self.mob_agent_map.keys()),prg__single_to_int(self.prg)) 
+
+        for (i,a) in enumerate(A): 
+            w_ = (i+1) * w 
+            #print("assigning {}'th agent {} weight {}".format(i+1,a,w_))
+            m = self.mob_agent_map[a] 
+            m.weight = w_ 
+        return 
+
+    def agent_scores(self,neg_to_zero:bool=False): 
+        s = self.antimob.score 
+        if neg_to_zero and s < 0.: 
+            s = 0. 
+
+        d = {} 
+        for k,v in self.mob_agent_map.items(): 
+            s2 = v.score 
+            d[k] = s2 
+
+        for k,v in self.tmob_map.items(): 
+            s2 = v.score 
+            if neg_to_zero and s2 < 0.: 
+                s2 = 0 
+            d[k] = s2 
+        return s,d 
         
+    ############################################################################## 
+
     """
     main function 
     """
