@@ -43,8 +43,10 @@ Here is a list of graph problems in the project:
     - vantage point for learning: anti-mob unit acting against `n` Mob agents in 
     a reactive system. 
     - file: `graph_problems/mkb.py` 
-- Surround & Corner Bot (planned)
-- Strangle Bot (planned)  
+- Strangle Bot (work in progress)  
+- Surround & Corner Bot (planned) 
+- Impostoriori Bot (planned) 
+- Protectionist Bot (planned) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

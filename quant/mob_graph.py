@@ -277,7 +277,6 @@ class MobNetwork:
         if len(self.mob_agent_map) == 0: 
             return 
         
-        #S = sum([v.weight for v in self.mob_agent_map.values()]) 
         S = self.agent_bool_weight(mob_vote) 
         terminated = set() 
         for v in self.mob_agent_map.values(): 
