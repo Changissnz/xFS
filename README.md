@@ -47,6 +47,8 @@ Here is a list of graph problems in the project:
 - Surround & Corner Bot (planned) 
 - Impostoriori Bot (planned) 
 - Protectionist Bot (planned) 
+- Dementia Bot (planned) 
+- Pretension & Deceit Bot (planned) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
