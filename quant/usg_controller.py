@@ -12,6 +12,8 @@ class USGController:
         self.search_target_nodeset = dict()
         self.found_target_nodeset = dict() 
         self.search_ctr = 0 
+        self.no_duplicate_touch_nodes__combined = False 
+        self.touched_nodes__combined = set() 
         return
 
     def set_new_search(self,is_dfs:bool,start_node,d:defaultdict,\
@@ -50,6 +52,12 @@ class USGController:
             if x[1] in self.search_target_nodeset[search_index]:
                 found_nodes |= {x[1]}
                 self.found_target_nodeset[search_index] |= {x[1]}
+        
+        # case: update touched nodes for all searches 
+        if self.no_duplicate_touch_nodes__combined: 
+            self.touched_nodes__combined |= q.touched_nodes 
+            self.update_no_duplicate_touch__combined() 
+
         return tcost,stat1,found_nodes 
 
     def recent_edges(self,search_index): 
@@ -58,3 +66,19 @@ class USGController:
     def set_no_duplicate_touch(self,index): 
         #assert type(self.searches[index]) == BFSCache
         self.searches[index].no_duplicate_touch_nodes = True 
+
+    """
+    used to synchronize all current searches to be considerate 
+    of the one superset of touched nodes spread out between them. 
+    """
+    def set_no_duplicate_touch__combined(self,stat):
+        assert type(stat) == bool  
+        self.no_duplicate_touch_nodes__combined = stat 
+        self.touched_nodes__combined = set() 
+        for v in self.searches.values(): 
+            self.touched_nodes__combined |= v.touched_nodes
+
+    def update_no_duplicate_touch__combined(self): 
+        for v in self.searches.values(): 
+            v.touched_nodes = deepcopy(self.touched_nodes__combined) 
+        return 
