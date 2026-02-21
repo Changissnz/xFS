@@ -1,4 +1,8 @@
+from graph_models.community import * 
 from .usg_controller import * 
+from types import FunctionType,MethodType
+from morebs2.matrix_methods import is_valid_range
+from morebs2.numerical_generator import modulo_in_range
 
 class StrangleForm: 
 
@@ -20,11 +24,22 @@ class StrangleForm:
         self.max_degree = max([len(v) for v in self.G.values()]) 
         assert self.max_degree > 0 
         self.held_nodes = dict() 
+        self.broken_hold = set() 
+        self.strangled_stat = False 
+
+    def node_status(self,open_info):  
+        d = {k:0 for k in self.G.keys()}
+        if not open_info: 
+            return d 
+        
+        for k,v in self.held_nodes.items(): 
+            d[k] = v 
+        return d 
 
     def register_reaction(self,counter_force): 
 
         broken_hold = set() 
-        for k,v in counter_force: 
+        for k,v in counter_force.items(): 
             assert v <= 0.  
             if k not in self.held_nodes: continue 
             self.held_nodes[k] += v 
@@ -33,6 +48,23 @@ class StrangleForm:
         
         self.update_broken_hold(broken_hold)
         return broken_hold 
+
+    def move(self,entry_points,traversal_type_seq=None): 
+
+        if self.strangled_stat: 
+            return 
+
+        if len(self.held_nodes) == 0: 
+            self.initiate_stranglehold(entry_points,traversal_type_seq) 
+        elif len(self.broken_hold) > 0: 
+            self.initiate_stranglehold(entry_points,traversal_type_seq) 
+        else: 
+            pass 
+
+        self.move__advance() 
+        if set(self.held_nodes.keys()) == set(self.G.keys()): 
+            self.strangled_stat = True 
+        return 
 
     def move__advance(self): 
         for i in range(len(self.usgcs)): 
@@ -58,9 +90,8 @@ class StrangleForm:
 
             x = usgc.recent_edges(index)
             if len(x) > 0:
-                new_nodes = [x_[1] for x_ in x]
+                new_nodes = set([x_[1] for x_ in x])
                 return new_nodes, False  
-
 
     def initiate_stranglehold(self,entry_points,traversal_type_seq=None): 
         self.initiate_stranglehold_(sorted(entry_points),traversal_type_seq) 
@@ -68,7 +99,7 @@ class StrangleForm:
 
     def initiate_stranglehold_(self,entry_points,traversal_type_seq=None):  
         if type(traversal_type_seq) == type(None): 
-            traversal_type_seq = ["bfs"] * len(entry_points) 
+            traversal_type_seq = ["dfs"] * len(entry_points) 
         else: 
             assert type(traversal_type_seq) == list 
             assert len(traversal_type_seq) == len(entry_points) 
@@ -83,8 +114,8 @@ class StrangleForm:
 
         px = DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__DFS(self.prg)
 
-        for t in entry_points: 
-            usgc.set_new_search(is_dfs=t,start_node=n,d=self.G,\
+        for p,t in zip(entry_points,traversal_type_seq): 
+            usgc.set_new_search(is_dfs=t,start_node=p,d=self.G,\
             edge_cost_function=self.edge_cost_function,\
             nextnode_priority_function=px,search_target_nodeset=set(),\
             no_duplicate_touch_nodes=True)
@@ -114,11 +145,35 @@ class StrangleForm:
                 q = self.force_per_node_range[0] + f 
             else: 
                 q = modulo_in_range(self.prg(),self.force_per_node_range) 
-            self.held_nodes[n] = q   
+            self.held_nodes[n] = q
+            self.broken_hold -= {n}   
             cumulative_force += q 
         return cumulative_force 
 
     def update_broken_hold(self,broken_hold): 
         for b in broken_hold: 
             del self.held_nodes[b] 
+        self.broken_hold |= broken_hold
         return
+
+class StrangleSubject: 
+
+    def __init__(self,G,num_comm_range,prg):  
+        assert type(G) == defaultdict 
+        assert is_valid_range(num_comm_range,True,False)
+        self.G = G 
+        self.num_comm_range = num_comm_range
+        self.prg = prg 
+        self.communities = None 
+        return
+
+    def calculate_communities(self):
+        num_comm = modulo_in_range(int(self.prg()),self.num_comm_range) 
+        self.communities = ReinforcementCommunityFinder.partition_into_n_communities(\
+            self.G,num_comm,self.prg,verbose=False) 
+        return
+
+    def receive_surface_status(self,node_to_hold):  
+
+        return -1 
+
