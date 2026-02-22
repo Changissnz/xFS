@@ -4,6 +4,22 @@ from types import FunctionType,MethodType
 from morebs2.matrix_methods import is_valid_range
 from morebs2.numerical_generator import modulo_in_range
 
+def default_strangle_breaking_function(node_map,F): 
+    if len(node_map) == 0: return dict() 
+
+    q = F / len(node_map) 
+    smap = {k:q for k in node_map.keys()} 
+    
+    # get nodes that are not being strangled.
+    neg_set = {k for k,v in node_map.items() if v <= 0.}
+    pos_set = {k for k in node_map.keys() if k not in neg_set} 
+    q2 = q * len(neg_set) 
+
+    for s in smap.keys(): 
+        if s in pos_set: 
+            smap[s] -= q2 
+    return smap 
+
 class StrangleForm: 
 
     def __init__(self,G,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
@@ -156,24 +172,71 @@ class StrangleForm:
         self.broken_hold |= broken_hold
         return
 
+class StrangleFormInfo: 
+
+    def __init__(self,info_type,info): 
+        assert info_type in {0,1,2,3} 
+        self.info_type = info 
+        self.info = None 
+
+    def load_info(self,sform,communities):  
+        assert type(sform) == StrangleForm 
+
+        if self.info_type == 0: 
+            self.info = sform.node_status(bool(self.info_type)) 
+        elif self.info_type == 1: 
+            q = set(sform.held_nodes.keys())
+            active_comm = [] 
+            for c in communities: 
+                if c.intersection(q) != set(): 
+                    active_comm.append(c) 
+            self.info = active_comm 
+        elif self.info_type == 2: 
+            q = set(sform.held_nodes.keys())
+            self.info = q
+        else: 
+            self.info = sform.node_status(bool(self.info_type)) 
+        return 
+
 class StrangleSubject: 
 
-    def __init__(self,G,num_comm_range,prg):  
+    def __init__(self,G,num_comm_range,break_prg,comm_prg,force_per_node_range):  
         assert type(G) == defaultdict 
         assert is_valid_range(num_comm_range,True,False)
+        assert type(break_prg) in {FunctionType,MethodType}
+        assert type(comm_prg) in {FunctionType,MethodType}
+
         self.G = G 
         self.num_comm_range = num_comm_range
-        self.prg = prg 
+        self.break_prg = break_prg
+        self.comm_prg = comm_prg 
+        self.force_per_node_range = force_per_node_range
         self.communities = None 
+
+        self.surface_info = None 
+
+        # (nodeset,float: cumulative force)
+        self.break_decision = None 
         return
 
     def calculate_communities(self):
-        num_comm = modulo_in_range(int(self.prg()),self.num_comm_range) 
+        num_comm = modulo_in_range(int(self.comm_prg()),self.num_comm_range) 
         self.communities = ReinforcementCommunityFinder.partition_into_n_communities(\
-            self.G,num_comm,self.prg,verbose=False) 
+            self.G,num_comm,self.comm_prg,verbose=False) 
         return
 
-    def receive_surface_status(self,node_to_hold):  
+    def receive_surface_info(self,sfi:StrangleFormInfo):
+        assert type(sfi) == StrangleFormInfo
+        self.surface_info = sfi 
+        return
 
+    def decide(self): 
+        assert type(self.surface_info) == sfi 
+
+        # case: 
+        #if self.surface_info.info_type == 0: 
+        return -1 
+
+    def estimate_for_closed_info(self): 
         return -1 
 
