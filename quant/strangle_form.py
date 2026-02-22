@@ -1,9 +1,13 @@
 from graph_models.community import * 
 from .usg_controller import * 
 from types import FunctionType,MethodType
-from morebs2.matrix_methods import is_valid_range
+from morebs2.matrix_methods import is_valid_range,point_on_bounds_by_ratio_vector
 from morebs2.numerical_generator import modulo_in_range
 from morebs2.measures import zero_div 
+
+# used by <StrangleSubject> for guessing force to break strangleholds. 
+DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION = 5 
+
 
 def default_strangle_breaking_function(node_map,F,node_weight_map=None): 
     if len(node_map) == 0: return dict() 
@@ -56,6 +60,26 @@ def min_strangle_breaking_force(node_map,node_weight_map=None):
     if coeff == 0: 
         return None 
     return len(node_map) * q / coeff
+
+def guess_min_max_strangle_breaking_force(num_nodes,hypothesized_max_node_force): 
+
+    # get min 
+    node_map = {k:hypothesized_max_node_force for i in range(num_nodes)}
+    q = min_strangle_breaking_force(node_map) 
+
+    max_node_map = {k:hypothesized_max_node_force for i in range(num_nodes)} 
+    # case: odd 
+    if num_nodes % 2: 
+        h = ceil(num_nodes/2) 
+    else: 
+        h = int(num_nodes / 2 + 1)
+
+    for i in range(h): 
+        max_node_map[i] = 0 
+
+    # get max 
+    q2 = min_strangle_breaking_force(max_node_map) 
+    return sorted([q,q2]) 
 
 class StrangleForm: 
 
@@ -216,11 +240,13 @@ class StrangleFormInfo:
         self.info_type = info 
         self.info = None 
 
-    def load_info(self,sform,communities):  
+    def load_info(self,sform,node_weights,communities):  
         assert type(sform) == StrangleForm 
 
+        # node -> 0. 
         if self.info_type == 0: 
             self.info = sform.node_status(bool(self.info_type)) 
+        # list of communities with at least 1 strangled node. 
         elif self.info_type == 1: 
             q = set(sform.held_nodes.keys())
             active_comm = [] 
@@ -228,17 +254,21 @@ class StrangleFormInfo:
                 if c.intersection(q) != set(): 
                     active_comm.append(c) 
             self.info = active_comm 
+        # set(strangled nodes) 
         elif self.info_type == 2: 
             q = set(sform.held_nodes.keys())
             self.info = q
+        # [0] node -> strangling force 
+        # [1] node -> weight 
         else: 
-            self.info = sform.node_status(bool(self.info_type)) 
+            self.info = (sform.node_status(bool(self.info_type)),\
+                node_weights)
         return 
 
 class StrangleSubject: 
 
     def __init__(self,G,num_comm_range,break_prg,comm_prg,force_per_node_range):  
-        assert type(G) == defaultdict 
+        assert type(G) == defaultdict
         assert is_valid_range(num_comm_range,True,False)
         assert type(break_prg) in {FunctionType,MethodType}
         assert type(comm_prg) in {FunctionType,MethodType}
@@ -267,13 +297,92 @@ class StrangleSubject:
         self.surface_info = sfi 
         return
 
-    def decide(self): 
-        assert type(self.surface_info) == sfi 
+    def break_decision(self):
+        if self.sfi.info_type == 0: 
+            self.break_decision = self.estimate_force_info_type_0()
+        if self.sfi.info_type == 1: 
+            self.break_decision = self.estimate_force_info_type_1()
+        if self.sfi.info_type == 2: 
+            self.break_decision = self.estimate_force_info_type_2()
+        else: 
+            self.break_decision = self.estimate_force_info_type_3()
+        return self.break_decision 
 
-        # case: 
-        #if self.surface_info.info_type == 0: 
-        return -1 
+    def estimate_force_info_type_0(self): 
+        assert self.sfi.info_type == 0  
 
-    def estimate_for_closed_info(self): 
-        return -1 
+        # choose a component 
+        q = int(self.break_prg()) % len(self.communities) 
+        comm = self.communities[q] 
+        return comm,self.guess_force_for_component(comm) 
 
+    def estimate_force_info_type_1(self): 
+        assert self.sfi.info_type == 1 
+        comms = self.sfi.info 
+
+        if len(comms) == 0: 
+            return 0 
+
+        q = int(self.break_prg()) % len(comms) 
+        comm = self.communities[q] 
+        return comm,self.guess_force_for_component(comm) 
+
+    def estimate_force_info_type_2(self): 
+        assert self.sfi.info_type == 2 
+
+        cx = self.communities_strangled_node_count(self.sfi.info)
+        cx = prg_seqsort_ties(cx,prg__single_to_int(self.prg),vf=lambda x:x[1])
+        comm = cx[-1] 
+        return comm,self.guess_force_for_component(comm) 
+
+    def estimate_force_info_type_3(self): 
+
+        # get strangled nodes 
+        q = {k for k,v in self.sfi.info[0].items() if v != 0.} 
+        cx = self.communities_strangled_node_count(q) 
+
+        # choose a community 
+        cx = prg_seqsort_ties(cx,prg__single_to_int(self.prg),vf=lambda x:x[1])
+        comm = cx[-1] 
+
+        # get the minumum breaking force for strangled nodes of community 
+        d0 = {k:v for k,v in self.sfi.info[0].items() if k in comm} 
+        d1 = {k:v for k,v in self.sfi.info[1].items() if k in comm} 
+        return comm,min_strangle_breaking_force(d0,node_weight_map=d1) 
+
+    def communities_strangled_node_count(self,active_nodes): 
+
+        def number_of_strangled_in_community(comm): 
+            q = 0 
+            for c in comm: 
+                if c in active_nodes: 
+                    q += 1 
+            return q 
+
+        cx = [] 
+        for c in self.communities: 
+            q = number_of_strangled_in_community(c)
+            cx.append((c,q))
+        return cx 
+
+    def guess_force_for_component(self,component): 
+
+        # guess the max node force based on interval 
+        q = modulo_in_range(int(self.break_prg()),DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION+1)
+        q = q / DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION 
+
+        b = np.array([self.force_per_node_range])
+        rv = np.array([q]) 
+        p0 = point_on_bounds_by_ratio_vector(b,rv)[0] 
+
+        # guess the (min,max) breaking force
+        M = guess_min_max_strangle_breaking_force(len(component),p0) 
+        
+        # choose a value in the (min,max) 
+        q = modulo_in_range(int(self.break_prg()),DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION+1)
+        q = q / DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION 
+
+        b = np.array([M])
+        rv1 = np.array([q]) 
+        p1 = point_on_bounds_by_ratio_vector(b,rv1)[0] 
+        return p1

@@ -283,6 +283,8 @@ class MobNetwork:
             if v.boolie != mob_vote: continue 
 
             f = v.weight / S 
+            
+            # NOTE: not technically inversely proportional... 
             if is_inversely_prop: 
                 f = 1 - f 
 
