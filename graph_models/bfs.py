@@ -25,6 +25,7 @@ class BFSCache(XFSCache):
 
         # case: no more neighbors, no more nodes
         if stat1 and stat2: 
+            self.fin_stat = True 
             return False 
 
         # case: use nnpf to prioritize order of neighbors for next search
@@ -56,6 +57,7 @@ class BFSCache(XFSCache):
             self.touched_nodes |= set(q) 
         
         if len(self.reference_varcache) == 0: 
+            self.fin_stat = True 
             return False 
         self.reference = self.reference_varcache.pop(0)
         return True 

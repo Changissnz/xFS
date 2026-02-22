@@ -118,7 +118,7 @@ class StrangleSubjectMethods(unittest.TestCase):
         assert type(mf) == type(None) 
 
         mf2 = min_strangle_breaking_force(D,W)
-        q6 = default_strangle_breaking_function(D,-mf2,W) 
+        q6 = default_strangle_breaking_function(D,mf2,W) 
         assert q6 == {0: 0, 1: 0, 2: -50.0, 3: -50.0}
 
     """
@@ -130,7 +130,7 @@ class StrangleSubjectMethods(unittest.TestCase):
             2:50,\
             3:50} 
         mf = min_strangle_breaking_force(D2,None)
-        assert round(mf,5) == 300 
+        assert round(mf,5) == -300 
 
 if __name__ == '__main__':
     unittest.main()

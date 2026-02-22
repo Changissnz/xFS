@@ -31,6 +31,7 @@ class DFSCache(XFSCache):
 
         # case: end search 
         if stat1 and stat2: 
+            self.fin_stat = True 
             return False
 
         # case: move to the next reference

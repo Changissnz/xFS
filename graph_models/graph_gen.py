@@ -364,6 +364,9 @@ class GraphWeightGen:
         assert (u,v) in self.W, "({},{}) not found".format(u,v) 
         return self.W[(u,v)] 
 
+    def weight_(self,u,v,c): 
+        return self.weight(u,v) 
+
 
 #-----------------------------------------------------------------------------------------
 

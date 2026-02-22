@@ -206,6 +206,7 @@ class XFSCache:
         self.min_paths = defaultdict(list)
         self.init_cache() 
         self.touched_nodes = set([self.reference]) 
+        self.fin_stat = False 
 
 
     def init_cache(self):
