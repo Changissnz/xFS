@@ -24,7 +24,7 @@ class StrangleEnv:
         self.node_weights = node_weights 
         self.info_mode = info_mode 
         self.prg = prg 
-
+ 
     def __next__(self): 
         entry_points = self.issue_entry_points()
         self.strangler.move(entry_points,traversal_type_seq=None)
