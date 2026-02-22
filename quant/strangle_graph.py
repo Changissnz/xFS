@@ -58,8 +58,7 @@ class StrangleEnv:
     def generate_instance(strangler_force_assignment_type,info_mode,prg,strangler_energy=10**6,\
         strangle_subject_energy=10**6): 
 
-        connectivity_range = [0.0009,0.005] 
-
+        connectivity_range = [0.009,0.025]
 
         vertex_degree = modulo_in_range(int(prg()),DEFAULT_GRAPH_NODE_SIZE_RANGE)
         connectivity = modulo_in_range(prg(),connectivity_range)

@@ -161,7 +161,7 @@ class ReinforcementCommunityFinder:
         if not fast_part: 
             ReinforcementCommunityFinder.community_reduction(rcf,n)
             return rcf.communities 
-         
+            
         return ReinforcementCommunityFinder.prng_merge_communities(G,\
             rcf.communities,n,prg) 
 

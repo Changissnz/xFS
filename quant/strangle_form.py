@@ -326,7 +326,9 @@ class StrangleSubject:
     def calculate_communities(self):
         num_comm = modulo_in_range(int(self.comm_prg()),self.num_comm_range) 
         self.communities = ReinforcementCommunityFinder.partition_into_n_communities(\
-            self.G,num_comm,self.comm_prg,verbose=False) 
+            self.G,num_comm,self.comm_prg,max_reassignment=False,fast_part=True,\
+            verbose=False) 
+
         return
 
     def receive_surface_info(self,sfi:StrangleFormInfo):
