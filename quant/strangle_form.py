@@ -3,9 +3,15 @@ from .usg_controller import *
 from types import FunctionType,MethodType
 from morebs2.matrix_methods import is_valid_range
 from morebs2.numerical_generator import modulo_in_range
+from morebs2.measures import zero_div 
 
-def default_strangle_breaking_function(node_map,F): 
+def default_strangle_breaking_function(node_map,F,node_weight_map=None): 
     if len(node_map) == 0: return dict() 
+    assert F <= 0. 
+    if type(node_weight_map) == type(None): 
+        node_weight_map = {k:1 for k in node_map.keys()} 
+    else: 
+        assert type(node_weight_map) == dict 
 
     q = F / len(node_map) 
     smap = {k:q for k in node_map.keys()} 
@@ -13,12 +19,43 @@ def default_strangle_breaking_function(node_map,F):
     # get nodes that are not being strangled.
     neg_set = {k for k,v in node_map.items() if v <= 0.}
     pos_set = {k for k in node_map.keys() if k not in neg_set} 
-    q2 = q * len(neg_set) 
+
+    neg_weight = sum([node_weight_map[n] for n in neg_set]) 
+    pos_weight = sum([node_weight_map[n] for n in pos_set]) 
+
+    q2 = q * neg_weight
+    q2 = zero_div(q2,pos_weight,0)  
 
     for s in smap.keys(): 
         if s in pos_set: 
             smap[s] -= q2 
-    return smap 
+        else: 
+            smap[s] = 0 
+    return {k:round(v,5) for k,v in smap.items()}
+
+def min_strangle_breaking_force(node_map,node_weight_map=None): 
+
+    if type(node_weight_map) == type(None): 
+        node_weight_map = {k:1 for k in node_map.keys()} 
+    else: 
+        assert type(node_weight_map) == dict 
+
+    q = -max(node_map.values())
+    assert q <= 0.0 
+
+    neg_set = {k for k,v in node_map.items() if v <= 0.}
+    pos_set = {k for k in node_map.keys() if k not in neg_set} 
+    if len(pos_set) == 0: 
+        return 0 
+
+    neg_weight = sum([node_weight_map[n] for n in neg_set]) 
+    pos_weight = sum([node_weight_map[n] for n in pos_set]) 
+    assert pos_weight > 0 
+
+    coeff = neg_weight / pos_weight - 1 
+    if coeff == 0: 
+        return None 
+    return len(node_map) * q / coeff
 
 class StrangleForm: 
 
