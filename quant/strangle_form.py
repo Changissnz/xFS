@@ -9,6 +9,7 @@ from math import floor
 # used by <StrangleSubject> for guessing force to break strangleholds. 
 DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION = 5 
 DEFAULT_STRANGLESUBJECT_COMMUNITY_SIZE_RANGE = [20,100] 
+DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES = 50 
 
 def default_strangle_breaking_function(node_map,F,node_weight_map=None): 
     if len(node_map) == 0: return dict() 
@@ -110,6 +111,9 @@ class StrangleForm:
 
         self.energy = energy 
 
+    def strangle_status(self): 
+        return (len(self.held_nodes),len(self.broken_hold),len(self.usgcs)) 
+
     def node_status(self,open_info):  
         d = {k:0 for k in self.G.keys()}
         if not open_info: 
@@ -147,9 +151,11 @@ class StrangleForm:
             pass 
 
         self.move__advance() 
+        return 
+
+    def check_strangled_stat(self): 
         if set(self.held_nodes.keys()) == set(self.G.keys()): 
             self.strangled_stat = True 
-        return 
 
     def move__advance(self): 
         for i in range(len(self.usgcs)): 
@@ -162,19 +168,19 @@ class StrangleForm:
         while i < len(self.usgcs): 
             stat = self.clean_one_controller(i) 
             if stat: 
+                print("\t** finished controller") 
                 continue 
             i += 1 
 
     def clean_one_controller(self,index): 
         usgc = self.usgcs[index]
         
-        i = 0 
-        while i < len(usgc.searches): 
-            q = usgc.searches[i] 
+        keys= set(usgc.searches.keys())
+        for k in keys: 
+            q = usgc.searches[k] 
             if q.fin_stat: 
-                usgc.searches.pop(i) 
-            else: 
-                i += 1 
+                del usgc.searches[k] 
+
         if len(usgc.searches) == 0: 
             self.usgcs.pop(index) 
             return True 
@@ -231,7 +237,10 @@ class StrangleForm:
             nextnode_priority_function=px,search_target_nodeset=set(),\
             no_duplicate_touch_nodes=True)
         usgc.set_no_duplicate_touch__combined(True) 
-        self.usgcs.append(usgc) 
+        self.usgcs.append(usgc)
+
+        while len(self.usgcs) > DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES:  
+            self.usgcs.pop(0)
         return
 
     def switch_force_assignment(self): 

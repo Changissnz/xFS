@@ -10,7 +10,7 @@ DEFAULT_STRANGLE_ENV_ENTRY_POINTS = [1,8]
 
 class StrangleEnv: 
 
-    def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg): 
+    def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg,verbose=False): 
         assert type(strangler) == StrangleForm
         assert type(strangle_subject) == StrangleSubject
         assert strangler.G == strangle_subject.G 
@@ -24,30 +24,72 @@ class StrangleEnv:
         self.node_weights = node_weights 
         self.info_mode = info_mode 
         self.prg = prg 
+        self.verbose = verbose 
+
+        self.timestamp = 0 
+        self.fin_stat = False 
+        self.win_stat = None 
+
+    def set_prng_for_subject(self,comm_prg,break_prg): 
+        if type(comm_prg) in {MethodType,FunctionType}:
+            self.strangle_subject.comm_prg = comm_prg 
+
+        if type(break_prg) in {MethodType,FunctionType}:
+            self.strangle_subject.break_prg = break_prg 
  
     def __next__(self): 
+        if self.fin_stat: 
+            return 
+
+        if self.strangler.energy <= 0. or self.strangle_subject.energy <= 0.:
+            self.fin_stat = True 
+
+            if self.strangler.energy > 0: 
+                self.win_stat = "strangler" 
+            elif self.strangle_subject.energy > 0: 
+                self.win_stat = "subject"
+            else: 
+                self.win_stat = "tie" 
+            return  
+
+        if self.strangler.strangled_stat : 
+            self.fin_stat = True 
+            self.win_stat = "strangler" 
+
         entry_points = self.issue_entry_points()
         self.strangler.move(entry_points,traversal_type_seq=None)
 
-        ##print("# of held_nodes: ", len(self.strangler.held_nodes))
+        stat = self.strangler.strangle_status() 
+        if self.verbose: 
+            print("\t\t timestamp={}".format(self.timestamp))
+            print("-- strangler: {}\n\t{} / {} nodes strangled".format(\
+                self.strangler.energy,stat[0],len(self.strangler.G)))
+
+            print("\t{} broken strangles\n\t{} strangle entities\t".format(\
+                stat[1],stat[2]))
 
         self.strangle_subject.calculate_communities() 
-        ##print("communities: ",len(self.strangle_subject.communities))
         sfi = StrangleFormInfo(self.info_mode) 
         sfi.load_info(self.strangler,self.node_weights,self.strangle_subject.communities)
-        ##print("SS: ",self.strangle_subject)
         self.strangle_subject.receive_surface_info(sfi) 
-        ##print("SS2: ",self.strangle_subject)
 
         break_decision = self.strangle_subject.break_decision_()
         nodeset,force = break_decision 
         ##print("FORCE: ",force) 
         node_map_ = self.strangler.node_status(True)
         node_map = {k:v for k,v in node_map_.items() if k in nodeset} 
-        ##print("NM: ",node_map) 
         q = default_strangle_breaking_function(node_map,force,node_weight_map=self.node_weights)
         broken = self.strangler.register_reaction(q) 
-        print("BROKEN: ",broken) 
+
+        self.timestamp += 1
+        if self.verbose: 
+            print("-- subject, {} energy.\n broke {} strangles".format(\
+                self.strangle_subject.energy,len(broken))) 
+            print("\t\tbroken")
+            print(broken) 
+            print("-----------------------------------------------------") 
+
+        self.strangler.check_strangled_stat()
 
 
     def issue_entry_points(self): 
