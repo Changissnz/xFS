@@ -2,13 +2,14 @@ from graph_models.community import *
 from .usg_controller import * 
 from types import FunctionType,MethodType
 from morebs2.matrix_methods import is_valid_range,point_on_bounds_by_ratio_vector
-from morebs2.numerical_generator import modulo_in_range
+from morebs2.numerical_generator import modulo_in_range,prg_decimal,prg_choose_n,prg__single_to_int
 from morebs2.measures import zero_div 
 from math import floor 
 
 # used by <StrangleSubject> for guessing force to break strangleholds. 
 DEFAULT_STRANGLESUBJECT_PR_DIST_PARTITION = 5 
 DEFAULT_STRANGLESUBJECT_COMMUNITY_SIZE_RANGE = [20,100] 
+DEFAULT_STRANGLER_HOLD_FREQUENCY_CONSUMPTION_MIN_THRESHOLD = 5 
 DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES = 50 
 
 def default_strangle_breaking_function(node_map,F,node_weight_map=None): 
@@ -89,13 +90,15 @@ def guess_min_max_strangle_breaking_force(num_nodes,node_weight_map,hypothesized
 class StrangleForm: 
 
     def __init__(self,G,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
-        force_assignment_type="random",force_per_node_range=[10,1000],energy=10**6): 
+        force_assignment_type="random",force_per_node_range=[10,1000],energy=10**6,\
+        enable_consumption:bool=False): 
         assert type(G) == defaultdict
         assert type(prg) in {FunctionType,MethodType}
         assert type(edge_cost_function) in {FunctionType,MethodType}
         assert force_assignment_type in {"random","degree-proportional"}
         assert is_valid_range(force_per_node_range,True,False) or is_valid_range(force_per_node_range,False,False)
         assert force_per_node_range[0] > 0
+        assert type(enable_consumption) == bool 
 
         self.G = G 
         self.prg = prg 
@@ -107,9 +110,12 @@ class StrangleForm:
         assert self.max_degree > 0 
         self.held_nodes = dict() 
         self.broken_hold = set() 
+        self.hold_frequency = defaultdict(float) 
         self.strangled_stat = False 
 
         self.energy = energy 
+        self.consumed = set() 
+        self.enable_consumption = enable_consumption
 
     def strangle_status(self): 
         return (len(self.held_nodes),len(self.broken_hold),len(self.usgcs)) 
@@ -126,6 +132,9 @@ class StrangleForm:
     def register_reaction(self,counter_force): 
         broken_hold = set() 
         for k,v in counter_force.items(): 
+
+            # case: StrangleSubject transfers energy over to 
+            #       Strangler 
             if v > 0: 
                 self.energy += v 
                 continue 
@@ -139,6 +148,9 @@ class StrangleForm:
         return broken_hold 
 
     def move(self,entry_points,traversal_type_seq=None): 
+        # sanity check 
+        q = self.consumed.intersection(set(self.G.keys()))
+        assert q == set(), "got {}".format(q) 
 
         if self.strangled_stat: 
             return 
@@ -252,10 +264,10 @@ class StrangleForm:
 
     def assign_force(self,nodeset): 
         assert type(nodeset) == set 
-        nodeseq = sorted(nodeset) 
-
+        nodeseq = sorted(nodeset.intersection(set(self.G.keys())))  
         cumulative_force = 0 
         for n in nodeseq: 
+            assert n in self.G 
             if n in self.held_nodes: 
                 continue 
             if self.force_assignment_type == "degree-proportional":
@@ -268,6 +280,7 @@ class StrangleForm:
             self.held_nodes[n] = q
             self.broken_hold -= {n}   
             cumulative_force += q 
+            self.hold_frequency[n] += 1 
         self.energy -= cumulative_force
         return cumulative_force 
 
@@ -276,6 +289,54 @@ class StrangleForm:
             del self.held_nodes[b] 
         self.broken_hold |= broken_hold
         return
+
+    def consume(self): 
+        if not self.enable_consumption: 
+            return None,None 
+
+        consumed_set = self.choose_consumption()
+        if len(consumed_set) == 0: 
+            return None,None 
+        assert consumed_set.intersection(self.consumed) == set()
+        self.consumed |= consumed_set
+
+        q = MicroGraph(deepcopy(self.G))
+        q.subgraph_nodeset_exclusion(self.consumed)  
+        assert set(q.dg.keys()).intersection(self.consumed) == set() 
+        self.G = deepcopy(q.dg)
+
+        for c in consumed_set: 
+            del self.held_nodes[c] 
+            del self.hold_frequency[c] 
+
+        assert self.consumed.intersection(set(self.G.keys())) == set() 
+        return consumed_set,deepcopy(self.G)
+
+    def choose_consumption(self): 
+        # get the held nodes that exceed hold frequency 
+        consumption_candidates = set() 
+
+        keys = set(self.held_nodes.keys())
+        for h in keys: 
+            if h not in self.G: 
+                del self.held_nodes[h] 
+                del self.hold_frequency[h] 
+                continue 
+
+            if self.hold_frequency[h] >= \
+                DEFAULT_STRANGLER_HOLD_FREQUENCY_CONSUMPTION_MIN_THRESHOLD: 
+                consumption_candidates |= {h} 
+
+        if len(consumption_candidates) == 0: return set() 
+
+        consumption_candidates = sorted(consumption_candidates) 
+
+        q = prg_decimal(self.prg,[0.,1.]) 
+        n = ceil(q * len(consumption_candidates))
+        if n == 0: 
+            return set() 
+        selection = prg_choose_n(consumption_candidates,n,prg__single_to_int(self.prg),True)
+        return set(selection)
 
 class StrangleFormInfo: 
 
@@ -334,6 +395,9 @@ class StrangleSubject:
 
     def calculate_communities(self):
         num_comm = modulo_in_range(int(self.comm_prg()),self.num_comm_range) 
+        if num_comm > len(self.G): 
+            num_comm = modulo_in_range(int(self.comm_prg()),[1,len(self.G)]) 
+
         self.communities = ReinforcementCommunityFinder.partition_into_n_communities(\
             self.G,num_comm,self.comm_prg,max_reassignment=False,fast_part=True,\
             verbose=False) 

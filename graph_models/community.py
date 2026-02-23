@@ -145,9 +145,9 @@ class ReinforcementCommunityFinder:
         max_reassignment=False,fast_part:bool=False,verbose=False): 
 
         assert n <= len(G) 
-        gd = GraphComponentDecomposition(G) 
-        gd.decompose() 
-        assert n >= len(gd.components) 
+        #gd = GraphComponentDecomposition(G) 
+        #gd.decompose() 
+        #assert n >= len(gd.components) 
 
         rcf = ReinforcementCommunityFinder(G,prg,edge_cost_function,max_reassignment,\
             force_reassignment=False,verbose=verbose) 

@@ -10,7 +10,9 @@ DEFAULT_STRANGLE_ENV_ENTRY_POINTS = [1,8]
 
 class StrangleEnv: 
 
-    def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg,verbose=False): 
+    def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg,\
+        enable_consumption:bool=False,verbose=False): 
+        
         assert type(strangler) == StrangleForm
         assert type(strangle_subject) == StrangleSubject
         assert strangler.G == strangle_subject.G 
@@ -20,6 +22,8 @@ class StrangleEnv:
         assert type(prg) in {MethodType,FunctionType} 
         
         self.strangler = strangler 
+        self.G_ = deepcopy(self.strangler.G) 
+        self.strangler.enable_consumption = enable_consumption  
         self.strangle_subject = strangle_subject
         self.node_weights = node_weights 
         self.info_mode = info_mode 
@@ -38,9 +42,11 @@ class StrangleEnv:
             self.strangle_subject.break_prg = break_prg 
  
     def __next__(self): 
+        # case: done 
         if self.fin_stat: 
             return 
 
+        # case: register done due to no more energy 
         if self.strangler.energy <= 0. or self.strangle_subject.energy <= 0.:
             self.fin_stat = True 
 
@@ -52,21 +58,34 @@ class StrangleEnv:
                 self.win_stat = "tie" 
             return  
 
+        # case: register strangled 
         if self.strangler.strangled_stat : 
             self.fin_stat = True 
             self.win_stat = "strangler" 
+            return 
+
+        # case: strangler can consume nodes it strangled 
+        nodeset,G = self.strangler.consume()
+        if type(nodeset) != type(None):
+            self.strangle_subject.G = deepcopy(G) 
 
         entry_points = self.issue_entry_points()
         self.strangler.move(entry_points,traversal_type_seq=None)
 
+        self.strangler.check_strangled_stat()
         stat = self.strangler.strangle_status() 
         if self.verbose: 
             print("\t\t timestamp={}".format(self.timestamp))
             print("-- strangler: {}\n\t{} / {} nodes strangled".format(\
                 self.strangler.energy,stat[0],len(self.strangler.G)))
-
             print("\t{} broken strangles\n\t{} strangle entities\t".format(\
                 stat[1],stat[2]))
+            print("\t{} consumed nodes".format(len(self.strangler.consumed)))
+
+        if self.strangler.strangled_stat: 
+            self.fin_stat = True 
+            self.win_stat = "strangler"
+            return 
 
         self.strangle_subject.calculate_communities() 
         sfi = StrangleFormInfo(self.info_mode) 
@@ -83,22 +102,20 @@ class StrangleEnv:
 
         self.timestamp += 1
         if self.verbose: 
-            print("-- subject, {} energy.\n broke {} strangles".format(\
-                self.strangle_subject.energy,len(broken))) 
+            print("-- subject, {} energy.\n used {} F to break {} strangles".format(\
+                self.strangle_subject.energy,force,len(broken))) 
+            ##print("TESTING: ",len(self.strangle_subject.G)) 
             print("\t\tbroken")
             print(broken) 
             print("-----------------------------------------------------") 
 
-        self.strangler.check_strangled_stat()
-
-
     def issue_entry_points(self): 
         q = modulo_in_range(int(self.prg()),DEFAULT_STRANGLE_ENV_ENTRY_POINTS)
-        return set(prg_choose_n(sorted(self.node_weights.keys()),q,prg__single_to_int(self.prg))) 
+        return set(prg_choose_n(sorted(self.strangler.G.keys()),q,prg__single_to_int(self.prg))) 
 
     @staticmethod 
     def generate_instance(strangler_force_assignment_type,info_mode,prg,strangler_energy=10**6,\
-        strangle_subject_energy=10**6): 
+        strangle_subject_energy=10**6,enable_consumption=False): 
 
         connectivity_range = [0.009,0.025]
 
@@ -128,4 +145,4 @@ class StrangleEnv:
         for k in G.keys(): 
             node_weights[k] = modulo_in_range(int(prg()),DEFAULT_STRANGLE_GRAPH_NODE_WEIGHT_RANGE)
 
-        return StrangleEnv(sf,ss,node_weights,info_mode,prgs[3])
+        return StrangleEnv(sf,ss,node_weights,info_mode,prgs[3],enable_consumption)
