@@ -129,6 +129,18 @@ class StrangleForm:
             d[k] = v 
         return d 
 
+    def score(self,W=None,consumed_ratio=0.5): 
+        s = 0 
+        if type(W) == dict: 
+            for c in self.consumed: 
+                s += (W[c] * consumed_ratio)
+            for k in self.held_nodes.keys(): 
+                s += W[k] 
+        else: 
+            s += (len(self.consumed) * consumed_ratio) 
+            s += len(self.held_nodes)
+        return s 
+
     def register_reaction(self,counter_force): 
         broken_hold = set() 
         for k,v in counter_force.items(): 
@@ -253,6 +265,7 @@ class StrangleForm:
 
         while len(self.usgcs) > DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES:  
             self.usgcs.pop(0)
+
         return
 
     def switch_force_assignment(self): 

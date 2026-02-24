@@ -69,6 +69,7 @@ class StrangleEnv:
         if type(nodeset) != type(None):
             self.strangle_subject.G = deepcopy(G) 
 
+        # strangler moves first 
         entry_points = self.issue_entry_points()
         self.strangler.move(entry_points,traversal_type_seq=None)
 
@@ -82,11 +83,13 @@ class StrangleEnv:
                 stat[1],stat[2]))
             print("\t{} consumed nodes".format(len(self.strangler.consumed)))
 
+        # case: strangler holds all environment nodes, strangler wins. 
         if self.strangler.strangled_stat: 
             self.fin_stat = True 
             self.win_stat = "strangler"
             return 
 
+        # strangle subject moves second
         self.strangle_subject.calculate_communities() 
         sfi = StrangleFormInfo(self.info_mode) 
         sfi.load_info(self.strangler,self.node_weights,self.strangle_subject.communities)
