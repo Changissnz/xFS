@@ -117,6 +117,8 @@ class StrangleForm:
         self.consumed = set() 
         self.enable_consumption = enable_consumption
 
+        self.highest_score = 0. 
+
     def strangle_status(self): 
         return (len(self.held_nodes),len(self.broken_hold),len(self.usgcs)) 
 
@@ -139,6 +141,7 @@ class StrangleForm:
         else: 
             s += (len(self.consumed) * consumed_ratio) 
             s += len(self.held_nodes)
+        self.highest_score = max([self.highest_score,s]) 
         return s 
 
     def register_reaction(self,counter_force): 

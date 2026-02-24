@@ -8,6 +8,10 @@ developed by me only in conjunction with my research efforts. Technicalities in 
 hardware and those projects' code implementation have pressured me to cease their 
 further development.
 
+```
+NOTE: Taking a break from further development of xFS @ 2/24/26. 
+```
+
 ## Graph Problems of Interest (in my words)
 
 Here is a list of graph problems in the project: 
@@ -44,11 +48,6 @@ Here is a list of graph problems in the project:
     a reactive system. 
     - file: `graph_problems/mkb.py` 
 - Strangle Bot (work in progress)  
-- Surround & Corner Bot (planned) 
-- Impostoriori Bot (planned) 
-- Protectionist Bot (planned) 
-- Dementia Bot (planned) 
-- Pretension & Deceit Bot (planned) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

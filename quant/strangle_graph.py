@@ -74,6 +74,7 @@ class StrangleEnv:
         self.strangler.move(entry_points,traversal_type_seq=None)
 
         self.strangler.check_strangled_stat()
+        self.strangler.score(self.node_weights,0.5) 
         stat = self.strangler.strangle_status() 
         if self.verbose: 
             print("\t\t timestamp={}".format(self.timestamp))
