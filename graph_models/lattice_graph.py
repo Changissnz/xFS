@@ -1,0 +1,205 @@
+from .graph_gen import * 
+from morebs2.numerical_generator import prg_choose_n,prg__single_to_int
+from morebs2.graph_basics import flatten_setseq
+
+class ParallelGraphSurface: 
+
+    def __init__(self,starting_idn,prg,parallel_length_range,is_dsg:bool):
+        assert is_valid_range(parallel_length_range,True,False) 
+        assert type(prg) in {MethodType,FunctionType} 
+
+        self.starting_idn = starting_idn 
+        self.current_index = starting_idn
+        self.prg = prg 
+        self.pl_range = parallel_length_range
+        self.is_dsg = is_dsg 
+        self.parallels = []
+        self.parallel_heads = [] 
+
+        self.parallels_nodeset = []  
+
+    def __len__(self): 
+        return len(self.parallels)
+
+    def __getitem__(self,i):
+        if isinstance(i, slice): 
+            return self.p.__getitem__(i)    
+
+        if type(i) in {list,np.ndarray}:
+            qx = []
+            for i_ in i:
+                qx.append(self.__getitem__(i_))
+            return qx 
+
+        assert i < len(self) 
+        return self.parallels[i]   
+
+    def one_new_parallel(self): 
+        num_vertices = int(modulo_in_range(self.prg(),self.pl_range)) 
+        G = generate_graph__path(num_vertices,self.current_index,self.is_dsg)
+        self.parallels.append(G) 
+        self.parallel_heads.append(self.current_index) 
+        self.current_index += num_vertices 
+
+        self.parallels_nodeset.append(set(G.keys()))
+        return
+
+    def connect_to_surface(self,parallel_index,num_heads,other_surface,num_other_parallels):  
+        assert 0 <= parallel_index < len(self) 
+        assert type(other_surface) == ParallelGraphSurface
+        assert 0 <= num_other_parallels <= len(other_surface) 
+
+        if num_other_parallels == 0: 
+            return 
+
+        # choose the first node from this parallel 
+        parallel = self[parallel_index]  
+        keys = sorted(parallel.keys())
+
+        heads = prg_choose_n(keys,num_heads,prg__single_to_int(self.prg),is_unique_picker=True) 
+
+        for h in heads: 
+            self.connect_to_surface_(parallel_index,h,other_surface,num_other_parallels) 
+
+    def connect_to_surface_(self,parallel_index,parallel_head,other_surface,num_other_parallels):  
+
+        parallel = self[parallel_index]  
+
+        # choose n parallels from the other surface 
+        q = [i for i in range(len(other_surface))] 
+        q_ = prg_choose_n(q,num_other_parallels,prg__single_to_int(self.prg),is_unique_picker=True)
+
+        ##print("connecting surface @ {} to {} other parallels".format(parallel_index,num_other_parallels))
+        ref = parallel_head  
+        chosen_parallel_nodes = [] 
+        for (i,p_index) in enumerate(q_): 
+
+            parallel2 = other_surface[p_index] 
+            keys = sorted(parallel2.keys())
+            index = int(self.prg()) % len(keys)
+            node2 = keys[index] 
+            chosen_parallel_nodes.append(node2) 
+
+            parallel[ref] |= {node2} 
+            if not self.is_dsg: 
+                parallel2[node2] |= {ref} 
+
+            parallel = parallel2 
+            ref = node2 
+        return
+
+    def to_MicroGraph(self): 
+        x = MicroGraph(defaultdict(set)) 
+        for x2 in self.parallels: 
+            x2_ = MicroGraph(x2) 
+            x = x + x2_ 
+        return x 
+
+    def node_to_parallel_index(self,n): 
+        for (i,s) in enumerate(self.parallels): 
+            if n in s: 
+                return i 
+        return -1 
+
+"""
+Variably connected lattice graph generator. 
+
+Graph outputs can be asymmetric in mesh geometry. 
+
+N-dimensional vector `shape` specifies the number of parallels for 
+every `ParallelGraphSurface`, a sequence of paths with no edge shared 
+between any path. 
+"""
+class VCLatticeGraphGen: 
+
+    def __init__(self,shape,prg,parallel_length_range,connection_density,\
+        is_dsg:bool):   
+
+        self.shape = shape 
+        self.prg = prg 
+        self.parallel_length_range = parallel_length_range
+        self.connection_density = connection_density
+        self.is_dsg = is_dsg 
+
+        self.index = 0 
+
+        self.surfaces = []
+        self.G = None 
+
+    #-------------------------------------- constructor functions 
+
+    def make(self): 
+        self.set_surfaces()
+        self.connect_surfaces() 
+        self.merge_surfaces() 
+
+    def set_surfaces(self): 
+        for x in self.shape: 
+            pgs = ParallelGraphSurface(self.index,self.prg,self.parallel_length_range,self.is_dsg)
+
+            for _ in range(x): 
+                pgs.one_new_parallel()
+            self.surfaces.append(pgs)  
+            self.index = pgs.current_index
+        return
+
+    def connect_surfaces(self): 
+        for i in range(len(self.surfaces)): 
+            self.connect_one_surface(i) 
+        return
+
+    def connect_one_surface(self,index): 
+        q = self.surfaces[index] 
+
+        other_surface_indices = [] 
+        if self.is_dsg: 
+            other_surface_indices = [i for i in range(len(self.surfaces)) if i != index] 
+        else: 
+            other_surface_indices = [i for i in range(index+1,len(self.surfaces))] 
+
+        for other_index in other_surface_indices: 
+            self.connect_surface2surface(index,other_index)
+        return
+
+    def connect_surface2surface(self,index1,index2): 
+
+        s0 = self.surfaces[index1] 
+        s1 = self.surfaces[index2] 
+
+        num_parallels = ceil(self.connection_density * len(s0))
+        candidates = [i for i in range(len(s0))] 
+        parallel_indices = prg_choose_n(candidates,num_parallels,prg__single_to_int(self.prg),True)  
+
+        #print("INDICES: ",index1,index2) 
+        #print("-- parallels: ",num_parallels)
+        #print("-- indices: ", parallel_indices)
+        for parallel_index in parallel_indices:
+            num_heads = ceil(self.connection_density * len(s0[parallel_index])) 
+            num_other_parallels = ceil(self.connection_density * len(s1)) 
+            s0.connect_to_surface(parallel_index,num_heads,s1,num_other_parallels)  
+
+    def merge_surfaces(self): 
+        self.G = MicroGraph(defaultdict(set))
+
+        for surface in self.surfaces: 
+            self.G = self.G + surface.to_MicroGraph()
+        self.G = self.G.dg 
+        return 
+
+    #-------------------------------------- functions to retrieve information 
+
+    def surface_to_nodeset_map(self,is_parallel_seq:bool=False): 
+        d = {} 
+        for (i,s) in enumerate(self.surfaces): 
+            q = deepcopy(s.parallels_nodeset)
+            if is_parallel_seq: 
+                d[i] = q 
+            else: 
+                d[i] = flatten_setseq(q)
+        return d 
+
+    def surface_to_node_heads_map(self):
+        d = {} 
+        for (i,s) in enumerate(self.surfaces): 
+            d[i] = deepcopy(s.parallel_heads) 
+        return d 
