@@ -9,7 +9,8 @@ hardware and those projects' code implementation have pressured me to cease thei
 further development.
 
 ```
-NOTE: Taking a break from further development of xFS @ 2/24/26. 
+NOTE: Project has entered progressive mode on 3/3/2026. Further developments will not 
+go according to previous rate of development. 
 ```
 
 ## Graph Problems of Interest (in my words)
