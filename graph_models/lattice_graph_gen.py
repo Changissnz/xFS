@@ -2,6 +2,13 @@ from .graph_gen import *
 from morebs2.numerical_generator import prg_choose_n,prg__single_to_int
 from morebs2.graph_basics import flatten_setseq
 
+"""
+file used to generate lattice graphs of variable dimension. 
+Two classes of lattice graphs: 
+- variably connected 
+- symmetric 
+"""
+
 class ParallelGraphSurface: 
 
     def __init__(self,starting_idn,prg,parallel_length_range,is_dsg:bool):
@@ -107,7 +114,7 @@ class ParallelGraphSurface:
         for i in range(max_length):
             i0 = i % len(keys1) 
             i1 = i % len(keys2) 
-            n0,n1 = keys[i0],keys[i1]
+            n0,n1 = keys1[i0],keys2[i1]
 
             parallel[n0] |= {n1} 
             if not self.is_dsg: 
@@ -126,6 +133,25 @@ class ParallelGraphSurface:
             if n in s: 
                 return i 
         return -1 
+
+    """
+    index of other surface's parallel -> number of parallel's nodes connected to this surface
+
+    NOTE: connection is target of (source,target) edge format.  
+    """
+    def parallel_intersection_degree_map(self,other_surface): 
+        assert type(other_surface) == ParallelGraphSurface
+
+        d = defaultdict(int)
+        for p in self.parallels: 
+            base_nodes = set(p.keys())
+            total_nodes = flatten_setseq([v for v in p.values()]) | base_nodes 
+
+            for t in total_nodes: 
+                q = other_surface.node_to_parallel_index(t)
+                if q != -1: 
+                    d[q] += 1 
+        return d 
 
 class LatticeGraphGen:
 
