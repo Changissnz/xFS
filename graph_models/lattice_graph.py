@@ -88,6 +88,32 @@ class ParallelGraphSurface:
             ref = node2 
         return
 
+    def uniform_connect_to_surface(self,parallel_index,other_surface):
+
+        l = len(other_surface) 
+        for i in range(l): 
+            self.uniform_connect_to_surface_(parallel_index,other_surface,i)
+        return
+
+    def uniform_connect_to_surface_(self,parallel_index,other_surface,parallel_index_2): 
+        parallel = self[parallel_index]
+        parallel2 = other_surface[parallel_index_2]
+
+        keys1 = sorted(parallel.keys())
+        keys2 = sorted(parallel2.keys())
+        max_length = max([len(keys1),len(keys2)]) 
+
+
+        for i in range(max_length):
+            i0 = i % len(keys1) 
+            i1 = i % len(keys2) 
+            n0,n1 = keys[i0],keys[i1]
+
+            parallel[n0] |= {n1} 
+            if not self.is_dsg: 
+                parallel[n1] |= {n0} 
+        return
+
     def to_MicroGraph(self): 
         x = MicroGraph(defaultdict(set)) 
         for x2 in self.parallels: 
@@ -101,37 +127,16 @@ class ParallelGraphSurface:
                 return i 
         return -1 
 
-"""
-Variably connected lattice graph generator. 
+class LatticeGraphGen:
 
-Graph outputs can be asymmetric in mesh geometry. 
-
-N-dimensional vector `shape` specifies the number of parallels for 
-every `ParallelGraphSurface`, a sequence of paths with no edge shared 
-between any path. 
-"""
-class VCLatticeGraphGen: 
-
-    def __init__(self,shape,prg,parallel_length_range,connection_density,\
-        is_dsg:bool):   
-
+    def __init__(self,shape,prg,parallel_length_range,is_dsg:bool):  
         self.shape = shape 
         self.prg = prg 
         self.parallel_length_range = parallel_length_range
-        self.connection_density = connection_density
         self.is_dsg = is_dsg 
-
         self.index = 0 
-
         self.surfaces = []
         self.G = None 
-
-    #-------------------------------------- constructor functions 
-
-    def make(self): 
-        self.set_surfaces()
-        self.connect_surfaces() 
-        self.merge_surfaces() 
 
     def set_surfaces(self): 
         for x in self.shape: 
@@ -142,6 +147,106 @@ class VCLatticeGraphGen:
             self.surfaces.append(pgs)  
             self.index = pgs.current_index
         return
+
+    def merge_surfaces(self): 
+        self.G = MicroGraph(defaultdict(set))
+
+        for surface in self.surfaces: 
+            self.G = self.G + surface.to_MicroGraph()
+        self.G = self.G.dg 
+        return 
+
+    #-------------------------------------- functions to retrieve information 
+
+    def surface_to_nodeset_map(self,is_parallel_seq:bool=False): 
+        d = {} 
+        for (i,s) in enumerate(self.surfaces): 
+            q = deepcopy(s.parallels_nodeset)
+            if is_parallel_seq: 
+                d[i] = q 
+            else: 
+                d[i] = flatten_setseq(q)
+        return d 
+
+    def surface_to_node_heads_map(self):
+        d = {} 
+        for (i,s) in enumerate(self.surfaces): 
+            d[i] = deepcopy(s.parallel_heads) 
+        return d 
+
+    """
+    surface 1 index -> parallel 1 index -> 
+    surface 2 index -> parallel 2 index -> 
+        {intercepted nodeset of (surface 2,parallel 2) index}
+    """
+    def surface_parallels_to_interception_map(self): 
+
+        dx = dict()
+        for i in range(len(self.surfaces)): 
+            dx[i] = self.surface_parallels_to_interception_map_(i)
+        return dx 
+
+    def surface_parallels_to_interception_map_(self,surface_index): 
+        s = self.surfaces[surface_index] 
+
+        d = defaultdict(None)
+        for (i,p) in enumerate(s.parallels):
+            d[i] = dict() 
+
+            base_nodes = set(p.keys())
+            total_nodes = flatten_setseq([v for v in p.values()]) | base_nodes 
+            diff_nodes = total_nodes - base_nodes 
+            
+            q2 = [list(self.sp_index_of_node(n2)) + [n2] for n2 in diff_nodes]
+
+            for q2_ in q2: 
+                if q2_[0] not in d[i]: 
+                    d[i][q2_[0]] = dict() 
+                if q2_[1] not in d[i][q2_[0]]: 
+                    d[i][q2_[0]][q2_[1]] = set() 
+                d[i][q2_[0]][q2_[1]] |= {q2_[2]} 
+        return d 
+
+
+    """
+    (surface,parallel) indices for the node `n`
+    """
+    def sp_index_of_node(self,n):
+        for i,s in enumerate(self.surfaces): 
+            q = s.node_to_parallel_index(n) 
+            if q != -1: 
+                return i,q 
+
+        return -1,-1 
+    
+
+
+"""
+Variably connected lattice graph generator. 
+
+Graph outputs can be asymmetric in mesh geometry. 
+
+N-dimensional vector `shape` specifies the number of parallels for 
+every `ParallelGraphSurface`, a sequence of paths with no edge shared 
+between any path at initial state. 
+"""
+class VCLatticeGraphGen(LatticeGraphGen): 
+
+    def __init__(self,shape,prg,parallel_length_range,connection_density,\
+        is_dsg:bool):   
+
+        super().__init__(shape,prg,parallel_length_range,is_dsg) 
+        self.connection_density = connection_density
+
+    #-------------------------------------- constructor functions 
+
+    """
+    main method 
+    """
+    def make(self): 
+        self.set_surfaces()
+        self.connect_surfaces() 
+        self.merge_surfaces() 
 
     def connect_surfaces(self): 
         for i in range(len(self.surfaces)): 
@@ -178,28 +283,49 @@ class VCLatticeGraphGen:
             num_other_parallels = ceil(self.connection_density * len(s1)) 
             s0.connect_to_surface(parallel_index,num_heads,s1,num_other_parallels)  
 
-    def merge_surfaces(self): 
-        self.G = MicroGraph(defaultdict(set))
+"""
+Uniformly connects n surfaces, each surface possibly of different 
+node dimension to each other. 
 
-        for surface in self.surfaces: 
-            self.G = self.G + surface.to_MicroGraph()
-        self.G = self.G.dg 
+For two parallels, P1 and P2, from surfaces S1 and S2, respectively, 
+the node-to-node connection goes as follows: 
+- let m = max([|P1|,|P2|])
+- connect P1[i % |P1|] to P2[i % |P2|] for every index i in range [0,m). 
+"""
+class SymmetricLatticeGraphGen(LatticeGraphGen):
+
+    def __init__(self,shape,prg,parallel_length_range,\
+        is_dsg:bool):   
+
+        super().__init__(shape,prg,parallel_length_range,is_dsg) 
+    
+    def make(self): 
+        self.set_surfaces()
+        self.connect_surfaces() 
+        self.merge_surfaces() 
+
+    def connect_surfaces(self): 
+        for i in range(len(self.surfaces)): 
+            self.connect_one_surface(i) 
+        return
+
+    def connect_one_surface(self,index): 
+        q = self.surfaces[index] 
+
+        other_surface_indices = [] 
+        if self.is_dsg: 
+            other_surface_indices = [i for i in range(len(self.surfaces)) if i != index] 
+        else: 
+            other_surface_indices = [i for i in range(index+1,len(self.surfaces))] 
+
+        for other_index in other_surface_indices: 
+            self.connect_surface2surface(index,other_index)
+        return
+
+    def connect_surface2surface(self,index1,index2): 
+        s0 = self.surfaces[index1] 
+        s1 = self.surfaces[index2] 
+
+        for i in range(len(s0)):
+            s0.uniform_connect_to_surface(i,s1)
         return 
-
-    #-------------------------------------- functions to retrieve information 
-
-    def surface_to_nodeset_map(self,is_parallel_seq:bool=False): 
-        d = {} 
-        for (i,s) in enumerate(self.surfaces): 
-            q = deepcopy(s.parallels_nodeset)
-            if is_parallel_seq: 
-                d[i] = q 
-            else: 
-                d[i] = flatten_setseq(q)
-        return d 
-
-    def surface_to_node_heads_map(self):
-        d = {} 
-        for (i,s) in enumerate(self.surfaces): 
-            d[i] = deepcopy(s.parallel_heads) 
-        return d 
