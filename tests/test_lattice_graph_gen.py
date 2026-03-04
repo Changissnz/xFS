@@ -121,7 +121,7 @@ class SymmetricLatticeGraphGenClass(unittest.TestCase):
     Tests for edge difference between symmetric and variably connected 
     lattice graph. 
     """
-    def test__LatticeGraphGen__make__case_1(self):
+    def test__SymmetricLatticeGraphGen__make__case_1(self):
         q,q2 = sample_VCLatticeGraphGen_pair() 
 
         # generate a symmetric lattice graph 
