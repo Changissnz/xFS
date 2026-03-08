@@ -115,6 +115,19 @@ class VCLatticeGraphGenClass(unittest.TestCase):
         dx3 = s0.parallel_intersection_degree_map(s2)
         assert dx3 == defaultdict(int, {0: 4, 2: 1, 5: 2, 1: 2, 4: 2})
 
+        ns0 = q.surfaces[0].nodeset() 
+        ns1 = q.surfaces[1].nodeset() 
+
+        assert ns0 == {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, "got {}".format(ns0) 
+        assert ns1 == {12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, \
+            24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, \
+            37, 38, 39}, "got {}".format(ns1) 
+
+        assert q.node_interception_map(0) == defaultdict(int, {(1, 5): 1, (2, 0): 1})
+        assert q.node_interception_map(1) == defaultdict(int, {(1, 2): 1, (2, 0): 1})
+        assert q.node_interception_map(2) == defaultdict(int, {(1, 6): 1, (2, 5): 1})
+        assert q.node_interception_map(3) == defaultdict(int, {(1, 3): 1, (2, 2): 1})
+
 class SymmetricLatticeGraphGenClass(unittest.TestCase):
 
     """

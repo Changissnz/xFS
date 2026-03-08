@@ -9,6 +9,28 @@ Two classes of lattice graphs:
 - symmetric 
 """
 
+"""
+return: 
+- set of nodes comprising the parallel 
+"""
+def parallel_base_nodes(pgraph): 
+    assert type(pgraph) == defaultdict 
+    return set(pgraph.keys()) 
+
+"""
+return: 
+- set of nodes connected to parallel but belonging to 
+  another parallel 
+"""
+def parallel_other_nodes(pgraph): 
+    assert type(pgraph) == defaultdict 
+    base_nodes = parallel_base_nodes(pgraph) 
+    total_nodes = flatten_setseq([v for v in pgraph.values()])
+    return total_nodes - base_nodes  
+
+"""
+represents one dimension, consisting of n parallels, for a lattice graph. 
+"""
 class ParallelGraphSurface: 
 
     def __init__(self,starting_idn,prg,parallel_length_range,is_dsg:bool):
@@ -24,6 +46,9 @@ class ParallelGraphSurface:
         self.parallel_heads = [] 
 
         self.parallels_nodeset = []  
+
+    def nodeset(self): 
+        return flatten_setseq(self.parallels_nodeset) 
 
     def __len__(self): 
         return len(self.parallels)
@@ -144,14 +169,12 @@ class ParallelGraphSurface:
 
         d = defaultdict(int)
         for p in self.parallels: 
-            base_nodes = set(p.keys())
-            total_nodes = flatten_setseq([v for v in p.values()]) | base_nodes 
-
-            for t in total_nodes: 
+            other_nodes = parallel_other_nodes(p)
+            for t in other_nodes:
                 q = other_surface.node_to_parallel_index(t)
                 if q != -1: 
                     d[q] += 1 
-        return d 
+        return d
 
 class LatticeGraphGen:
 
@@ -163,6 +186,7 @@ class LatticeGraphGen:
         self.index = 0 
         self.surfaces = []
         self.G = None 
+        self.p2i_map = None
 
     def set_surfaces(self): 
         for x in self.shape: 
@@ -242,10 +266,28 @@ class LatticeGraphGen:
             q = s.node_to_parallel_index(n) 
             if q != -1: 
                 return i,q 
+        return -1,-1
 
-        return -1,-1 
-    
+    """
+    return: 
+    - (surface index,parallel index) -> number of nodes connected to node n (n is target node in (source,target) edge format)
+    """
+    def node_interception_map(self,n): 
 
+        assert type(self.p2i_map) != type(None) 
+        
+        d = defaultdict(int)
+        # surface 1 -> parallel 1 -> surface 2 -> parallel 2 -> {nodeset} 
+        for k,v in self.p2i_map.items(): 
+            # parallel 1 -> surface 2 -> parallel 2 -> {nodeset}
+            for k2,v2 in v.items(): 
+                # surface 2 -> parallel 2 -> {nodeset}
+                for k3,v3 in v2.items(): 
+                    # parallel 2 -> {nodeset}
+                    for k4,v4 in v3.items(): 
+                        if n in v4: 
+                            d[(k,k2)] += 1 
+        return d 
 
 """
 Variably connected lattice graph generator. 
@@ -272,7 +314,8 @@ class VCLatticeGraphGen(LatticeGraphGen):
     def make(self): 
         self.set_surfaces()
         self.connect_surfaces() 
-        self.merge_surfaces() 
+        self.merge_surfaces()
+        self.p2i_map = self.surface_parallels_to_interception_map() 
 
     def connect_surfaces(self): 
         for i in range(len(self.surfaces)): 
@@ -329,6 +372,7 @@ class SymmetricLatticeGraphGen(LatticeGraphGen):
         self.set_surfaces()
         self.connect_surfaces() 
         self.merge_surfaces() 
+        self.p2i_map = self.surface_parallels_to_interception_map() 
 
     def connect_surfaces(self): 
         for i in range(len(self.surfaces)): 
