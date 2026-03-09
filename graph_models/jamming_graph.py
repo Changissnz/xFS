@@ -29,7 +29,7 @@ class JammingGraph:
             self.ctr_function = SimpleCounter(max(self.npath.p) + 1).__next__ 
         self.node2nodesets = defaultdict(list) 
         for k in self.modifiable_nodeset: 
-            self.node2nodesets[k] = []  
+            self.node2nodesets[k] = [{k}]  
 
         self.G = nodepath.to_graph(is_path_directed)
 
