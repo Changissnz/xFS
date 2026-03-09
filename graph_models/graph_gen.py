@@ -105,6 +105,17 @@ def does_path_exist(G,p):
             return False 
     return True 
 
+"""
+does nodeset n0 have an edge to n1 
+"""
+def are_nodesets_connected(G,n0,n1):
+
+    for n in n0: 
+        q = G[n] 
+        if len(q.intersection(n1)) > 0: 
+            return True 
+    return False 
+
 #-------------------------- two elementary graph types 
 
 def generate_graph__path(num_vertices,starting_node_idn:int,is_dsg:bool): 

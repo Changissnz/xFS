@@ -24,11 +24,11 @@ class JammingGraph:
         self.jam_nodesize_range = jam_nodesize_range 
         if type(ctr_function) != type(None): 
             assert type(ctr_function) in {MethodType,FunctionType}
-            self.ctr_function = ctr_function
+            self.ctr = ctr_function
         else: 
-            self.ctr_function = SimpleCounter(max(self.npath.p) + 1).__next__ 
+            self.ctr = SimpleCounter(max(self.npath.p) + 1).__next__ 
         self.node2nodesets = defaultdict(list) 
-        for k in self.modifiable_nodeset: 
+        for k in nodepath.p: 
             self.node2nodesets[k] = [{k}]  
 
         self.G = nodepath.to_graph(is_path_directed)
@@ -40,16 +40,13 @@ class JammingGraph:
 
     def entire_nodeset_for_node(self,q): 
         if q not in self.node2nodesets: 
-            return {q} 
-        return flatten_setseq(self.node2nodesets) 
+            return set()  
+        return flatten_setseq(self.node2nodesets[q]) 
 
     def alter_nodeset(self,disconnect_possible:bool):  
-        nodes = set(self.node2nodesets.keys()) 
-        if len(nodes) == 0: 
-            return 
 
-        i = int(self.prg()) % len(nodes) 
-        n = nodes[i]
+        i = int(self.prg()) % len(self.modifiable_nodeset) 
+        n = sorted(self.modifiable_nodeset)[i]
         if len(self.node2nodesets[n]) == 0: 
             return 
 
@@ -58,8 +55,6 @@ class JammingGraph:
         return
 
     def alter_nodeset_(self,base_node,nodeset_index,disconnect_possible:bool,max_edge_changes = 1000):  
-        # graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function,\
-        # max_edge_changes=float('inf'))
 
         nodeset = self.node2nodesets[base_node][nodeset_index] 
         # case: no alter 
@@ -71,7 +66,7 @@ class JammingGraph:
         nc_ratio = modulo_in_range(self.prg(),DEFAULT_JAMMING_GRAPH_ALTER_NODE_RATIO_RANGE) 
         ec_ratio = modulo_in_range(self.prg(),DEFAULT_JAMMING_GRAPH_ALTER_EDGE_RATIO_RANGE)  
 
-        G3 = graph_derivation(deepcopy(G2),self.is_directed,nc_ratio,ec_ratio,self.prg,self.ctr_function,\
+        G3,_ = graph_derivation(deepcopy(G2),self.is_directed,nc_ratio,ec_ratio,self.prg,self.ctr,\
             max_edge_changes)
         self.node2nodesets[base_node][nodeset_index] = set(G3.keys())
 
@@ -79,7 +74,12 @@ class JammingGraph:
         mg = mg - MicroGraph(G2) 
         mg = mg + MicroGraph(G3)
         self.G = mg.dg 
-        self.ensure_connected(base_node)
+
+        if not self.is_directed: 
+            self.G = directed_to_undirected_graph(self.G) 
+
+        if not disconnect_possible: 
+            self.ensure_connected(base_node)
         return
 
     def ensure_connected(self,base_node): 
@@ -100,8 +100,21 @@ class JammingGraph:
         G2 = MicroGraph(self.G).subgraph_by_nodeset_(base_nodeset).dg   
         G3 = graph_to_one_component(G2,self.prg) 
 
-        self.G = MicroGraph(self.G) + MicroGraph(G3) 
+        self.G = (MicroGraph(self.G) + MicroGraph(G3)).dg 
         return
+
+    def disconnect_neighbors(self,base_node1,base_node2):
+        ns1 = self.entire_nodeset_for_node(base_node1)
+        ns2 = self.entire_nodeset_for_node(base_node2) 
+
+        for n in ns1: 
+            self.G[n] -= ns2 
+        
+        if self.is_directed: return 
+
+        for n in ns2: 
+            self.G[n] -= ns1
+        return 
     
     def neighbor_nodesets_to_base_nodeset(self,base_node): 
         i = self.npath.p.index(base_node) 
@@ -119,15 +132,28 @@ class JammingGraph:
     def prng_choose_node_in_base_nodeset(self,base_node,choose_minimally_connected:bool): 
         q = self.entire_nodeset_for_node(base_node)
         if len(q) == 0: return None 
+
         q = sorted(q) 
         if not choose_minimally_connected: 
             i = int(self.prg()) % len(q) 
             return q[i] 
         
-        G_ = MicroGraph(self.G).subgraph_by_nodeset_(q).dg 
+        G_ = MicroGraph(self.G).subgraph_by_nodeset_(set(q)).dg 
         q = [(q_,len(G_[q_])) for q_ in q] 
         q = prg_seqsort_ties(q,self.prg,vf=lambda x: x[1])
         return q[0][0] 
+
+    def connect_nodesets(self,ref_base_node,base_node0): 
+        left_nodeset = self.entire_nodeset_for_node(ref_base_node)
+        right_nodeset = self.entire_nodeset_for_node(base_node0)
+        conn0 = are_nodesets_connected(self.G,left_nodeset,right_nodeset) 
+        if not conn0: 
+            q0 = self.prng_choose_node_in_base_nodeset(ref_base_node,True)
+            q1 = self.prng_choose_node_in_base_nodeset(base_node0,True) 
+            self.G[q0] |= {q1} 
+            if not self.is_directed: 
+                self.G[q1] |= {q0} 
+        return 
 
     def nodeset_index_for_node(self,node): 
         for k,v in self.node2nodesets.items(): 
@@ -136,40 +162,60 @@ class JammingGraph:
                     return (k,i)
         return None,None 
 
-    def subgraph_edit(self,node,G): 
-        # replace the direct nodeset 
+    def subgraph_edit(self,node,G_,remove_original_node:bool): 
+        # replace the direct nodeset and subgraph 
         q0,q1 = self.nodeset_index_for_node(node)
-        self.node2nodesets[q0][q1] = set(G.keys()) 
+
+        if type(q0) == type(None): 
+            mg = MicroGraph(self.G) + MicroGraph(G_)  
+            self.G = mg.dg
+            self.G = graph_to_one_component(self.G,self.prg)
+            self.node2nodesets[node].append(set(G_.keys()))
+            return 
+
+        nodeset_ = self.node2nodesets[q0][q1]
+        subgraph = MicroGraph(self.G).subgraph_by_nodeset_(nodeset_)
+
+        if remove_original_node: 
+            self.node2nodesets[q0][q1] -= {node} 
+            if len(self.node2nodesets[q0][q1]) == 0: 
+                self.node2nodesets[q0].pop(q1) 
+            self.node2nodesets[q0].append(set(G_.keys()))
+            mg = MicroGraph(self.G)
+            mg.subgraph_nodeset_exclusion({node})
+            self.G = mg.dg 
+        else: 
+            self.node2nodesets[q0][q1] |= set(G_.keys()) 
+
+            # cut connection from node to other nodes not of G_ 
+            cut_conn = self.G[node] - self.node2nodesets[q0][q1]
+
+            self.G[node] -= cut_conn 
+
+            if not self.is_directed: 
+                for c in cut_conn: 
+                    self.G[c] -= {node} 
+
+        # update graph 
+        nodeset = flatten_setseq(self.node2nodesets[q0])
+        replacement = MicroGraph(self.G).subgraph_by_nodeset_(nodeset) 
+
+        mg = MicroGraph(self.G) + MicroGraph(G_)  
+        self.G = mg.dg 
 
         # ensure entire nodeset of node is connected 
-        G = MicroGraph(self.G).subgraph_by_nodeset_(self.entire_nodeset_for_node(node)).dg 
+        G = MicroGraph(self.G).subgraph_by_nodeset_(nodeset).dg 
         G = graph_to_one_component(G,self.prg)
+        self.G = (MicroGraph(self.G) + MicroGraph(G)).dg 
 
         # connect the new graph to neighbors 
-        left,right = self.neighbor_nodesets_to_base_nodeset(node) 
-        keys = sorted(G.keys())
-        node_candidates = [(k,len(G[k])) for k in keys] 
-        node_candidates = sorted(node_candidates,key=lambda x:x[1]) 
-        
-        left0 = node_candidates.pop(0)[0] 
-        if len(node_candidates) == 0: 
-            right0 = left0 
-        else: 
-            right0 = node_candidates.pop(0)[0] 
+        left,right = self.neighbor_nodesets_to_base_nodeset(q0)
 
         if type(left) != type(None): 
-            # choose a node 
-            left_node = self.prng_choose_node_in_base_nodeset(left,choose_minimally_connected=True)
-            G[left0] |= {left_node} 
-            if not self.is_directed: G[left_node] |= {left0}
+            self.connect_nodesets(left,q0)
 
         if type(right) != type(None): 
-            # choose a node 
-            right_node = self.prng_choose_node_in_base_nodeset(right,choose_minimally_connected=True)
-            G[right0] |= {right_node} 
-            if not self.is_directed: G[right_node] |= {right0}
-
-        self.G = (MicroGraph(self.G) + MicroGraph(G)).dg
+            self.connect_nodesets(q0,right)
         return
 
 
@@ -183,9 +229,15 @@ class JammingGraphTypeC(JammingGraph):
         super().__init__(nodepath,modifiable_nodeset,prg,is_path_directed,jam_nodesize_range,ctr_function)
         return
 
-    def one_jam(self,node,remove_original_node:bool):
+    def one_jam(self,base_node,remove_original_node:bool):
+        assert base_node in self.modifiable_nodeset
+
         num_nodes = modulo_in_range(int(self.prg()),self.jam_nodesize_range) 
         assert num_nodes > 1 
+
+        nodeset = sorted(self.entire_nodeset_for_node(base_node)) 
+        i = int(self.prg()) % len(nodeset)
+        node = nodeset[i] 
 
         start_node = self.ctr() 
         if remove_original_node: 
@@ -204,8 +256,8 @@ class JammingGraphTypeC(JammingGraph):
                 if not self.is_directed: 
                     G[q] |= {prev}
                 prev = q 
-            if _ not in G: 
-                G[_] = set() 
+            if prev not in G: 
+                G[prev] = set() 
 
             # get backward
             prev = node 
@@ -215,10 +267,10 @@ class JammingGraphTypeC(JammingGraph):
                 if not self.is_directed: 
                     G[prev] |= {q}
                 prev = q 
-            if _ not in G: 
-                G[_] = set() 
+            if prev not in G: 
+                G[prev] = set()
         
-        self.subgraph_edit(node,G) 
+        self.subgraph_edit(node,G,remove_original_node) 
 
 """
 Type (O)bstruction of Jamming Graph, based on the principle of adding 
@@ -231,6 +283,7 @@ class JammingGraphTypeO(JammingGraph):
         return
 
     def one_jam(self,node,remove_original_node:bool):
+        assert node in self.modifiable_nodeset
 
         num_nodes = modulo_in_range(int(self.prg()),self.jam_nodesize_range) 
         assert num_nodes > 1 
@@ -240,17 +293,17 @@ class JammingGraphTypeO(JammingGraph):
         gg = GraphGen(self.is_directed,self.prg,is_realtime_gen,num_nodes,edge_connectivity)
         gg.full_run()
         G = gg.d 
-        for _ in range(num_nodes): self.ctr() 
+        G,_ = graph_automorphism(G,self.ctr)
 
         if not remove_original_node: 
             ratio_conn = modulo_in_range(self.prg(),[0.05,0.3]) 
-            num_conn = ceil(gg.keys() * ratio_conn)
-            node_candidates = sorted(gg.keys())
+            num_conn = ceil(len(G) * ratio_conn)
+            node_candidates = sorted(G.keys())
             node_conn = prg_choose_n(node_candidates,num_conn,prg__single_to_int(self.prg),True)
 
             for x in node_conn: 
                 G[node] |= {x} 
                 if not self.is_directed: G[x] |= {node} 
-        
-        self.subgraph_edit(node,G) 
+            
+        self.subgraph_edit(node,G,remove_original_node) 
         return
