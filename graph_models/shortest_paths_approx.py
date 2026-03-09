@@ -55,7 +55,7 @@ class ShortestPathsApproximator:
         self.max_periphery = max_periphery
         self.edge_cost_function = edge_cost_function
         self.verbose = verbose 
-        self.subgraph_nodeset_map = defaultdict(set) 
+        ##self.subgraph_nodeset_map = defaultdict(set) 
 
         self.preproc() 
         self.next_ref_queue = [] 
@@ -308,6 +308,12 @@ class ShortestPathsApproximator:
     """
     main method #4
 
+    Finds the shortest path from source to target. By the following 
+    order of methods, 
+    [0] (source,target) has path in `nodepair_path_info`,
+    [1] (source,target) has path according to direct subgraph-to-subgraph tracing,
+    [2] (source,target) has path according to deduction, via method<deduce_path, 
+    method outputs the first path from source to target in its search of [0],[1],[2].
     """
     def shortest_path(self,source,target,by_weight:bool): 
         if (source,target) in self.nodepair_path_info: 

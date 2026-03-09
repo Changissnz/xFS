@@ -61,7 +61,7 @@ class NodePath:
         for npath in nodepath_set:
             assert type(npath) == NodePath 
             X = npath.p
-
+            if X[0] not in D: D[X[0]] = set() 
             for i in range(len(X) - 1): 
                 x0,x1 = X[i],X[i+1]
                 D[x0] |= {x1} 
@@ -173,6 +173,18 @@ class NodePath:
         pw_ = self.pweights[index:]
 
         return NodePath.preload(p_,pw_) 
+
+    # NOTE: somewhat duplicate code from method<nodepath_set_to_graph>. 
+    def to_graph(self,is_dsg:bool):  
+        q = defaultdict(set) 
+        q[self.p[0]] = set() 
+        q[self.p[-1]] = set() 
+        for i in range(0,len(self.p) - 1): 
+            p0,p1 = self.p[i],self.p[i+1] 
+            q[p0] |= {p1} 
+            if not is_dsg: 
+                q[p1] |= {p0} 
+        return q 
 
 # NOTE: there are some features not yet implemented, such as 
 #           parameter<cost_func> for function<store_minpaths>. 

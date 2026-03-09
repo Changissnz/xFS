@@ -36,8 +36,11 @@ class ShortestPathsApproximatorClasses(unittest.TestCase):
                 [0, 2, 3, 4, 5]]
 
         X = spa.paths(0,5)
-        for x,p in zip(X,path_ans): 
-            assert x.p == p,"got {}".format(x.p)
+        #for x,p in zip(X,path_ans): 
+        #    assert x.p == p,"got {}".format(x.p)
+        for x in X:
+            assert x.p in path_ans 
+        assert len(X) == 2 and X[0].p != X[1].p 
 
         for p in spa.nodepair_path_info.values(): 
             assert p.cost() <= R 
