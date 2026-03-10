@@ -7,6 +7,27 @@ DEFAULT_JAMMING_GRAPH_ALTER_EDGE_RATIO_RANGE = [-0.2,0.2]
 DEFAULT_JAMMING_GRAPH_JAMSIZE_RANGE = [3,15] 
 DEFAULT_JAMMING_GRAPH_TYPE_O_CONNECTIVITY_RANGE = [0.05,0.22] 
 
+"""
+Instance is instantiated with a <NodePath> from node s to t, and with 
+additional parameters specifying the numerical qualities for the jam 
+process. 
+
+The jam process is given as function<JammingGraph.one_jam>. <NodePath> 
+must consist of unique nodes N, these nodes comprising the base nodes for 
+the graph G_k (keys of variable<node2nodesets>), built from k calls to 
+function<JammingGraph.one_jam>. Variable `modifiable_nodeset` is a subset 
+of N and specifies the nodes that JammingGraph can "modify", as part of its 
+jam process. 
+
+Jam variants are of Type (C)ircumvention and Type (O)bstruction. In both types, 
+function<JammingGraph.one_jam> receives one base node n_b as input at timestamp k. 
+It generates a subgraph G2, with no nodes of G_k, and adds nodes of G2 to the nodeset 
+`node2nodesets[n_b]`. If parameter `remove_original_node`, then node n_b2, a node that 
+is n_b or part of the same nodeset `node2nodesets[n_b]`, is removed. 
+
+The number of calls to function<JammingGraph.one_jam> positively correlates to longer 
+paths on average between nodes s and t. 
+"""
 class JammingGraph: 
 
     def __init__(self,nodepath,modifiable_nodeset,prg,\
