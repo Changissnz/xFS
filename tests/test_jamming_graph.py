@@ -145,7 +145,7 @@ class JammingGraphTypeOClass(unittest.TestCase):
         qx = mg0.sub_ve_score(mg1)
         qx2 = mg1.sub_ve_score(mg0)
         assert qx == (2, 8)
-        assert qx2 == (4, 12),"got {}".format(qx2)
+        assert qx2 == (4, 14),"got {}".format(qx2)
 
         gd = GraphComponentDecomposition(jg.G)
         gd.decompose() 
