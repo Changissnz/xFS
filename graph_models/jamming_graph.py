@@ -107,21 +107,24 @@ class JammingGraph:
 
         # get the neighbors of base_node 
         left,right = self.neighbor_nodesets_to_base_nodeset(base_node)
-
+        
         base_nodeset = self.entire_nodeset_for_node(base_node) 
+        G1 = MicroGraph(self.G).subgraph_by_nodeset_(base_nodeset) 
+        G0,G2 = None,None 
 
         if type(left) != type(None): 
-            q = self.entire_nodeset_for_node(left) 
-            base_nodeset |= q 
+            left_nodeset = self.entire_nodeset_for_node(left)
+            G0 = MicroGraph(self.G).subgraph_by_nodeset_(left_nodeset)
+            G1 = graph_to_one_component((G0+G1).dg,self.prg)
+            G1 = MicroGraph(G1) 
 
         if type(right) != type(None): 
-            q = self.entire_nodeset_for_node(right) 
-            base_nodeset |= q  
+            right_nodeset = self.entire_nodeset_for_node(right)
+            G2 = MicroGraph(self.G).subgraph_by_nodeset_(right_nodeset)
+            G1 = graph_to_one_component((G1+G2).dg,self.prg)
+            G1 = MicroGraph(G1) 
 
-        G2 = MicroGraph(self.G).subgraph_by_nodeset_(base_nodeset).dg   
-        G3 = graph_to_one_component(G2,self.prg) 
-
-        self.G = (MicroGraph(self.G) + MicroGraph(G3)).dg 
+        self.G = (MicroGraph(self.G) + G1).dg
         return
 
     def disconnect_neighbors(self,base_node1,base_node2):

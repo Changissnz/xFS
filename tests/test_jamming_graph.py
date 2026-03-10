@@ -145,11 +145,11 @@ class JammingGraphTypeOClass(unittest.TestCase):
         qx = mg0.sub_ve_score(mg1)
         qx2 = mg1.sub_ve_score(mg0)
         assert qx == (2, 8)
-        assert qx2 == (4, 12)
+        assert qx2 == (4, 12),"got {}".format(qx2)
 
         gd = GraphComponentDecomposition(jg.G)
         gd.decompose() 
-        assert len(gd.components) == 1 
+        assert len(gd.components) == 1, "got {}".format(len(gd.components))
 
     """
     checks for correct number of components after method<disconnect_neighbors>.  
