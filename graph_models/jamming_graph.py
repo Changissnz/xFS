@@ -53,7 +53,7 @@ class JammingGraph:
             self.node2nodesets[k] = [{k}]  
 
         self.G = nodepath.to_graph(is_path_directed)
-
+        self.dead_nodes = set() 
         return
 
     def one_jam(self,node,remove_original_node:bool):
@@ -154,6 +154,12 @@ class JammingGraph:
                     self.npath.p[i+1] 
         return left,right 
 
+    def prng_choose_jam_mod_info(self,base_node): 
+        num_nodes = modulo_in_range(int(self.prg()),self.jam_nodesize_range) 
+        assert num_nodes > 1 
+        node = self.prng_choose_node_in_base_nodeset(base_node,False)
+        return num_nodes,node 
+
     def prng_choose_node_in_base_nodeset(self,base_node,choose_minimally_connected:bool): 
         q = self.entire_nodeset_for_node(base_node)
         if len(q) == 0: return None 
@@ -241,6 +247,10 @@ class JammingGraph:
 
         if type(right) != type(None): 
             self.connect_nodesets(q0,right)
+
+        # case: add removed node to dead nodes
+        if remove_original_node:
+            self.dead_nodes |= {node}
         return
 
 
@@ -257,12 +267,7 @@ class JammingGraphTypeC(JammingGraph):
     def one_jam(self,base_node,remove_original_node:bool):
         assert base_node in self.modifiable_nodeset
 
-        num_nodes = modulo_in_range(int(self.prg()),self.jam_nodesize_range) 
-        assert num_nodes > 1 
-
-        nodeset = sorted(self.entire_nodeset_for_node(base_node)) 
-        i = int(self.prg()) % len(nodeset)
-        node = nodeset[i] 
+        num_nodes,node = self.prng_choose_jam_mod_info(base_node) 
 
         start_node = self.ctr() 
         if remove_original_node: 
@@ -307,11 +312,10 @@ class JammingGraphTypeO(JammingGraph):
         super().__init__(nodepath,modifiable_nodeset,prg,is_path_directed,jam_nodesize_range,ctr_function)
         return
 
-    def one_jam(self,node,remove_original_node:bool):
-        assert node in self.modifiable_nodeset
+    def one_jam(self,base_node,remove_original_node:bool):
+        assert base_node in self.modifiable_nodeset
 
-        num_nodes = modulo_in_range(int(self.prg()),self.jam_nodesize_range) 
-        assert num_nodes > 1 
+        num_nodes,node = self.prng_choose_jam_mod_info(base_node)
 
         is_realtime_gen = bool(int(self.prg()) % 2)
         edge_connectivity = modulo_in_range(self.prg(),DEFAULT_JAMMING_GRAPH_TYPE_O_CONNECTIVITY_RANGE)
@@ -331,4 +335,4 @@ class JammingGraphTypeO(JammingGraph):
                 if not self.is_directed: G[x] |= {node} 
             
         self.subgraph_edit(node,G,remove_original_node) 
-        return
+        return 
