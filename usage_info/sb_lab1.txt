@@ -1,0 +1,303 @@
+This lab consists of 9 trials showing the performance of a specific <StrangleBot> instance. 
+
+Below is the base code. 
+
+############################### CODE 
+
+from quant.strangle_graph import * 
+from morebs2.numerical_generator import * 
+
+prg = prg__LCG(34.4,-14.31,55.7,505.11)
+
+info_mode = ? 
+strangler_energy = ? 
+strangle_subject_energy = ? 
+enable_consumption = ? 
+max_timestamps = ? 
+
+se = StrangleEnv.generate_instance("random",info_mode,prg,strangler_energy,strangle_subject_energy,\
+    enable_consumption=enable_consumption) 
+
+se.verbose = True 
+
+prgs = prg_to_prg__LCG_sequence(prg,2,5.10101) 
+se.set_prng_for_subject(prgs[0],prgs[1]) 
+
+while not se.fin_stat and se.timestamp < max_timestamps:  
+    next(se) 
+
+print("Strangler score")
+print(se.strangler.score(se.node_weights))
+print("Strangler highest score")
+print(se.strangler.highest_score) 
+
+print("Strangle Subject energy")
+print(se.strangle_subject.energy)
+
+print("Finished timestamp: ",se.timestamp) 
+
+############################################################
+
+############ TRIAL 1 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 0 
+strangler_energy = float('inf) 
+strangle_subject_energy = 10**8 
+enable_consumption = False  
+max_timestamps = 500 
+
+# Ending Results 
+
+-----------------------------------------------------
+		 timestamp=499
+-- strangler: inf
+	598 / 634 nodes strangled
+	36 broken strangles
+	50 strangle entities	
+	0 consumed nodes
+-- subject, 98561915.60000002 energy.
+ used -504.0 F to break 1 strangles
+		broken
+{268}
+-----------------------------------------------------
+Strangler score
+7413
+Strangler highest score
+7786
+Strangle Subject energy
+98561915.60000002
+Finished timestamp:  500
+
+
+############ TRIAL 2 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 0 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = False  
+max_timestamps = float('inf') 
+
+# Ending Results 
+
+-----------------------------------------------------
+		 timestamp=937
+-- strangler: -7857.3032089472235
+	605 / 634 nodes strangled
+	29 broken strangles
+	50 strangle entities	
+	0 consumed nodes
+-- subject, 7268364.800000005 energy.
+ used -447.99999999999994 F to break 0 strangles
+		broken
+set()
+-----------------------------------------------------
+Strangler score
+7504
+Strangler highest score
+7786
+Strangle Subject energy
+7268364.800000005
+Finished timestamp:  938
+
+########### TRIAL 3 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 0 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = True   
+max_timestamps = float('inf') 
+
+# Ending Results 
+
+timestamp=438
+-- strangler: 6598137.348595992
+	27 / 27 nodes strangled
+	0 broken strangles
+	15 strangle entities	
+	607 consumed nodes
+Strangler score
+4145.0
+Strangler highest score
+7681.0
+Strangle Subject energy
+8972746.000000006
+Finished timestamp:  438
+
+########### TRIAL 4 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 3 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = False    
+max_timestamps = float('inf') 
+
+# Ending Results
+
+ timestamp=920
+-- strangler: -2106.6626212911824
+	593 / 634 nodes strangled
+	41 broken strangles
+	50 strangle entities	
+	0 consumed nodes
+-- subject, 8933537.336790305 energy.
+ used -3445.7214439762083 F to break 34 strangles
+		broken
+{576, 577, 578, 579, 580, 582, 583, 584, 585, 586, 587, 588, 589, 590, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575}
+-----------------------------------------------------
+Strangler score
+6906
+Strangler highest score
+7725
+Strangle Subject energy
+8933537.336790305
+Finished timestamp:  921
+
+########### TRIAL 5 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 2 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = False    
+max_timestamps = float('inf') 
+
+# Ending Results
+
+timestamp=890
+-- strangler: -3122.5754220321637
+	571 / 634 nodes strangled
+	63 broken strangles
+	50 strangle entities	
+	0 consumed nodes
+-- subject, 2907160.000000008 energy.
+ used -2100.0 F to break 21 strangles
+		broken
+{130, 452, 453, 134, 137, 74, 143, 16, 145, 207, 278, 153, 100, 103, 487, 106, 111, 431, 496, 186, 443}
+-----------------------------------------------------
+Strangler score
+6760
+Strangler highest score
+7615
+Strangle Subject energy
+2907160.000000008
+Finished timestamp:  891
+
+########### TRIAL 6 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 1 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = False    
+max_timestamps = float('inf') 
+
+# Ending Results
+
+timestamp=937
+-- strangler: -1178.482033624278
+	603 / 634 nodes strangled
+	31 broken strangles
+	50 strangle entities	
+	0 consumed nodes
+-- subject, 7292473.200000005 energy.
+ used -447.99999999999994 F to break 0 strangles
+		broken
+set()
+-----------------------------------------------------
+Strangler score
+7500
+Strangler highest score
+7763
+Strangle Subject energy
+7292473.200000005
+Finished timestamp:  938
+
+
+########### TRIAL 7 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 3 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = True    
+max_timestamps = float('inf') 
+
+# Ending Results
+
+ timestamp=346
+-- strangler: 6737673.869891159
+	122 / 122 nodes strangled
+	0 broken strangles
+	49 strangle entities	
+	512 consumed nodes
+Strangler score
+4690.5
+Strangler highest score
+7517.0
+Strangle Subject energy
+9763877.575573007
+Finished timestamp:  346
+
+########### TRIAL 8 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 2 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = True     
+max_timestamps = float('inf') 
+
+# Ending Results
+
+ timestamp=193
+-- strangler: 8315456.642768771
+	69 / 69 nodes strangled
+	0 broken strangles
+	26 strangle entities	
+	565 consumed nodes
+Strangler score
+4404.5
+Strangler highest score
+7214.0
+Strangle Subject energy
+9070012.400000002
+Finished timestamp:  193
+
+
+########### TRIAL 9 
+
+# First, set these variables from the base code (lines 12-16).
+
+info_mode = 1 
+strangler_energy = 10**7 
+strangle_subject_energy = 10**7 
+enable_consumption = True     
+max_timestamps = float('inf') 
+
+# Ending Results
+
+timestamp=536
+-- strangler: 5413209.044646472
+	78 / 78 nodes strangled
+	0 broken strangles
+	44 strangle entities	
+	556 consumed nodes
+Strangler score
+4456.0
+Strangler highest score
+7760
+Strangle Subject energy
+9196447.999999998
+Finished timestamp:  536

@@ -48,7 +48,10 @@ Here is a list of graph problems in the project:
     - vantage point for learning: anti-mob unit acting against `n` Mob agents in 
     a reactive system. 
     - file: `graph_problems/mkb.py` 
-- Strangle Bot (work in progress)  
+- Strangle Bot (Alpha)  
+    - vantage point for learning: strangling agent with objective to control all nodes 
+    of graph G, the subject of strangling. 
+- Middleman Bot (work in progress) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
