@@ -36,6 +36,7 @@ class JammingGraph:
         assert type(prg) in {MethodType,FunctionType}
         assert len(nodepath) >= 2 and len(set(nodepath.p)) == len(nodepath)  
         assert modifiable_nodeset.issubset(set(nodepath.p))
+        assert len(modifiable_nodeset) > 0
         assert is_valid_range(jam_nodesize_range,True,False) 
 
         self.npath = nodepath 
@@ -251,7 +252,7 @@ class JammingGraph:
         # case: add removed node to dead nodes
         if remove_original_node:
             self.dead_nodes |= {node}
-        return
+        return G 
 
 
 """
@@ -300,7 +301,7 @@ class JammingGraphTypeC(JammingGraph):
             if prev not in G: 
                 G[prev] = set()
         
-        self.subgraph_edit(node,G,remove_original_node) 
+        return self.subgraph_edit(node,G,remove_original_node) 
 
 """
 Type (O)bstruction of Jamming Graph, based on the principle of adding 
@@ -334,5 +335,4 @@ class JammingGraphTypeO(JammingGraph):
                 G[node] |= {x} 
                 if not self.is_directed: G[x] |= {node} 
             
-        self.subgraph_edit(node,G,remove_original_node) 
-        return 
+        return self.subgraph_edit(node,G,remove_original_node)  

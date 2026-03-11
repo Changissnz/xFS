@@ -12,6 +12,21 @@ DEFAULT_STRANGLESUBJECT_COMMUNITY_SIZE_RANGE = [20,100]
 DEFAULT_STRANGLER_HOLD_FREQUENCY_CONSUMPTION_MIN_THRESHOLD = 5 
 DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES = 50 
 
+"""
+Function used by strangle subject to break out of stranglehold. 
+
+Breaking process goes as follows: 
+- partition the nodes of `node_map` into two sets: 
+    - positive : being strangled 
+    - negative: not being strangled 
+- for the total force F, set q = F / |node_map| * neg_weight / pos_weight; 
+    neg_weight the cumulative node weights in the `node_weight_map` for 
+    the negative nodeset, pos_weight likewise. 
+* If pos_weight is 0, then set q equal to 0. 
+- Apply -q to every positive node, and 0 to every negative node. This comprises 
+  the map, 
+      node -> breaking force applied to node. 
+"""
 def default_strangle_breaking_function(node_map,F,node_weight_map=None): 
     if len(node_map) == 0: return dict() 
     assert F <= 0. 
@@ -354,6 +369,23 @@ class StrangleForm:
         selection = prg_choose_n(consumption_candidates,n,prg__single_to_int(self.prg),True)
         return set(selection)
 
+"""
+Data structure used by <StrangleEnv> to relay information to <StrangleSubject>. 
+The information is used by <StrangleSubject> to calculate its decision on applying 
+the appropriate breaking force to the appropriate community (nodeset) where strangling 
+is taking place.  
+
+info type 0 -> 
+    map, node -> 0 force (equivalent to no node status given)
+info type 1 ->
+    list, of communities calculated by <StrangleSubject> s.t. every 
+        community has at least 1 node being strangled. 
+info type 2 -> 
+    set, of nodes being strangled by <StrangleForm> 
+info type 3 -> 
+    [0] map, node -> strangling force (0 if no strangle) 
+    [1] map, node -> node weight
+"""
 class StrangleFormInfo: 
 
     def __init__(self,info_type): 
@@ -425,6 +457,17 @@ class StrangleSubject:
         self.surface_info = sfi 
         return
 
+    """
+    Chooses one of the calculated graph communities, from method<calculate_communities>, 
+    to break out strangled nodes. Then hypothesizes a breaking force to apply over the 
+    community nodeset. In modes 0-2, where there is limited information on the status 
+    of the community nodes, the hypothesis is based on method<guess_min_max_strangle_breaking_force>. 
+    In mode 3, all relevant information is known, so the method used calculates the most 
+    cost-efficient breaking force, method<min_strangle_breaking_force>. 
+
+    return:
+    - community::nodeset, (breaking force)::float
+    """
     def break_decision_(self):
         if self.surface_info.info_type == 0: 
             self.break_decision = self.estimate_force_info_type_0()

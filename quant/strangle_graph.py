@@ -8,6 +8,10 @@ DEFAULT_STRANGLE_GRAPH_EDGE_WEIGHT_RANGE = [10,100]
 DEFAULT_STRANGLE_GRAPH_NODE_WEIGHT_RANGE = [1,25] 
 DEFAULT_STRANGLE_ENV_ENTRY_POINTS = [1,8] 
 
+"""
+The environment where strangling takes place. Features two agents, a <StrangleForm> 
+and a <StrangleSubject>. 
+"""
 class StrangleEnv: 
 
     def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg,\
