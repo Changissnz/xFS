@@ -8,7 +8,7 @@ not reach total stranglehold of the graph. <StrangleForm> oscillates in the
 approximate range of 580-620 for the remainder of the simulation. 
 
 LEMMA: If a <StrangleForm> cannot consume the nodes it holds, there is an 
-unspecified probability that the <StrangleForm> will plateau in the maximum 
+unspecified non-zero probability the <StrangleForm> will plateau in the maximum 
 number of nodes it holds. After reaching this plateau, <StrangleForm>'s number 
 of held nodes will oscillate in a range that does not include the total number 
 of nodes of graph. This is due to three primary features. The first feature is 
