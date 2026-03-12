@@ -44,6 +44,10 @@ class StrangleEnv:
 
         if type(break_prg) in {MethodType,FunctionType}:
             self.strangle_subject.break_prg = break_prg 
+
+    def set_prng_for_strangler(self,prg): 
+        assert type(prg) in {MethodType,FunctionType}
+        self.strangler.prg = prg
  
     def __next__(self): 
         # case: done 

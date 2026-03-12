@@ -60,7 +60,7 @@ At every timestamp, if the energy of agent <StrangleForm> or <StrangleSubject> f
 float, agent loses. If both agents' energy falls below positive, simulation ends with tie. Otherwise, 
 the remaining agent wins. 
 """
-class StrangleBot:  
+class StrangleBot(StrangleEnv):  
 
     def __init__(self,strangler,strangle_subject,node_weights,info_mode,prg,\
         enable_consumption:bool=False,verbose=False): 
@@ -72,7 +72,7 @@ class StrangleBot:
         strangle_subject_energy=10**6,enable_consumption=False): 
 
         senv = StrangleEnv.generate_instance(strangler_force_assignment_type,info_mode,prg,\
-            strangler_energy=strangle_energy,strangle_subject_energy=strangle_subject_energy,\
+            strangler_energy=strangler_energy,strangle_subject_energy=strangle_subject_energy,\
             enable_consumption=enable_consumption)
         return StrangleBot(senv.strangler,senv.strangle_subject,senv.node_weights,\
             senv.info_mode,senv.prg,enable_consumption)

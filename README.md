@@ -51,6 +51,7 @@ Here is a list of graph problems in the project:
 - Strangle Bot (Alpha)  
     - vantage point for learning: strangling agent with objective to control all nodes 
     of graph G, the subject of strangling. 
+    - file: `graph_problems/sb.py` 
 - Middleman Bot (work in progress) 
 
 #### NOTE: 

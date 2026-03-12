@@ -1,0 +1,39 @@
+from graph_problems.sim_solution_search import * 
+from graph_problems.sb_ext import * 
+from morebs2.numerical_generator import * 
+import time
+
+info_mode = ? 
+strangler_energy = ? 
+strangle_subject_energy = ? 
+enable_consumption = ? 
+
+prg = prg__LCG(34.4,-14.31,55.7,505.11) 
+sbot = StrangleBot.generate_instance("random",info_mode,prg,strangler_energy,\
+    strangle_subject_energy,enable_consumption=enable_consumption)  
+sbot.verbose = False 
+
+prgs = prg_to_prg__LCG_sequence(prg,2,5.10101) 
+sbot.set_prng_for_subject(prgs[0],prgs[1]) 
+
+sim_env_run_function = SB_env_run_(1000) 
+prng_seq = merge_two_prgs_into_LCG_sequence(deepcopy(prgs[0]),deepcopy(prgs[1]),\
+    40,mod_mult_range=[1.333,5.999],operations = [add,sub]) 
+sim_env_prng_assignment_function = SB_env_prng_assignment_function 
+sim_mode_shift_function = SB_env_mode_shift_function
+simsol_fetch_function = SB_env_solution_fetch_function__type_1
+simsol_cmp_function = SB_env_cmp_solution_(SB_env_solution_fetch_function__type_1)
+
+S = SimulationSolutionSearch(sbot,sim_env_run_function,prng_seq,\
+        sim_env_prng_assignment_function,sim_mode_shift_function,\
+        simsol_fetch_function,simsol_cmp_function,verbose=True) 
+
+t = time.time()
+t_ = t 
+while not S.fin_stat: 
+    t = time.time() 
+    S.process_one()
+    t2 = time.time() -t 
+    print("\t\t** runtime: ",t2) 
+
+print("\t* TOTAL RUNTIME: ",time.time() - t_) 

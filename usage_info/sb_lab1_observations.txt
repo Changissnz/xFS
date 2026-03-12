@@ -1,0 +1,44 @@
+Out of the 9 trials with ending results displayed in file `sb_lab1.txt`, trials 
+1,2,4,5, and 6, where <StrangleForm> cannot consume nodes it currently holds, 
+<StrangleForm> loses, unable to completely capture the intact graph G after 
+exhausting its energy stores. Specifically, <StrangleForm> in trial 1 reached 
+past 600 nodes in strangleholds, out of a total of 634, at timestamp 50. For the 
+remaining timestamps, up until <StrangleForm>'s termination, <StrangleForm> could 
+not reach total stranglehold of the graph. <StrangleForm> oscillates in the 
+approximate range of 580-620 for the remainder of the simulation. 
+
+LEMMA: If a <StrangleForm> cannot consume the nodes it holds, there is an 
+unspecified probability that the <StrangleForm> will plateau in the maximum 
+number of nodes it holds. After reaching this plateau, <StrangleForm>'s number 
+of held nodes will oscillate in a range that does not include the total number 
+of nodes of graph. This is due to three primary features. The first feature is 
+the parameter of the range DEFAULT_STRANGLE_ENV_ENTRY_POINTS that sets the 
+limit on the number of new nodes for a <StrangleForm> to hold with a new 
+strangling body. The second feature is the DFS process used by every active 
+strangling body of the <StrangleForm>. If a node that has already been held 
+through a previous DFS process P0 is touched by another DFS process P1, process 
+P1 terminates. This technicality means that many DFS processes will be prematurely 
+terminated before they have a chance to capture nodes that are not held. The 
+last feature is of the <StrangleSubject>. After a certain ratio of nodes are 
+put into strangleholds by the <StrangleForm>, this being the plateau, there is 
+an almost 100% probability that the <StrangleSubject> will decide on a 
+(community nodeset of graph, total breaking force) that frees up that nodeset of 
+the graph, due to the programmed functions that <StrangleSubject> uses to make 
+its decision in information modes 0-3. So a <StrangleForm> will not be able to 
+exceed this plateau, as the <StrangleSubject> frees a ratio of the strangled 
+nodes at one timestamp that roughly matches the number of nodes the <StrangleForm> 
+can put into strangleholds at the next timestamp. 
+
+
+In the other trials 3,7,8, and 9 that permit <StrangleForm> to consume held nodes, 
+the below table summarizes the results. Note that the higher the quality of information, 
+the more remaining nodes are able to be strangled by the <StrangleForm>. In the mathematical 
+functions, a strangled node is worth more than a consumed node, the default being twice as 
+much. 
+
+TIMESTAMP   INFO MODE    NUMBER OF REMAINING NODES (COMPLETE STRANGLE)   REMAINING ENERGY
+-----------------------------------------------------------------------------------------
+438           0                        27                                 6598137.348595992
+536           1                        78                                 5413209.044646472
+193           2                        69                                 8315456.642768771
+346           3                        122                                6737673.869891159

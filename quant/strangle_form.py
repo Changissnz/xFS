@@ -210,7 +210,7 @@ class StrangleForm:
         while i < len(self.usgcs): 
             stat = self.clean_one_controller(i) 
             if stat: 
-                print("\t** finished controller") 
+                ##print("\t** finished controller") 
                 continue 
             i += 1 
 
