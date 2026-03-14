@@ -206,19 +206,23 @@ class MultiAgentActionTable:
         assert set(other_agent_moves.keys()).issubset(self.agents) 
 
     @staticmethod 
-    def generate_instance__type_prng(agents,agent_action_value_range,move_idn_counter): 
+    def generate_instance__type_prng(agents,agent2movesize_map,agent_action_value_range,\
+        move_idn_counter=SimpleCounter(0).__next__): 
         if type(agent_action_value_range) = dict: 
             return -1 
         return -1 
 
     @staticmethod 
-    def generate_instance__type_strict_percentile(agent_action_value_range): 
+    def generate_instance__type_strict_percentile(agents,agent2movesize_map,agent_action_value_range,\
+        move_idn_counter=SimpleCounter(0).__next__):
+
         return -1 
 
     @staticmethod 
-    def generate_instance__type_scattered_percentile(agent_action_value_range): 
+    def generate_instance__type_scattered_percentile(agents,agent2movesize_map,agent_action_value_range,\
+        move_idn_counter=SimpleCounter(0).__next__): 
         return -1
 
     @staticmethod 
-    def generate_zero_instance():
+    def generate_zero_instance(agents,agent2movesize_map,move_idn_counter=SimpleCounter(0).__next__):
         return -1 
