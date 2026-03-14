@@ -297,6 +297,7 @@ class StrangleForm:
         assert type(nodeset) == set 
         nodeseq = sorted(nodeset.intersection(set(self.G.keys())))  
         cumulative_force = 0 
+        max_degree = max([len(self.G[n]) for n in nodeseq]) 
         for n in nodeseq: 
             assert n in self.G 
             if n in self.held_nodes: 

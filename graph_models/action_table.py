@@ -47,7 +47,7 @@ class MultiAgentActionTable:
         self.agent_action_map = agent_action_map
         self.agent2move_map = None 
         self.check_arguments()
-        return -1 
+        return
 
     ################### preprocessing moves for info on `agent_action_map`
     def check_arguments(self):
@@ -206,8 +206,18 @@ class MultiAgentActionTable:
         assert set(other_agent_moves.keys()).issubset(self.agents) 
 
     @staticmethod 
-    def generate_instance(): 
+    def generate_instance__type_prng(agents,agent_action_value_range,move_idn_counter): 
+        if type(agent_action_value_range) = dict: 
+            return -1 
         return -1 
+
+    @staticmethod 
+    def generate_instance__type_strict_percentile(agent_action_value_range): 
+        return -1 
+
+    @staticmethod 
+    def generate_instance__type_scattered_percentile(agent_action_value_range): 
+        return -1
 
     @staticmethod 
     def generate_zero_instance():
