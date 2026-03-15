@@ -6,7 +6,7 @@ class GameControverter:
         total_payoff_multiplier_range,pcorrelation_total_payoff:float,pcorrelation_upturn:float): 
         return    
 
-    def recv_agent_move_map(self): 
+    def recv_agent_move_map(self,amap):  
         return -1 
 
     def __next__(self): 

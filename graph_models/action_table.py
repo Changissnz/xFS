@@ -16,6 +16,16 @@ def string_to_agent_move_map(S):
         d[a] = m 
     return d 
 
+def agent_move_map_to_string(amap):
+    assert type(amap) in {dict,defaultdict} 
+    if len(amap) == 0: return "" 
+
+    keys = sorted(amap.keys()) 
+    s = ""
+    for k in keys: 
+        s += "{},{},".format(int(k),int(amap[k])) 
+    return s[:-1] 
+
 def is_partial_agent_move_map_match(partial,whole): 
     for k,v in partial.items(): 
         if whole[k] == v: 
@@ -31,6 +41,63 @@ def agent_move_map__partial_key_match(S,amap):
         if is_partial_agent_move_map_match(amap,whole):
             key_matches.append(k) 
     return sorted(key_matches)
+
+def multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter): 
+    # assign move identifiers to each agent's moves 
+    agents = sorted(agents) 
+    agent2move_map = {} 
+    for a in agents: 
+        l = agent2movesize_map[a] 
+        agent2move_map[a] = [move_idn_counter() for _ in range(l)] 
+
+    q = [agent2movesize_map[a] for a in agents] 
+    bounds = np.array([np.zeros(len(agents),),q]).T 
+    start_point = bounds[:,0]
+    column_order = [i for i in range(len(q))] 
+    ssi_hop = np.array(q)
+    ssi = SearchSpaceIterator(bounds,start_point,column_order,\
+        ssi_hop,cycleOn = False,cycleIs = 0)
+
+    T = {} 
+    v = {a:0 for a in agents}
+    while not ssi.finished(): 
+        # get the index 
+        n = next(ssi) 
+        # get the dict 
+        d = {agents[i]:agent2move_map[i][n_] for (i,n_) in enumerate(n)} 
+
+        # convert dict to string 
+        s = agent_move_map_to_string(d) 
+
+        # load element 
+        T[s] = deepcopy(v) 
+    
+    return T,agent2move_map
+
+def bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,agent_action_value_range,\
+    bracket_size_range,prg): 
+
+    actions = sorted(agent_moveset) 
+    num_brackets = modulo_in_range(int(prg()),bracket_size_range)
+    r = agent_action_value_range[a] 
+    v = n_partition_for_range(r,num_brackets)
+
+    actions = prg_seqsort(actions,prg)
+    action_brackets = [] 
+    for i,a2 in enumerate(actions): 
+        i2 = i % num_brackets 
+        r2 = v[i2:i2+2]
+        action_brackets.append(r2) 
+
+    for (i,a) in enumerate(actions):
+        amap = {agent_idn:a}
+        keys = agent_move_map__partial_key_match(T,amap)
+        r2 = action_brackets[i]
+        for k in keys: 
+            ratio = modulo_in_range(prg(),r2) 
+            value = round(r2[0] + ratio * (r2[1] - r2[0]),5) 
+            T[k][agent_idn] = value 
+    return
 
 """
 table for immediate effects of actions by agents
@@ -207,22 +274,51 @@ class MultiAgentActionTable:
 
     @staticmethod 
     def generate_instance__type_prng(agents,agent2movesize_map,agent_action_value_range,\
-        move_idn_counter=SimpleCounter(0).__next__): 
-        if type(agent_action_value_range) = dict: 
-            return -1 
-        return -1 
+        prg,move_idn_counter=SimpleCounter(0).__next__): 
+        agent_action_value_range = MultiAgentActionTable.generate_instance__parameter_assertion(\
+            agents,agent2movesize_map,agent_action_value_range,prg)
+
+        T,_ = multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter)
+        agents_ = sorted(agents) 
+
+        for k,v in T.items(): 
+            for k2 in agents_: 
+                v[k2] = safe_modulo_in_range(prg(),agent_action_value_range[k2])
+        return MultiAgentActionTable(agents,T) 
 
     @staticmethod 
     def generate_instance__type_strict_percentile(agents,agent2movesize_map,agent_action_value_range,\
-        move_idn_counter=SimpleCounter(0).__next__):
+        prg,bracket_size_range,move_idn_counter=SimpleCounter(0).__next__):
 
-        return -1 
+        agent_action_value_range = MultiAgentActionTable.generate_instance__parameter_assertion(\
+            agents,agent2movesize_map,agent_action_value_range,prg)
+
+
+        T,M = multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter)
+        agents = sorted(agents) 
+
+        for agent_idn in agents: 
+            agent_moveset = M[agent_idn]
+            bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,\
+                agent_action_value_range[agent_idn],bracket_size_range,prg)
+        return MultiAgentActionTable(set(agents),T)
 
     @staticmethod 
-    def generate_instance__type_scattered_percentile(agents,agent2movesize_map,agent_action_value_range,\
-        move_idn_counter=SimpleCounter(0).__next__): 
-        return -1
+    def generate_instance__parameter_assertion(agents,agent2movesize_map,agent_action_value_range,\
+        prg):
+        assert type(prg) in {FunctionType,MethodType}
 
-    @staticmethod 
-    def generate_zero_instance(agents,agent2movesize_map,move_idn_counter=SimpleCounter(0).__next__):
-        return -1 
+        if type(agent_action_value_range) = dict: 
+            assert set(agent_action_value_range.keys()) == agents 
+            for v in agent_action_value_range.values(): 
+                assert v[0] <= v[1]     
+        else: 
+            assert agent_action_value_range[0] <= agent_action_value_range[1] 
+            d = {} 
+            for k in agents: 
+                d[k] = deepcopy(agent_action_value_range) 
+            agent_action_value_range = d 
+
+        assert set(agent2movesize_map.keys()) == agents
+        for v in agent2movesize_map.values(): assert v > 0 
+        return agent_action_value_range
