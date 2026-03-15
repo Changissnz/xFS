@@ -1,4 +1,10 @@
 from morebs2.matrix_methods import *
+from morebs2.search_space_iterator import * 
+from morebs2.numerical_generator import modulo_in_range,safe_modulo_in_range,prg_seqsort
+from .tree_gen import SimpleCounter
+from types import MethodType,FunctionType
+from copy import deepcopy 
+
 
 """
 S := str, comma-separated integers, even non-zero number of integers;
@@ -64,7 +70,7 @@ def multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter):
         # get the index 
         n = next(ssi) 
         # get the dict 
-        d = {agents[i]:agent2move_map[i][n_] for (i,n_) in enumerate(n)} 
+        d = {agents[i]:agent2move_map[i][int(n_)] for (i,n_) in enumerate(n)} 
 
         # convert dict to string 
         s = agent_move_map_to_string(d) 
@@ -79,8 +85,8 @@ def bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,agent_actio
 
     actions = sorted(agent_moveset) 
     num_brackets = modulo_in_range(int(prg()),bracket_size_range)
-    r = agent_action_value_range[a] 
-    v = n_partition_for_range(r,num_brackets)
+    v = n_partition_for_range(agent_action_value_range,num_brackets)
+    print("VV: ",v)
 
     actions = prg_seqsort(actions,prg)
     action_brackets = [] 
@@ -94,8 +100,11 @@ def bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,agent_actio
         keys = agent_move_map__partial_key_match(T,amap)
         r2 = action_brackets[i]
         for k in keys: 
-            ratio = modulo_in_range(prg(),r2) 
-            value = round(r2[0] + ratio * (r2[1] - r2[0]),5) 
+            value = modulo_in_range(prg(),r2) 
+            # agent_action_value_range
+            #value = round(r2[0] + ratio * (r2[1] - r2[0]),5) 
+            print("VV: ",value)
+
             T[k][agent_idn] = value 
     return
 
@@ -116,6 +125,23 @@ class MultiAgentActionTable:
         self.check_arguments()
         return
 
+    def __str__(self): 
+        keys = sorted(self.agent_action_map.keys()) 
+        S = "" 
+        for k in keys: 
+            S += self.stringize_move(k) + "\n" + "-" * 50 + "\n" 
+        return S 
+    
+    def stringize_move(self,k): 
+        m2 = string_to_agent_move_map(k)
+        x = self.agent_action_map[k] 
+        keys = sorted(m2.keys())
+
+        s = ""
+        for k2 in keys: 
+            s += "agent {} move {} payoff {}\n".format(k2,m2[k2],x[k2])  
+        return s 
+
     ################### preprocessing moves for info on `agent_action_map`
     def check_arguments(self):
         assert type(self.agents) == set 
@@ -125,7 +151,7 @@ class MultiAgentActionTable:
 
     def agent_to_move_map(self):
         d = defaultdict(set) 
-        for k,v in self.agent_action_map.values(): 
+        for k,v in self.agent_action_map.items(): 
             q = string_to_agent_move_map(k)
             for k2,v2 in q.items(): 
                 d[k2] |= {v2}
@@ -292,15 +318,19 @@ class MultiAgentActionTable:
 
         agent_action_value_range = MultiAgentActionTable.generate_instance__parameter_assertion(\
             agents,agent2movesize_map,agent_action_value_range,prg)
-
+        print("XX: ",agent_action_value_range)
 
         T,M = multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter)
         agents = sorted(agents) 
-
+        '''
+T,agent_idn,agent_moveset,agent_action_value_range,\
+    bracket_size_range,prg): 
+        ''' 
         for agent_idn in agents: 
             agent_moveset = M[agent_idn]
+            aarange = agent_action_value_range[agent_idn]
             bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,\
-                agent_action_value_range[agent_idn],bracket_size_range,prg)
+                aarange,bracket_size_range,prg)
         return MultiAgentActionTable(set(agents),T)
 
     @staticmethod 
@@ -308,7 +338,7 @@ class MultiAgentActionTable:
         prg):
         assert type(prg) in {FunctionType,MethodType}
 
-        if type(agent_action_value_range) = dict: 
+        if type(agent_action_value_range) == dict: 
             assert set(agent_action_value_range.keys()) == agents 
             for v in agent_action_value_range.values(): 
                 assert v[0] <= v[1]     
@@ -321,4 +351,5 @@ class MultiAgentActionTable:
 
         assert set(agent2movesize_map.keys()) == agents
         for v in agent2movesize_map.values(): assert v > 0 
+        print("QQ: ",agent_action_value_range)
         return agent_action_value_range
