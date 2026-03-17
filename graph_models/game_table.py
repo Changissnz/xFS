@@ -99,7 +99,7 @@ class FullMultiAgentActionTable(MultiAgentActionTable):
             v = t0[k] 
             for a in agents: 
                 m = safe_modulo_in_range(prg(),cumulative_payoff_multiplier_range)
-                v[a] = v[a] * m  
+                v[a] = round(v[a] * m,5)
         
         return MultiAgentActionTable(mt.agents,t0)
 

@@ -44,6 +44,7 @@ class GameControverter:
 
         self.payoff_trend_map = {a:0 for a in self.ftable.agents}
         self.next_agent_bracket = {} 
+        self.previous_agent_move_rank = {} 
         return    
 
     def recv_agent_move_map(self,amap):  
@@ -52,6 +53,7 @@ class GameControverter:
         return
 
     def derive_next(self):
+        self.previous_agent_move_rank.clear()
         # get the action rankings 
         for a_idn in self.ftable.agents: 
             self.agent_derivative_proc(a_idn)
@@ -60,6 +62,7 @@ class GameControverter:
     def agent_derivative_proc(self,a_idn): 
         corr_rank,num_ranks = self.assign_agent_payoff_to_bracket(a_idn) 
         self.update_payoff_trend_for_agent(a_idn,corr_rank,num_ranks)
+        self.previous_agent_move_rank[a_idn] = (corr_rank,num_ranks)
 
     def generate_next_table(self): 
         agent2movesize_map = {} 
@@ -96,6 +99,9 @@ class GameControverter:
         a_range = self.agent2payoff_range[a_idn]
         brackets = n_partition_for_range(a_range,num_brackets)
         bracket = brackets[index:index+2]
+        #print("a_range: ",a_range)
+        #print("rank: ",move_rank)
+        #print("bracket: ",index)  
         self.next_agent_bracket[a_idn] = bracket 
         return index,num_brackets - 1 
 
@@ -125,8 +131,21 @@ class GameControverter:
 
         m = safe_modulo_in_range(self.prg(),q) 
         q0 = adjust_range_by_multiplier(q0,m)
+        q0 = self.adjust_agent_payoff_range_(q0)
         self.agent2payoff_range[agent_idn] = q0 
         return q0
+
+    def adjust_agent_payoff_range_(self,q0): 
+        if q0[0] < GameControverter.DEFAULT_GAME_MIN_PAYOFF: 
+            q0[0] = GameControverter.DEFAULT_GAME_MIN_PAYOFF
+        if q0[1] < GameControverter.DEFAULT_GAME_MIN_PAYOFF: 
+            q0[1] = GameControverter.DEFAULT_GAME_MIN_PAYOFF
+
+        if q0[0] > GameControverter.DEFAULT_GAME_MAX_PAYOFF: 
+            q0[0] = GameControverter.DEFAULT_GAME_MAX_PAYOFF
+        if q0[1] > GameControverter.DEFAULT_GAME_MAX_PAYOFF: 
+            q0[1] = GameControverter.DEFAULT_GAME_MAX_PAYOFF
+        return q0 
 
     def update_payoff_trend_for_agent(self,agent_idn,correlation_rank,num_ranks):
         assert num_ranks > 0 
