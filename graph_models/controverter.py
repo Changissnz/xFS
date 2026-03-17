@@ -68,8 +68,12 @@ class GameControverter:
 
     """
     """
-    def assign_agent_payoff_to_bracket(self,a_idn): 
-        ranked_moves = self.ftable.sort_agent_moves(a_idn,2)
+    def assign_agent_payoff_to_bracket(self,a_idn,is_cumulative_payoff:bool=True):
+        if is_cumulative_payoff:  
+            ranked_moves = self.ftable.agent_action_cmap.sort_agent_moves(a_idn,2)
+        else: 
+            ranked_moves = self.ftable.sort_agent_moves(a_idn,2)
+
         a_move = self.agent_action_profile[a_idn] 
 
         move_rank = np.where(np.array(ranked_moves)[:,0] == a_move)[0][0]

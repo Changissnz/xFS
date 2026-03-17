@@ -128,6 +128,11 @@ class MultiAgentActionTable:
         for k in keys: 
             S += self.stringize_action_profile(k) + "\n" + "-" * 50 + "\n" 
         return S 
+
+    def __getitem__(self, key):
+        if key in self.agent_action_map: 
+            return self.agent_action_map[key]
+        assert False 
     
     def stringize_action_profile(self,k): 
         m2 = string_to_agent_move_map(k)

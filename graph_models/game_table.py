@@ -21,8 +21,8 @@ class FullMultiAgentActionTable(MultiAgentActionTable):
         mt2 = MultiAgentActionTable(agents,agent_action_dmap) 
         assert mt1.agent2move_map == self.agent2move_map == mt2.agent2move_map
 
-        self.agent_action_cmap = agent_action_cmap
-        self.agent_action_dmap = agent_action_dmap
+        self.agent_action_cmap = mt1
+        self.agent_action_dmap = mt2 
 
     def __str__(self): 
         S = ""
