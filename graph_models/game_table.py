@@ -9,6 +9,8 @@ Three <MultiAgentActionTable> instances.
 """
 class FullMultiAgentActionTable(MultiAgentActionTable):
 
+    DEFAULT_CUMULATIVE_PAYOFF_DURATION_RANGE = [2,20] 
+
     def __init__(self,agents,agent_action_imap,agent_action_cmap,agent_action_dmap):
         super().__init__(agents,agent_action_imap)
 
@@ -21,3 +23,112 @@ class FullMultiAgentActionTable(MultiAgentActionTable):
 
         self.agent_action_cmap = agent_action_cmap
         self.agent_action_dmap = agent_action_dmap
+
+    def __str__(self): 
+        S = ""
+        keys = sorted(self.agent_action_map.keys())
+        for k in keys: 
+            S += self.stringize_action_profile(k) 
+            S += "-" * 50 + "\n" 
+        return S 
+
+    def stringize_action_profile(self,k): 
+        m2 = string_to_agent_move_map(k)
+        x = self.agent_action_map[k]
+        x1 = self.agent_action_cmap[k] 
+        x2 = self.agent_action_dmap[k] 
+        keys = sorted(m2.keys())
+
+        s = ""
+        for k2 in keys: 
+            s += "agent {} move {} payoff_i {} payoff_t {} payoff_d {}\n".format(\
+                k2,m2[k2],x[k2],x1[k2],x2[k2])  
+        return s 
+
+    """
+    Generator scheme uses strict percentile scheme @ 
+    method<MultiAgentActionTable.generate_instance__type_strict_percentile>.
+    """
+    @staticmethod 
+    def generate_instance(agents,agent2movesize_map,\
+        agent_action_value_range,prg,bracket_size_range,move_idn_counter,\
+        cumulative_payoff_multiplier_range,\
+        duration_range=DEFAULT_CUMULATIVE_PAYOFF_DURATION_RANGE,\
+        ref_is_immediate_payoff:bool=True):
+
+        agent_action_cumulative_value_range = \
+            MultiAgentActionTable.format_agent_action_value_range(agents,agent_action_value_range)
+
+        # generate the reference (either immediate or cummulative)
+        mt_ref = MultiAgentActionTable.generate_instance__type_strict_percentile(agents,\
+            agent2movesize_map,agent_action_value_range,prg,bracket_size_range,\
+            move_idn_counter)
+
+        if not ref_is_immediate_payoff: 
+            cumulative_payoff_multiplier_range = sorted([\
+                zero_div(1,cumulative_payoff_multiplier_range[0],0),\
+                zero_div(1,cumulative_payoff_multiplier_range[1],0)])
+                
+        # generate anti-reference (either immediate or cummulative)
+        mt_antiref = FullMultiAgentActionTable.assign_accumulation_to_MultiAgentActionTable(mt_ref,\
+            agent_action_cumulative_value_range,cumulative_payoff_multiplier_range,prg)  
+
+        # assign duration
+        mtd = FullMultiAgentActionTable.assign_duration_to_MultiAgentActionTable(\
+            mt_ref,duration_range,prg) 
+
+        q0,q1 = (mt_ref,mt_antiref) if ref_is_immediate_payoff else (mt_antiref,mt_ref) 
+        return FullMultiAgentActionTable(mt_ref.agents,q0.agent_action_map,q1.agent_action_map,\
+            mtd.agent_action_map)   
+
+    @staticmethod 
+    def assign_accumulation_to_MultiAgentActionTable(mt,agent_action_value_range,\
+        cumulative_payoff_multiplier_range,prg):  
+
+        agent_action_value_range = MultiAgentActionTable.format_agent_action_value_range(\
+            mt.agents,agent_action_value_range)
+
+        t0 = deepcopy(mt.agent_action_map) 
+
+        # calculate 1 multiplier per agent 
+        agents = sorted(mt.agents) 
+        mult_map = FullMultiAgentActionTable.agent_to_cumulative_multiplier_map(agents,\
+            prg,cumulative_payoff_multiplier_range)
+        '''
+        print("MULT MAP")
+        print(mult_map)
+        print() 
+        '''
+
+        # multiply each payoff in matrix
+        keys = sorted(t0.keys())
+        for k in keys: 
+            v = t0[k] 
+            for a in agents: 
+                m = mult_map[a] 
+                v[a] = v[a] * m 
+        
+        return MultiAgentActionTable(mt.agents,t0)
+
+    @staticmethod 
+    def agent_to_cumulative_multiplier_map(agents,prg,cumulative_payoff_multiplier_range): 
+        mult_map = {}
+        agents = sorted(agents) 
+        for a in agents: 
+            mult_map[a] = safe_modulo_in_range(prg(),cumulative_payoff_multiplier_range) 
+        return mult_map
+
+    @staticmethod 
+    def assign_duration_to_MultiAgentActionTable(mt,duration_range,prg):  
+        assert is_valid_range(duration_range,True,False)
+
+        t0 = deepcopy(mt.agent_action_map) 
+        keys = sorted(t0.keys())
+        agents = sorted(mt.agents) 
+
+        for k in keys: 
+            v = t0[k] 
+            for a in agents: 
+                v[a] = modulo_in_range(int(prg()),duration_range)
+        
+        return MultiAgentActionTable(mt.agents,t0)

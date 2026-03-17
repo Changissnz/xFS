@@ -126,17 +126,17 @@ class MultiAgentActionTable:
         keys = sorted(self.agent_action_map.keys()) 
         S = "" 
         for k in keys: 
-            S += self.stringize_move(k) + "\n" + "-" * 50 + "\n" 
+            S += self.stringize_action_profile(k) + "\n" + "-" * 50 + "\n" 
         return S 
     
-    def stringize_move(self,k): 
+    def stringize_action_profile(self,k): 
         m2 = string_to_agent_move_map(k)
         x = self.agent_action_map[k] 
         keys = sorted(m2.keys())
 
         s = ""
         for k2 in keys: 
-            s += "agent {} move {} payoff {}\n".format(k2,m2[k2],x[k2])  
+            s += "agent {} move {} value {}\n".format(k2,m2[k2],x[k2])  
         return s 
 
     ################### preprocessing moves for info on `agent_action_map`
@@ -307,7 +307,9 @@ class MultiAgentActionTable:
         T,_ = multi_agent_action_map__zeros(agents,agent2movesize_map,move_idn_counter)
         agents_ = sorted(agents) 
 
-        for k,v in T.items(): 
+        keys = sorted(T.keys())
+        for k in keys:
+            v = T[k] 
             for k2 in agents_: 
                 v[k2] = round(safe_modulo_in_range(prg(),\
                     agent_action_value_range[k2]),5) 
@@ -334,17 +336,25 @@ class MultiAgentActionTable:
         prg):
         assert type(prg) in {FunctionType,MethodType}
 
+        agent_action_value_range = MultiAgentActionTable.format_agent_action_value_range(\
+            agents,agent_action_value_range)
+
+        assert set(agent2movesize_map.keys()) == agents
+        for v in agent2movesize_map.values(): assert v > 0 
+        return agent_action_value_range
+
+    @staticmethod 
+    def format_agent_action_value_range(agents,agent_action_value_range): 
+
         if type(agent_action_value_range) == dict: 
             assert set(agent_action_value_range.keys()) == agents 
             for v in agent_action_value_range.values(): 
                 assert v[0] <= v[1]     
         else: 
             assert agent_action_value_range[0] <= agent_action_value_range[1] 
+            agents = sorted(agents) 
             d = {} 
             for k in agents: 
                 d[k] = deepcopy(agent_action_value_range) 
             agent_action_value_range = d 
-
-        assert set(agent2movesize_map.keys()) == agents
-        for v in agent2movesize_map.values(): assert v > 0 
         return agent_action_value_range
