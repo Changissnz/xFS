@@ -106,7 +106,10 @@ def bracket_assignment_agent_action_payoff(T,agent_idn,agent_moveset,agent_actio
     return
 
 """
-table for immediate effects of actions by agents
+table that can be used for (immediate XOR cumulative XOR duration of) payoffs from 
+actions by agents. 
+
+Typically used as container for immediate payoffs. 
 """
 class MultiAgentActionTable: 
 
@@ -260,6 +263,9 @@ class MultiAgentActionTable:
     """
     index0 := (0|1|2) <-> (min|max|mean), payoff for other agents 
     index1 := (0|1|2) <-> (min|max|mean), summarization (1 value) of other agents' payoff map.
+
+    return: 
+    - agent move idn -> payoff info specified by the criteria (index0,index1). 
     """
     def agent_move_for_info_on_other_agents(self,a_idn,other_idns,other_agent_moves={},index0=2,\
         index1=2):

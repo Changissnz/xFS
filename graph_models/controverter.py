@@ -23,6 +23,12 @@ class GameControverter:
         move_idn_counter,agent_move_size_range = DEFAULT_GAME_AGENT_MOVE_SIZE_RANGE,\
         agent_payoff_bracket_range = DEFAULT_GAME_AGENT_PAYOFF_MOVE_BRACKET_RANGE): 
 
+        assert cumulative_payoff_multiplier_range[0] < 0 and cumulative_payoff_multiplier_range[1] > 0 
+        assert 0. <= pcorrelation_payoff <= 1.0 
+        assert 0. <= pcorrelation_upturn <= 1.0 
+        assert is_valid_range(agent_move_size_range,True,False) 
+        assert is_valid_range(agent_payoff_bracket_range,True,False) 
+
         self.ftable = ftable 
         # cumulative payoff 
         self.agent2payoff_range = agent2payoff_range
@@ -99,16 +105,9 @@ class GameControverter:
         # no change 
         if self.payoff_trend_map[agent_idn] == 0: 
             return q0  
-        
-        # upturn 
-        if self.payoff_trend_map[agent_idn] == 1: 
-            q = [0.,self.cpayoff_multiplier_range[1]]
-        # downturn 
-        else: 
-            q = [self.cpayoff_multiplier_range[0],0]
-        
-        ##upturn_range = self.cpayoff_multiplier_range
-        ##downturn_range = [-self.cpayoff_multiplier_range[1],-self.cpayoff_multiplier_range[0]] 
+                
+        upturn_range = [0.,self.cpayoff_multiplier_range[1]]
+        downturn_range = [-self.cpayoff_multiplier_range[1],0]#-self.cpayoff_multiplier_range[0]] 
 
         # upturn 
         if self.payoff_trend_map[agent_idn] == 1: 

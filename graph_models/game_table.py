@@ -1,11 +1,11 @@
 from .action_table import * 
 
 """
-table for immediate + long-term effects of actions by agents. 
+table for immediate + long-term payoffs from actions by agents. 
 Three <MultiAgentActionTable> instances.
-[0] immediate value 
-[1] cumulative value 
-[2] duration (number of timestamps) for cumulative value to be met 
+[0] immediate payoff  
+[1] cumulative payoff  
+[2] duration (number of timestamps) for cumulative payoff to be met 
 """
 class FullMultiAgentActionTable(MultiAgentActionTable):
 
