@@ -182,13 +182,14 @@ class MultiAgentActionTable:
         for m in self.agent2move_map[a_idn]: 
             info = self.base_info_on_agent_move(a_idn,m,other_agent_moves)
             move_info.append((int(m),info))
-        return sorted(move_info,key=lambda x:x[1][sort_index])
+        q = sorted(move_info,key=lambda x:x[1][sort_index])
+        return [(q_[0],q_[1][sort_index]) for q_ in q]
 
     """
     Determines the rank of agent `a_idn` conducting move `move_idn` 
     w.r.t. the others. For every element E in `agent_action_map` that 
     has agent `a_idn` conduct `move_idn`, ranks value of agent with the 
-    costs of the other, producing rank r. 
+    costs of the other agents, producing rank r. 
 
     NOTE: ordering of rank is least=0, greatest=max. 
 
@@ -214,7 +215,7 @@ class MultiAgentActionTable:
 
     """
     return:
-    - (min,max,mean) of agent move value 
+    - (min,max,mean) of agent move payoffs  
     """
     def base_info_on_agent_move(self,a_idn,move_idn,other_agent_moves={}):
         self.query_parameter_assertion(a_idn,move_idn,other_agent_moves)
@@ -232,13 +233,23 @@ class MultiAgentActionTable:
         return np.min(vs),np.max(vs),np.round(np.mean(vs),5) 
 
     """
-    calculates the move by agent `a_idn` that would yield the minumum mean value by agents in 
+    calculates the move by agent `a_idn` that would yield the minumum mean paypoff by agents in 
     set `other_idns`. If `other_agent_moves` is not empty, only those moves by the other agents 
     are considered in the ranking calculation.
     """
     def agent_move_for_minmean_value_by_other_agents(self,a_idn,other_idns,other_agent_moves={},\
         prg = None):
-        
+        return self.agent_countermove_for_other_agents(a_idn,other_idns,other_agent_moves,\
+            2,2,prg)         
+
+    """
+    calculates the move by agent that would yield the "minimal" payoff by the other agents. 
+    See description for function<MultiAgentActionTable.agent_move_for_info_on_other_agents> 
+    for how this "minimal" payoff is calculated. 
+    """
+    def agent_countermove_for_other_agents(self,a_idn,other_idns,other_agent_moves,\
+        index0,index1,prg = None): 
+
         other_info = self.agent_move_for_info_on_other_agents(a_idn,other_idns,other_agent_moves,2,2)
         other_info = [(k,v) for k,v in other_info.items()]
 
@@ -246,6 +257,10 @@ class MultiAgentActionTable:
             return int(prg_seqsort_ties(other_info,prg,vf=lambda x:x[1])[0][0])
         return int(sorted(other_info,key=lambda x:x[1])[0][0])
 
+    """
+    index0 := (0|1|2) <-> (min|max|mean), payoff for other agents 
+    index1 := (0|1|2) <-> (min|max|mean), summarization (1 value) of other agents' payoff map.
+    """
     def agent_move_for_info_on_other_agents(self,a_idn,other_idns,other_agent_moves={},index0=2,\
         index1=2):
         assert index0 in {0,1,2}
@@ -268,6 +283,13 @@ class MultiAgentActionTable:
             move_info[m] = s 
         return move_info 
 
+    """
+    given agent `a_idn` that conducts move `move_idn`, a map 
+
+        other agent idn -> (min,max,mean) payoff values 
+
+    is produced. 
+    """
     def base_info_on_other_agents(self,a_idn,move_idn,other_idns,other_agent_moves={}): 
         self.query_parameter_assertion(a_idn,move_idn,other_agent_moves)
         assert other_idns.issubset(self.agents) and a_idn not in other_idns

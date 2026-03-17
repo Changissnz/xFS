@@ -92,24 +92,19 @@ class FullMultiAgentActionTable(MultiAgentActionTable):
 
         # calculate 1 multiplier per agent 
         agents = sorted(mt.agents) 
-        mult_map = FullMultiAgentActionTable.agent_to_cumulative_multiplier_map(agents,\
-            prg,cumulative_payoff_multiplier_range)
-        '''
-        print("MULT MAP")
-        print(mult_map)
-        print() 
-        '''
 
-        # multiply each payoff in matrix
+        # multiply each agent's payoff range by a PRNG multiple
         keys = sorted(t0.keys())
         for k in keys: 
             v = t0[k] 
             for a in agents: 
-                m = mult_map[a] 
-                v[a] = v[a] * m 
+                m = safe_modulo_in_range(prg(),cumulative_payoff_multiplier_range)
+                v[a] = v[a] * m  
         
         return MultiAgentActionTable(mt.agents,t0)
 
+    # NOTE: unused method. Every agent assigned 1 float multiple. Multiples are used for deriving 
+    #       possible agent cumulative payoff ranges. 
     @staticmethod 
     def agent_to_cumulative_multiplier_map(agents,prg,cumulative_payoff_multiplier_range): 
         mult_map = {}

@@ -1,4 +1,5 @@
 from .game_table import * 
+from morebs2.point_sorter import median_swap
 
 def adjust_range_by_multiplier(r,m): 
     assert is_valid_range(r,True,True) or is_valid_range(r,False,True) 
@@ -60,7 +61,7 @@ class GameControverter:
             agent2movesize_map[a] = modulo_in_range(int(self.prg()),self.agent_move_size_range)
 
         self.ftable = FullMultiAgentActionTable.generate_instance(\
-            self.agents,agent2movesize_map,self.agent2payoff_range,\
+            self.ftable.agents,agent2movesize_map,self.agent2payoff_range,\
             self.prg,self.agent_payoff_bracket_range,\
             self.move_idn_counter,self.cpayoff_multiplier_range,\
             duration_range=FullMultiAgentActionTable.DEFAULT_CUMULATIVE_PAYOFF_DURATION_RANGE,\
@@ -70,25 +71,27 @@ class GameControverter:
     """
     def assign_agent_payoff_to_bracket(self,a_idn,is_cumulative_payoff:bool=True):
         if is_cumulative_payoff:  
-            ranked_moves = self.ftable.agent_action_cmap.sort_agent_moves(a_idn,2)
+            sorted_moves = self.ftable.agent_action_cmap.sort_agent_moves(a_idn,2)
         else: 
-            ranked_moves = self.ftable.sort_agent_moves(a_idn,2)
+            sorted_moves = self.ftable.sort_agent_moves(a_idn,2)
 
+        ranked_moves = rank_sequence(sorted_moves,vf=lambda x:x[1],\
+            element_output_function=lambda x:x[0],output_type=list)  
         a_move = self.agent_action_profile[a_idn] 
 
-        move_rank = np.where(np.array(ranked_moves)[:,0] == a_move)[0][0]
+        move_rank = np.where(np.array(ranked_moves)[:,0] == a_move)[0][0] 
 
-        ix = [i for i in range(ranked_moves[-1][1])] 
+        ix = [i for i in range(ranked_moves[-1][1]+1)] 
         ix = median_swap(ix,self.pcorrelation_payoff)[::-1] 
         index = ix.index(move_rank)
         self.adjust_agent_payoff_range(a_idn) 
 
         num_brackets = ranked_moves[-1][1] + 1 
-        a_range = self.agent2payoff_range[agent_idn]
+        a_range = self.agent2payoff_range[a_idn]
         brackets = n_partition_for_range(a_range,num_brackets)
         bracket = brackets[index:index+2]
         self.next_agent_bracket[a_idn] = bracket 
-        return index,num_backets - 1 
+        return index,num_brackets - 1 
 
     # TODO 
     def adjust_agent_payoff_range(self,agent_idn): 
@@ -156,17 +159,15 @@ class GameControverter:
         duration_range=FullMultiAgentActionTable.DEFAULT_CUMULATIVE_PAYOFF_DURATION_RANGE,\
         ref_is_immediate_payoff=True)
 
-        mult_map = FullMultiAgentActionTable.agent_to_cumulative_multiplier_map(\
-            agents,prg,cumulative_payoff_multiplier_range)
         agent_action_value_range = MultiAgentActionTable.format_agent_action_value_range(\
             agents,agent_action_value_range) 
 
         agent2payoff_range = {} 
         agents_ = sorted(agents)
         for a in agents_: 
-            v = agent_action_value_range[a] 
-            v2 = mult_map[a] 
-            agent2payoff_range[a] = adjust_range_by_multiplier(v,v2)  
+            r = agent_action_value_range[a] 
+            m = safe_modulo_in_range(prg(),cumulative_payoff_multiplier_range) 
+            agent2payoff_range[a] = adjust_range_by_multiplier(r,m)  
 
         return GameControverter(ft,agent2payoff_range,cumulative_payoff_multiplier_range,\
             pcorrelation_payoff,pcorrelation_upturn,prg,move_idn_counter)
