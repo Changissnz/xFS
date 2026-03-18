@@ -77,6 +77,7 @@ class GameControverterClass(unittest.TestCase):
         
         gc = GameControverter__sample_GCX(0,0) 
         gc1 = GameControverter__sample_GCX(1,0) 
+        gc2 = GameControverter__sample_GCX(1,1) 
 
         M = GTAgent.best_decision_for_game(gta,gc,"c") 
         gc.recv_agent_move_map(M)
@@ -87,9 +88,17 @@ class GameControverterClass(unittest.TestCase):
         gc1.recv_agent_move_map(M) 
         next(gc1) 
 
+        gc2.recv_agent_move_map(M) 
+        next(gc2)
+
+        # check for correct ranking 
         assert gc.previous_agent_move_rank == {0: (0, 2), 1: (0, 1), 2: (0, 1)}
         assert gc1.previous_agent_move_rank == {0: (2, 2), 1: (1, 1), 2: (1, 1)}
         assert gc.agent2payoff_range == gc1.agent2payoff_range
+
+        # check for correct boolean trends 
+        assert gc.payoff_trend_map == gc1.payoff_trend_map == {0: -1, 1: -1, 2: -1} 
+        assert gc2.payoff_trend_map == {0: 1, 1: 1, 2: 1}
 
     def test__GameControverter__next__case_3(self):
         gta = GTAgent__sample_TA() 
@@ -153,6 +162,10 @@ class GameControverterClass(unittest.TestCase):
             b0 = np.array([v]) 
             b1 = np.array([sx]) 
             assert bounds_is_subbounds(b1,b0) 
+
+        # check for correct payoff trend 
+        assert gc.payoff_trend_map == {0: 1, 1: 1, 2: 1}
+        assert gc1.payoff_trend_map == {0: -1, 1: -1, 2: -1}
 
 if __name__ == '__main__':
     unittest.main()
