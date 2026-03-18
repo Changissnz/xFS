@@ -7,6 +7,56 @@ def adjust_range_by_multiplier(r,m):
     r0 = r[0]  * m 
     return tuple(np.round((r0,r0+d),5))
 
+"""
+A structure used to produce payoff matrices for a set of n agents. At every 
+timestamp t after the first, each agent p_i is given q_i new moves for the new 
+payoff matrix (the agent situation). 
+
+Generation of new payoff matrices relies on principles of correlation that 
+use variables `pcorrelation_payoff` and `pcorrelation_upturn`. 
+
+At timestamp t after the first, <GameControverter> receives agent action 
+profile, via function<recv_agent_move_map>. <GameControverter> then adjusts 
+every agent's possible cumulative payoff range (variable<agent2payoff_range>). 
+This variable determines each agent's possible cumulative payoff range for the next 
+<FullMultiAgentActionTable>. 
+
+The adjustment process considers one of two categories, used to rank each agent's 
+move in the agent's possible moveset: 
+- immediate payoff
+- cumulative payoff. 
+
+Agent move is ranked according to the degree of positive correlation (1 is entirely 
+positively correlated to the agent move with greatest mean payoff), 
+variable<pcorrelation_payoff>. The agent a_i's rank r_i then is converted to a float f in [0.,1.], by 
+    (r_i + 1) / (r_t + 1); r_t the total number of ranks starting at integer 0 (minumum rank). 
+If 
+    f <= variable<pcorrelation_upturn>, 
+then the agent cumulative payoff range is on an "upturn". 
+Otherwise, it is on a "downturn". The boolean for upturn is stored in variable<payoff_trend_map>. 
+
+In a payoff upturn, the current possible cumulative payoff range r0 is adjusted by a float f in 
+variable<cpayoff_multiplier_range>, via method<adjust_range_by_multiplier>, to produce r1, a 
+range with a positive minumum. In a payoff downturn, r1 would have a negative maximum. 
+
+The rank r_i for each agent a_i is then used to assign a bracket, in other words, a subrange 
+of the possible cumulative payoff range for the agent a_i, to the agent a_i; see 
+variable<next_agent_bracket>. This bracket is the agent's actual cumulative payoff range. No 
+move of the agent in the next situation can be out of bounds of this bracket. When an agent 
+chooses the "best" move (highest-ranking according to immediate XOR cumulative payoff), its 
+rank is the highest when variable<pcorrelation_payoff> is 0, and lowest when variable<next_agent_bracket>
+is 1. This rank corresponds to the bracket in the partition of the possible cumulative payoff 
+range. 
+
+To summarize, the rank of an agent's move bears effects in two dimensions. The primary dimension, 
+by programmed design, is that of the trend (upturn or downturn). The secondary dimension is the 
+bracket that is the actual cumulative payoff range, a subrange in the possible cumulative payoff 
+range. 
+
+The two ranges, variable<agent_move_size_range> and variable<agent_payoff_bracket_range>, 
+determine the possible number of moves every new situation allows an agent and the number 
+of possible brackets for partitioning an agent's cumulative payoff range, respectively. 
+"""
 class GameControverter:
 
 
@@ -76,7 +126,7 @@ class GameControverter:
             agent2movesize_map[a] = modulo_in_range(int(self.prg()),self.agent_move_size_range)
 
         self.ftable = FullMultiAgentActionTable.generate_instance(\
-            self.ftable.agents,agent2movesize_map,self.agent2payoff_range,\
+            self.ftable.agents,agent2movesize_map,self.next_agent_bracket,\
             self.prg,self.agent_payoff_bracket_range,\
             self.move_idn_counter,self.cpayoff_multiplier_range,\
             duration_range=FullMultiAgentActionTable.DEFAULT_CUMULATIVE_PAYOFF_DURATION_RANGE,\
@@ -108,7 +158,7 @@ class GameControverter:
         #print("a_range: ",a_range)
         #print("rank: ",move_rank)
         #print("bracket: ",index)  
-        self.next_agent_bracket[a_idn] = bracket 
+        self.next_agent_bracket[a_idn] = tuple(bracket) 
         return index,num_brackets - 1 
 
     # TODO 
