@@ -50,7 +50,7 @@ range.
 
 To summarize, the rank of an agent's move bears effects in two dimensions. The primary dimension, 
 by programmed design, is that of the trend (upturn or downturn). The secondary dimension is the 
-bracket that is the actual cumulative payoff range, a subrange in the possible cumulative payoff 
+bracket, the actual cumulative payoff range, a subrange in the possible cumulative payoff 
 range. 
 
 The two ranges, variable<agent_move_size_range> and variable<agent_payoff_bracket_range>, 
