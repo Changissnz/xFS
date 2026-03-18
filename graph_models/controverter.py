@@ -65,7 +65,9 @@ payoffs, for every timestamp after the first.
 
 `Controverter` is the acting noun for `controversy`. Similar to how controversies defy expectations, 
 `Controverter` generates agent situations based on non-transparent correlations from every agent's 
-move. 
+move. Defiance of expectations and differences between predictions cause controversy. An agent that 
+decides on "best" moves, calculated through some process, may find these "best" moves do not yield 
+a satisfactory outcome.
 
 NOTE: the correlations mentioned in this description are linearly independent. One agent B's move does 
       not affect another agent A's next moveset and possible cumulative payoff range. 
