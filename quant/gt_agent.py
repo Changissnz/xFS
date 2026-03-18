@@ -49,3 +49,16 @@ class GTAgent:
 
     def decision(self,mt:MultiAgentActionTable,other_agent_moves): 
         return self.dec_maker.decide(self.agent_idn,mt,other_agent_moves,self.prg) 
+
+    @staticmethod 
+    def best_decision_for_game(gta,gc,table): 
+        assert type(gta) == GTAgent
+        assert type(gc) == GameControverter
+        assert table in {"c","i"} 
+
+        T = gc.ftable if table == "i" else gc.ftable.agent_action_cmap
+        M = {}
+        for x in T.agents: 
+            gta.agent_idn = x 
+            M[x] = gta.decision(T,other_agent_moves={})
+        return M 

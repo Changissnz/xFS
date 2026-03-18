@@ -5,7 +5,7 @@ def adjust_range_by_multiplier(r,m):
     assert is_valid_range(r,True,True) or is_valid_range(r,False,True) 
     d = r[1] - r[0]
     r0 = r[0]  * m 
-    return (r0,r0+d)
+    return tuple(np.round((r0,r0+d),5))
 
 class GameControverter:
 
@@ -45,12 +45,17 @@ class GameControverter:
         self.payoff_trend_map = {a:0 for a in self.ftable.agents}
         self.next_agent_bracket = {} 
         self.previous_agent_move_rank = {} 
+
+        self.correlate_to_immediate_payoff = False 
         return    
 
     def recv_agent_move_map(self,amap):  
         assert set(amap.keys()) == self.ftable.agents 
         self.agent_action_profile = amap 
         return
+
+    def switch_correlation(self): 
+        self.correlate_to_immediate_payoff = not self.correlate_to_immediate_payoff
 
     def derive_next(self):
         self.previous_agent_move_rank.clear()
@@ -60,7 +65,8 @@ class GameControverter:
         return 
 
     def agent_derivative_proc(self,a_idn): 
-        corr_rank,num_ranks = self.assign_agent_payoff_to_bracket(a_idn) 
+        corr_rank,num_ranks = self.assign_agent_payoff_to_bracket(a_idn,\
+            not self.correlate_to_immediate_payoff)  
         self.update_payoff_trend_for_agent(a_idn,corr_rank,num_ranks)
         self.previous_agent_move_rank[a_idn] = (corr_rank,num_ranks)
 
@@ -98,7 +104,7 @@ class GameControverter:
         num_brackets = ranked_moves[-1][1] + 1 
         a_range = self.agent2payoff_range[a_idn]
         brackets = n_partition_for_range(a_range,num_brackets)
-        bracket = brackets[index:index+2]
+        bracket = np.round(brackets[index:index+2],5)
         #print("a_range: ",a_range)
         #print("rank: ",move_rank)
         #print("bracket: ",index)  
