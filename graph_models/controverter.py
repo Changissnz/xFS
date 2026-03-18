@@ -171,6 +171,7 @@ class GameControverter:
         a_move = self.agent_action_profile[a_idn] 
 
         move_rank = np.where(np.array(ranked_moves)[:,0] == a_move)[0][0] 
+        move_rank = ranked_moves[move_rank][1]  
 
         ix = [i for i in range(ranked_moves[-1][1]+1)] 
         ix = median_swap(ix,self.pcorrelation_payoff)[::-1] 
