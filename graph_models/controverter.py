@@ -58,6 +58,17 @@ range.
 The two ranges, variable<agent_move_size_range> and variable<agent_payoff_bracket_range>, 
 determine the possible number of moves every new situation allows an agent and the number 
 of possible brackets for partitioning an agent's cumulative payoff range, respectively. 
+------------------------------------------------------------------------------------------------
+
+The class is named `GameControverter` because its programming controls agent situations, of moves and 
+payoffs, for every timestamp after the first. 
+
+`Controverter` is the acting noun for `controversy`. Similar to how controversies defy expectations, 
+`Controverter` generates agent situations based on non-transparent correlations from every agent's 
+move. 
+
+NOTE: the correlations mentioned in this description are linearly independent. One agent B's move does 
+      not affect another agent A's next moveset and possible cumulative payoff range. 
 """
 class GameControverter:
 
