@@ -10,7 +10,9 @@ def adjust_range_by_multiplier(r,m):
 """
 A structure used to produce payoff matrices for a set of n agents. At every 
 timestamp t after the first, each agent p_i is given q_i new moves for the new 
-payoff matrix (the agent situation). 
+payoff matrix (the agent situation). The quality of each agent situation is 
+determined by the previous agent action profile (the map of each agent's move), 
+in conjunction with other parameters. 
 
 Generation of new payoff matrices relies on principles of correlation that 
 use variables `pcorrelation_payoff` and `pcorrelation_upturn`. 
@@ -97,8 +99,21 @@ class GameControverter:
         self.previous_agent_move_rank = {} 
 
         self.correlate_to_immediate_payoff = False 
-        return    
+        return  
 
+    """
+    main method 
+    """
+    def __next__(self): 
+        assert type(self.agent_action_profile) != type(None) 
+        self.derive_next()
+        self.generate_next_table()
+        self.agent_action_profile = None 
+        return  
+
+    """
+    pre-main method 
+    """
     def recv_agent_move_map(self,amap):  
         assert set(amap.keys()) == self.ftable.agents 
         self.agent_action_profile = amap 
@@ -210,12 +225,6 @@ class GameControverter:
         t = 1 if pos_trend else -1 
         self.payoff_trend_map[agent_idn] = t 
         return 
-
-    def __next__(self): 
-        assert type(self.agent_action_profile) != type(None) 
-        self.derive_next()
-        self.generate_next_table()
-        return
 
     ########################################
 
