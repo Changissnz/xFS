@@ -31,16 +31,22 @@ class ControverterNet:
         self.is_correlation_variable = is_correlation_variable
         return
 
-    def set_non_auto_agent(self,a_idn): 
+    def set_non_auto_agent(self,a_idn,prg=None): 
         assert a_idn in self.amap 
         self.nonauto_agents |= {a_idn}
         self.auto_agents -= {a_idn}
+
+        if type(prg) in {MethodType,FunctionType}:
+            self.amap[a_idn].prg = prg 
         return 
 
-    def set_auto_agent(self,a_idn): 
+    def set_auto_agent(self,a_idn,prg=None): 
         assert a_idn in self.amap 
         self.auto_agents |= {a_idn}
         self.nonauto_agents -= {a_idn}
+
+        if type(prg) in {MethodType,FunctionType}:
+            self.amap[a_idn].prg = prg 
         return
 
     def prng_set_correlation_values(self): 
@@ -111,6 +117,9 @@ class ControverterNet:
 
         # update Controverter 
         C = self.tmap[node_idn] 
+        ##print("DD")
+        ##print(d) 
+        
         C.recv_agent_move_map(d) 
         next(C)
         return
@@ -158,6 +167,8 @@ class ControverterNet:
 
         if a_idn in self.auto_agents: 
             ranked_moves = C.rank_agent_moves(a_idn,is_cumulative_payoff=True)
+            #print("RANKING")
+            #print(ranked_moves)
             return ranked_moves[-1][0] 
         else: 
             # choose cumulative or immediate type 
@@ -180,13 +191,13 @@ class ControverterNet:
 
     def switch_nonauto_agent_decision_type(self,a_idn): 
         a = self.amap[a_idn]
-        x = modulo_in_range(int(a.prg()),6) 
+        x = int(a.prg()) % 6
 
         if x < 3: 
             a.change_objective("self",x) 
         else: 
-            one = modulo_in_range(int(a.prg()),3)
-            two = modulo_in_range(int(a.prg()),3)
+            one = int(a.prg()) % 3
+            two = int(a.prg()) % 3
             a.change_objective("others",(one,two)) 
         return
 
@@ -194,7 +205,7 @@ class ControverterNet:
     def generate_instance(num_agents,path_size,agent_action_value_range,\
         cumulative_payoff_multiplier_range,prg,allow_agent_move_knowledge=False,\
         is_correlation_variable=True): 
-        assert type(path_size) == int and path_size > 1 
+        assert type(path_size) == int and path_size > 0 
 
         N = NodePath.preload([i for i in range(path_size)],[1 for _ in range(path_size -1)])
         tmap = {} 

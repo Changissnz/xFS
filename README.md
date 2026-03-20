@@ -52,6 +52,10 @@ Here is a list of graph problems in the project:
     - vantage point for learning: strangling agent with objective to control all nodes 
     of graph G, the subject of strangling. 
     - file: `graph_problems/sb.py` 
+- Controverter Bot (Alpha) 
+    - vantage point for learning: an agent in a multi-agent game, structured as a 
+    continually variable chain of decision junction points, each requiring all the 
+    agents to make their moves. 
 - Middleman Bot (work in progress) 
 
 #### NOTE: 
