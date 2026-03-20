@@ -5,7 +5,8 @@ from morebs2.numerical_generator import prg_decimal,prg_to_prg__LCG_sequence,\
 
 class ControverterNet: 
 
-    def __init__(self,amap:dict,tmap:dict,N:NodePath,prg,allow_agent_move_knowledge): 
+    def __init__(self,amap:dict,tmap:dict,N:NodePath,prg,allow_agent_move_knowledge,\
+        is_correlation_variable:bool): 
 
         for v in amap.values(): assert type(v) == GTAgent
         assert len(amap) > 1 
@@ -15,6 +16,8 @@ class ControverterNet:
 
         assert type(N) == NodePath
         assert type(allow_agent_move_knowledge) == bool 
+        assert type(is_correlation_variable) == bool 
+
 
         self.amap = amap 
         self.tmap = tmap 
@@ -25,6 +28,7 @@ class ControverterNet:
         self.nonauto_agents = set()
 
         self.allow_agent_move_knowledge = allow_agent_move_knowledge
+        self.is_correlation_variable = is_correlation_variable
         return
 
     def set_non_auto_agent(self,a_idn): 
@@ -39,10 +43,49 @@ class ControverterNet:
         self.nonauto_agents -= {a_idn}
         return
 
+    def prng_set_correlation_values(self): 
+        for node_idn in self.N: 
+            if type(node_idn) == type(None): 
+                break 
+            d0 = prg_decimal(self.prg,[0.,1.])
+            d1 = prg_decimal(self.prg,[0.,1.]) 
+            self.set_correlation_values_for_node(node_idn,d0,d1) 
+        return 
+
+    def set_correlation_values(self,pcorrelation_payoff,pcorrelation_upturn): 
+        for node_idn in self.N: 
+            if type(node_idn) == type(None): 
+                break 
+            self.set_correlation_values_for_node(node_idn,pcorrelation_payoff,pcorrelation_upturn)
+    
+    def set_correlation_values_for_node(self,node_idn,pcorrelation_payoff,pcorrelation_upturn): 
+
+        C = self.tmap[node_idn]
+        if type(pcorrelation_payoff) != type(None): 
+            C.pcorrelation_payoff = pcorrelation_payoff
+        if type(pcorrelation_upturn) != type(None): 
+            C.pcorrelation_upturn = pcorrelation_upturn
+
     def __next__(self): 
         for node_idn in self.N: 
             if type(node_idn) == type(None): break 
             self.process_at_node(node_idn,self.allow_agent_move_knowledge)
+        
+        if self.is_correlation_variable:
+            self.prng_set_correlation_values()
+
+    def agent_value_ranking(self):
+        d = [] 
+        for k in self.amap.keys(): 
+            a = self.amap[k]
+            v = a.value
+            d.append((k,v))
+        d = sorted(d,key=lambda x:x[1])[::-1] 
+        s = "" 
+        for d_ in d: 
+            s += "agent {} value {}\n".format(d_[0],d_[1]) 
+        s += "\n"
+        return s 
 
     def process_at_node(self,node_idn,allow_agent_move_knowledge:bool):  
         # sort the agents by prng 
@@ -149,7 +192,8 @@ class ControverterNet:
 
     @staticmethod 
     def generate_instance(num_agents,path_size,agent_action_value_range,\
-        cumulative_payoff_multiplier_range,prg,allow_agent_move_knowledge=False): 
+        cumulative_payoff_multiplier_range,prg,allow_agent_move_knowledge=False,\
+        is_correlation_variable=True): 
         assert type(path_size) == int and path_size > 1 
 
         N = NodePath.preload([i for i in range(path_size)],[1 for _ in range(path_size -1)])
@@ -166,7 +210,8 @@ class ControverterNet:
         for i in range(num_agents): 
             agents[i] = GTAgent(i,"self",2,prg_seq[i]) 
 
-        return ControverterNet(agents,tmap,N,prg,allow_agent_move_knowledge)  
+        return ControverterNet(agents,tmap,N,prg,allow_agent_move_knowledge,\
+            is_correlation_variable)  
 
     @staticmethod
     def generate_one_node(num_agents,agent_action_value_range,\
