@@ -65,7 +65,7 @@ class GameControverterClass(unittest.TestCase):
 
         #after = deepcopy(gc.ftable)
         r1 = deepcopy(gc.agent2payoff_range)
-        assert gc.previous_agent_move_rank == {0: (0, 6), 1: (0, 1), 2: (0, 2)},"got {}".format(gc.previous_agent_move_rank)
+        assert gc.previous_agent_move_rank == {0: (0, 2), 1: (0, 2), 2: (0, 5)},"got {}".format(gc.previous_agent_move_rank)
 
         # check for correct payoff range adjustment 
         for k,v in r0.items(): 
@@ -132,8 +132,8 @@ class GameControverterClass(unittest.TestCase):
         r11 = deepcopy(gc1.agent2payoff_range) 
 
         # check for correct move ranking 
-        assert gc.previous_agent_move_rank == {0: (0, 6), 1: (0, 1), 2: (0, 2)}
-        assert gc1.previous_agent_move_rank == {0: (6, 6), 1: (1, 1), 2: (2, 2)}
+        assert gc.previous_agent_move_rank == {0: (0, 2), 1: (0, 2), 2: (0, 5)}, "got {}".format(gc.previous_agent_move_rank)
+        assert gc1.previous_agent_move_rank == {0: (2, 2), 1: (2, 2), 2: (5, 5)}, "got {}".format(gc1.previous_agent_move_rank)
 
         # check for correct bracket relation 
         for k,v in gc.next_agent_bracket.items(): 
@@ -145,6 +145,11 @@ class GameControverterClass(unittest.TestCase):
             1: np.array([16860.58422, 16870.58422]), \
             2: np.array([989.91245, 996.57912])}
 
+        ans = {0: (2019.61743, 2026.2841), \
+            1: (20634.24842, 20640.91509), \
+            2: (4738.61186, 4741.94519)}
+
+
         for k,v in gc.next_agent_bracket.items(): 
             assert np.all(v == ans[k])
             sx = r10[k] 
@@ -152,9 +157,9 @@ class GameControverterClass(unittest.TestCase):
             b1 = np.array([sx]) 
             assert bounds_is_subbounds(b1,b0) 
 
-        ans = {0: np.array([-3574.2933 , -3571.43616]), \
-            1: np.array([-4125.92428, -4115.92428]), \
-            2: np.array([-4518.70272, -4512.03605])}
+        ans = {0: (-3742.27974, -3735.61307), \
+            1: (-348.92675, -342.26008), \
+            2: (-766.66997, -763.33664)}
 
         for k,v in gc1.next_agent_bracket.items(): 
             assert np.all(v == ans[k])

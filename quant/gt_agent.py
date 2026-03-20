@@ -24,7 +24,7 @@ class GTAgentDecisionType:
 
     def decide(self,a_idn,mt:MultiAgentActionTable,other_agent_moves,prg=None): 
         assert issubclass(type(mt),MultiAgentActionTable)
-        
+
         if self.objective == "self": 
             moves = mt.sort_agent_moves(a_idn,self.objective_var,other_agent_moves)
             return moves[-1][0] 
@@ -42,7 +42,11 @@ class GTAgent:
         assert type(prg) in {MethodType,FunctionType,type(None)} 
         self.agent_idn = agent_idn 
         self.dec_maker = GTAgentDecisionType(objective,objective_var)
-        self.prg = prg 
+        self.prg = prg
+
+        self.payoff_queue = [] 
+        self.action_cache = [] 
+        self.value = 0. 
         return 
 
     def change_objective(self,objective,objective_var): 
@@ -50,6 +54,29 @@ class GTAgent:
 
     def decision(self,mt:MultiAgentActionTable,other_agent_moves): 
         return self.dec_maker.decide(self.agent_idn,mt,other_agent_moves,self.prg) 
+
+    def add_to_payoff_queue(self,action_idn,immediate,cumulative_sequence): 
+        assert type(immediate) == float 
+        assert type(cumulative_sequence) == list 
+
+        self.action_cache.append(action_idn)
+        self.value += immediate 
+        self.payoff_queue.append(cumulative_sequence)
+        return 
+
+    def account_for_payoffs(self): 
+        i = 0
+        s = 0  
+        while i < len(self.payoff_queue): 
+            q = self.payoff_queue[i] 
+            q_ = q.pop(0) 
+            s += q_ 
+
+            if len(q) == 0: 
+                self.payoff_queue.pop(i) 
+            else: 
+                i += 1 
+        self.value += s 
 
     @staticmethod 
     def best_decision_for_game(gta,gc,table): 

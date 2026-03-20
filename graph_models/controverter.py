@@ -163,13 +163,7 @@ class GameControverter:
     """
     """
     def assign_agent_payoff_to_bracket(self,a_idn,is_cumulative_payoff:bool=True):
-        if is_cumulative_payoff:  
-            sorted_moves = self.ftable.agent_action_cmap.sort_agent_moves(a_idn,2)
-        else: 
-            sorted_moves = self.ftable.sort_agent_moves(a_idn,2)
-
-        ranked_moves = rank_sequence(sorted_moves,vf=lambda x:x[1],\
-            element_output_function=lambda x:x[0],output_type=list)  
+        ranked_moves = self.rank_agent_moves(a_idn,is_cumulative_payoff)
         a_move = self.agent_action_profile[a_idn] 
 
         move_rank = np.where(np.array(ranked_moves)[:,0] == a_move)[0][0] 
@@ -189,6 +183,17 @@ class GameControverter:
         #print("bracket: ",index)  
         self.next_agent_bracket[a_idn] = tuple(bracket) 
         return index,num_brackets - 1 
+
+    def rank_agent_moves(self,a_idn,is_cumulative_payoff:bool=True):
+        if is_cumulative_payoff:  
+            sorted_moves = self.ftable.agent_action_cmap.sort_agent_moves(a_idn,2)
+        else: 
+            sorted_moves = self.ftable.sort_agent_moves(a_idn,2)
+        ranked_moves = rank_sequence(sorted_moves,vf=lambda x:x[1],\
+            element_output_function=lambda x:x[0],output_type=list)  
+        
+        ranked_moves = prg_seqsort_ties(ranked_moves,self.prg,vf=lambda x:x[1])         
+        return ranked_moves
 
     # TODO 
     def adjust_agent_payoff_range(self,agent_idn): 
