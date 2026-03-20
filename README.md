@@ -56,6 +56,7 @@ Here is a list of graph problems in the project:
     - vantage point for learning: an agent in a multi-agent game, structured as a 
     continually variable chain of decision junction points, each requiring all the 
     agents to make their moves. 
+    - file: `graph_problems/cb.py` 
 - Middleman Bot (work in progress) 
 
 #### NOTE: 
