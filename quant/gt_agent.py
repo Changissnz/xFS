@@ -23,7 +23,8 @@ class GTAgentDecisionType:
         self.assert_parameters() 
 
     def decide(self,a_idn,mt:MultiAgentActionTable,other_agent_moves,prg=None): 
-
+        assert issubclass(type(mt),MultiAgentActionTable)
+        
         if self.objective == "self": 
             moves = mt.sort_agent_moves(a_idn,self.objective_var,other_agent_moves)
             return moves[-1][0] 

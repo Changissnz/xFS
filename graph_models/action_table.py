@@ -246,9 +246,11 @@ class MultiAgentActionTable:
             2,2,prg)         
 
     """
-    calculates the move by agent that would yield the "minimal" payoff by the other agents. 
-    See description for function<MultiAgentActionTable.agent_move_for_info_on_other_agents> 
-    for how this "minimal" payoff is calculated. 
+    Calculates the move by agent that would yield the "minimal" payoff, 
+        MIN(MEAN (MEAN(others))),
+    by the other agents. See description for 
+    function<MultiAgentActionTable.agent_move_for_info_on_other_agents> for how this "minimal" 
+    payoff is calculated. 
     """
     def agent_countermove_for_other_agents(self,a_idn,other_idns,other_agent_moves,\
         index0,index1,prg = None): 
