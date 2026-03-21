@@ -19,8 +19,8 @@ use variables `pcorrelation_payoff` and `pcorrelation_upturn`.
 
 At timestamp t after the first, <GameControverter> receives agent action 
 profile, via function<recv_agent_move_map>. <GameControverter> then adjusts 
-every agent's possible cumulative payoff range (variable<agent2payoff_range>). 
-This variable determines each agent's possible cumulative payoff range for the next 
+every agent's probable cumulative payoff range (variable<agent2payoff_range>). 
+This variable determines each agent's probable cumulative payoff range for the next 
 <FullMultiAgentActionTable>. 
 
 The adjustment process considers one of two categories, used to rank each agent's 
@@ -37,22 +37,22 @@ If
 then the agent cumulative payoff range is on an "upturn". 
 Otherwise, it is on a "downturn". The boolean for upturn is stored in variable<payoff_trend_map>. 
 
-In a payoff upturn, the current possible cumulative payoff range r0 is adjusted by a float f in 
+In a payoff upturn, the current probable cumulative payoff range r0 is adjusted by a float f in 
 variable<cpayoff_multiplier_range>, via method<adjust_range_by_multiplier>, to produce r1, a 
 range with a positive minumum. In a payoff downturn, r1 would have a negative maximum. 
 
 The rank r_i for each agent a_i is then used to assign a bracket, in other words, a subrange 
-of the possible cumulative payoff range for the agent a_i, to the agent a_i; see 
+of the probable cumulative payoff range for the agent a_i, to the agent a_i; see 
 variable<next_agent_bracket>. This bracket is the agent's actual cumulative payoff range. No 
 move of the agent in the next situation can be out of bounds of this bracket. When an agent 
 chooses the "best" move (highest-ranking according to immediate XOR cumulative payoff), its 
 rank is the highest when variable<pcorrelation_payoff> is 0, and lowest when variable<next_agent_bracket>
-is 1. This rank corresponds to the bracket in the partition of the possible cumulative payoff 
+is 1. This rank corresponds to the bracket in the partition of the probable cumulative payoff 
 range. 
 
 To summarize, the rank of an agent's move bears effects in two dimensions. The primary dimension, 
 by programmed design, is that of the trend (upturn or downturn). The secondary dimension is the 
-bracket, the actual cumulative payoff range, a subrange in the possible cumulative payoff 
+bracket, the actual cumulative payoff range, a subrange in the probable cumulative payoff 
 range. 
 
 The two ranges, variable<agent_move_size_range> and variable<agent_payoff_bracket_range>, 
@@ -70,7 +70,7 @@ decides on "best" moves, calculated through some process, may find these "best" 
 a satisfactory outcome.
 
 NOTE: the correlations mentioned in this description are linearly independent. One agent B's move does 
-      not affect another agent A's next moveset and possible cumulative payoff range. 
+      not affect another agent A's next moveset and probable cumulative payoff range. 
 """
 class GameControverter:
 
