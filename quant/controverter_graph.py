@@ -186,7 +186,8 @@ class ControverterNet:
             self.switch_nonauto_agent_decision_type(a_idn)
 
             # decide 
-            d = a.decision(t,other_agent_moves)
+            other_agents = set(self.amap.keys()) - {a_idn}
+            d = a.decision(t,other_agents,other_agent_moves)
             return d 
 
     def switch_nonauto_agent_decision_type(self,a_idn): 

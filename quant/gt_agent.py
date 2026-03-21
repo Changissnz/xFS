@@ -22,7 +22,7 @@ class GTAgentDecisionType:
         self.objective_var = objective_var
         self.assert_parameters() 
 
-    def decide(self,a_idn,mt:MultiAgentActionTable,other_agent_moves,prg=None): 
+    def decide(self,a_idn,mt:MultiAgentActionTable,other_agents,other_agent_moves,prg=None): 
         assert issubclass(type(mt),MultiAgentActionTable)
 
         if self.objective == "self": 
@@ -30,7 +30,7 @@ class GTAgentDecisionType:
             return moves[-1][0] 
         
         index0,index1 = self.objective_var[0],self.objective_var[1] 
-        return mt.agent_countermove_for_other_agents(a_idn,set(other_agent_moves.keys()),\
+        return mt.agent_countermove_for_other_agents(a_idn,other_agents,\
             other_agent_moves,index0,index1,prg = prg)
 
 """
@@ -52,8 +52,8 @@ class GTAgent:
     def change_objective(self,objective,objective_var): 
         self.dec_maker.change_objective(objective,objective_var)
 
-    def decision(self,mt:MultiAgentActionTable,other_agent_moves): 
-        return self.dec_maker.decide(self.agent_idn,mt,other_agent_moves,self.prg) 
+    def decision(self,mt:MultiAgentActionTable,other_agents,other_agent_moves): 
+        return self.dec_maker.decide(self.agent_idn,mt,other_agents,other_agent_moves,self.prg) 
 
     def add_to_payoff_queue(self,action_idn,immediate,cumulative_sequence): 
         assert type(immediate) == float 
@@ -86,7 +86,9 @@ class GTAgent:
 
         T = gc.ftable if table == "i" else gc.ftable.agent_action_cmap
         M = {}
+        all_agents = T.agents 
         for x in T.agents: 
             gta.agent_idn = x 
-            M[x] = gta.decision(T,other_agent_moves={})
+            other_agents = all_agents - {x}
+            M[x] = gta.decision(T,other_agents,other_agent_moves={})
         return M 

@@ -38,10 +38,10 @@ class GTAgentClass(unittest.TestCase):
         gta = GTAgent(agent_idn=0,objective="self",objective_var=2,prg=prg) 
 
         T = gc.ftable.agent_action_cmap 
-        qx = gta.decision(T,other_agent_moves={})
+        qx = gta.decision(T,{1,2},other_agent_moves={})
 
         T2 = gc.ftable  
-        qx2 = gta.decision(T2,other_agent_moves={}) 
+        qx2 = gta.decision(T2,{1,2},other_agent_moves={}) 
         assert qx == 0 
         assert qx2 == 1 
 

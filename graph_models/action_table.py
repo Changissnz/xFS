@@ -247,7 +247,7 @@ class MultiAgentActionTable:
 
     """
     Calculates the move by agent that would yield the "minimal" payoff, 
-        MIN(MEAN (MEAN(others))),
+        MIN (MIN|MAX|MEAN (MIN|MAX|MEAN(others))),
     by the other agents. See description for 
     function<MultiAgentActionTable.agent_move_for_info_on_other_agents> for how this "minimal" 
     payoff is calculated. 
@@ -255,7 +255,8 @@ class MultiAgentActionTable:
     def agent_countermove_for_other_agents(self,a_idn,other_idns,other_agent_moves,\
         index0,index1,prg = None): 
 
-        other_info = self.agent_move_for_info_on_other_agents(a_idn,other_idns,other_agent_moves,2,2)
+        other_info = self.agent_move_for_info_on_other_agents(a_idn,other_idns,other_agent_moves,\
+            index0,index1) 
         other_info = [(k,v) for k,v in other_info.items()]
 
         if type(prg) != type(None):
@@ -285,7 +286,6 @@ class MultiAgentActionTable:
         move_info = {}
         for m in self.agent2move_map[a_idn]:
             dx = self.base_info_on_other_agents(a_idn,m,other_idns,other_agent_moves)
-
             s = [v[index0] for v in dx.values()] 
             s = fx(s)
             move_info[m] = s 
