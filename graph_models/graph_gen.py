@@ -116,6 +116,29 @@ def are_nodesets_connected(G,n0,n1):
             return True 
     return False 
 
+def replace_nodeset_with_node(G,nodeset,node): 
+    assert type(G) == defaultdict 
+    assert type(nodeset) == set 
+    assert node not in G 
+
+    # turn all sources part of nodeset into node 
+    targets = set() 
+    for n in nodeset: 
+        if n in G: 
+            targets |= G[n] 
+            del G[n] 
+    G[node] = targets 
+
+    # turn all targets part of nodeset into node 
+    keys = sorted(G.keys()) 
+    for k in keys: 
+        q = G[k] - nodeset 
+        # case: replace 
+        if q != G[k]: 
+            G[k] = q | {node} - {k} 
+
+    return G  
+
 #-------------------------- two elementary graph types 
 
 def generate_graph__path(num_vertices,starting_node_idn:int,is_dsg:bool): 

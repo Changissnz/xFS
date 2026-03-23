@@ -81,7 +81,7 @@ class QuickSubgraphFetcher(SubgraphFetcher):
 
     def __init__(self,reference_graph:defaultdict,prg=None,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2): 
-        assert is_undirected_graph(reference_graph)
+        ##assert is_undirected_graph(reference_graph)
         super().__init__(reference_graph,prg,"distance",edge_cost_function) 
 
     def subgraph(self,node,radius):

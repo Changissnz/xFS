@@ -107,5 +107,23 @@ class QuickSubgraphFetcherClass(unittest.TestCase):
         D_ = qsf.subgraph(5,5)
         print("-- exec time: ",time.time() - t)
 
+    def test__QuickSubgraphFetcher__subgraph__case3(self): 
+        G = defaultdict(set,{0:{1}})
+        G3 = defaultdict(set,{0:{1},1:{0}}) 
+
+        q0 = QuickSubgraphFetcher(G,prg=None,\
+                edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2)
+        x0 = q0.subgraph(0,1) 
+        x1 = q0.subgraph(1,1) 
+        assert x0 == defaultdict(set, {0: {1}, 1: set()})
+        assert x1 == defaultdict(set, {1: set()})
+
+        q1 = QuickSubgraphFetcher(G3,prg=None,\
+            edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2) 
+        x00 = q1.subgraph(0,1) 
+        x01 = q1.subgraph(1,1) 
+        assert x00 == defaultdict(set, {0: {1}, 1: {0}})
+        assert x01 == defaultdict(set, {0: {1}, 1: {0}})
+
 if __name__ == '__main__':
     unittest.main()
