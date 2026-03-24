@@ -13,8 +13,11 @@ is of a node N_j > N_(j-1) > N_0 in `base_graph`.
 """
 class ModularGraph:
 
-    def __init__(self,base_graph,upper_nodesize_threshold,prg): 
+    def __init__(self,base_graph,upper_nodesize_threshold,prg,allow_multireduction:bool=False): 
         assert type(base_graph) == defaultdict
+        assert type(prg) in {MethodType,FunctionType}
+        assert type(allow_multireduction) == bool 
+
         self.is_directed = is_directed_graph(base_graph)
         
         graph_childkey_fillin(base_graph) 
@@ -31,8 +34,8 @@ class ModularGraph:
 
         self.upper_nodesize_threshold = upper_nodesize_threshold 
         self.prg = prg 
-
-        self.fin_stat = True 
+        self.allow_multireduction = allow_multireduction
+        self.fin_stat = False  
         return 
 
     """
@@ -54,26 +57,35 @@ class ModularGraph:
 
         nodeseq = prg_seqsort(sorted(self.base_graph_.keys()),self.prg) 
         accounted = set() 
+        new_nodes = set() 
+
         while len(nodeseq) > 0 and len(self.base_graph_) > self.upper_nodesize_threshold: 
             x = nodeseq.pop(0) 
             if x in accounted: continue 
-            q = self.reduce_at_node(x) 
+            new_node,q = self.reduce_at_node(x,new_nodes) 
             accounted |= q 
-            #print("Q: ",q) 
+            new_nodes |= {new_node}
+            ##print("Q: ",new_nodes) 
         self.base_reduced = True 
         return
 
-    def reduce_at_node(self,base_node):         
+    def reduce_at_node(self,base_node,previous_new_nodes):         
         q1 = QuickSubgraphFetcher(self.base_graph_,prg=self.prg,\
             edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2) 
         sg = q1.subgraph(base_node,1) 
+        
+        if not self.allow_multireduction:
+            q = MicroGraph(sg)
+            q.subgraph_nodeset_exclusion(previous_new_nodes)
+            sg = q.dg 
+
         graph_childkey_fillin(sg) 
         nodeset = set(sg.keys()) 
 
         new_node = self.ctr() 
         self.base_graph_ = replace_nodeset_with_node(self.base_graph_,nodeset,new_node) 
         self.node2nodeset[new_node] = nodeset 
-        return nodeset
+        return new_node,nodeset
 
     def node_to_base_nodeset(self,n): 
         if n in self.base_graph: return {n} 
