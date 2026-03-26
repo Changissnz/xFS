@@ -1,7 +1,8 @@
 from .radial_subgraph import * 
 from morebs2.graph_basics import is_directed_graph,graph_childkey_fillin
 from .tree_gen import SimpleCounter
-from .graph_gen import replace_nodeset_with_node
+from .graph_gen import replace_nodeset_with_node,connected_nodes_to_other_nodeset
+from .shortest_paths_approx import * 
 
 """
 reduces `base_graph` into n <= `upper_nodesize_threshold` nodes. 
@@ -13,7 +14,10 @@ is of a node N_j > N_(j-1) > N_0 in `base_graph`.
 """
 class ModularGraph:
 
-    def __init__(self,base_graph,upper_nodesize_threshold,prg,allow_multireduction:bool=False): 
+    def __init__(self,base_graph,upper_nodesize_threshold,prg,\
+        edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
+        allow_multireduction:bool=False): 
+
         assert type(base_graph) == defaultdict
         assert type(prg) in {MethodType,FunctionType}
         assert type(allow_multireduction) == bool 
@@ -28,12 +32,14 @@ class ModularGraph:
         self.node2nodeset = dict() 
 
         self.base_graph_ = deepcopy(self.base_graph)
+        self.node_densities = {k:1 for k in self.base_graph_.keys()} 
+
         self.base_reduced = False 
         self.current_graph = defaultdict(set) 
 
-
         self.upper_nodesize_threshold = upper_nodesize_threshold 
         self.prg = prg 
+        self.edge_cost_function = edge_cost_function
         self.allow_multireduction = allow_multireduction
         self.fin_stat = False  
         return 
@@ -55,7 +61,13 @@ class ModularGraph:
     def one_reduction_(self): 
         if self.base_reduced: return 
 
-        nodeseq = prg_seqsort(sorted(self.base_graph_.keys()),self.prg) 
+        #nodeseq = prg_seqsort(sorted(self.base_graph_.keys()),self.prg)
+        ## NOTE: scheme produces a more even distribution of reduced node densities,
+        ##       in comparison with arbitrary PRNG selection. 
+        nodeseq = [(k,v) for k,v in self.node_densities.items()] 
+        nodeseq = prg_seqsort_ties(nodeseq,self.prg,vf=lambda x:x[1]) 
+        nodeseq = [n[0] for n in nodeseq]
+
         accounted = set() 
         new_nodes = set() 
 
@@ -63,9 +75,15 @@ class ModularGraph:
             x = nodeseq.pop(0) 
             if x in accounted: continue 
             new_node,q = self.reduce_at_node(x,new_nodes) 
+
             accounted |= q 
             new_nodes |= {new_node}
-            ##print("Q: ",new_nodes) 
+            ##print("Q: {} / {}  / {}".format(new_node,x,q)) 
+
+            fx = sum([self.node_densities[i] for i in q]) 
+            for i in q: del self.node_densities[i] 
+            self.node_densities[new_node] = fx 
+
         self.base_reduced = True 
         return
 
@@ -104,3 +122,96 @@ class ModularGraph:
                 else: 
                     queue.append(r) 
         return nodeset
+
+    def base_node_to_rednode(self,n): 
+
+        node = None  
+        n_ = n 
+
+        while type(node) == type(None): 
+            if n_ in self.base_graph_: 
+                node = n_ 
+                continue
+            n_ = self.node_to_nextnode(n_) 
+            assert type(n_) != type(None) 
+        return node 
+            
+    def node_to_nextnode(self,n): 
+        for k,v in self.node2nodeset.items(): 
+            if n in v: 
+                return k 
+        return None 
+
+    def shortest_paths__init(self): 
+
+        self.paths_info,_ = BDFSCache.BFS_full(self.base_graph_,return_type="paths",prg=self.prg,max_search_radius=float('inf'),\
+            edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False)
+        return
+
+    def shortest_path__approx(self,u,v): 
+        ured = self.base_node_to_rednode(u) 
+        vred = self.base_node_to_rednode(v) 
+        #print("U,V: ",ured,vred) 
+        p = self.paths_info[(ured,vred)]
+        return self.travel_reduced_path(p,u,v) 
+
+    def travel_reduced_path(self,p,u,v): 
+        p_ = p.p 
+        ref = u 
+        print("TRAVELING: ",p_) 
+        P = NodePath.preload([],[])
+        for i in range(len(p_) - 1): 
+            # get the bridging nodes 
+            p0,p1 = p_[i],p_[i+1] 
+
+            # travel to the next node 
+            h = self.travel_two_reduced_nodes(ref,p0,p1)
+
+            # update vars 
+            P.add_path(h) 
+            ref = h.tail()
+
+        q0 = self.node_to_base_nodeset(p_[-1])
+        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
+        spa = ShortestPathsApproximator(g0,is_dfs=False,max_subgraph_radius=2,\
+            prg=self.prg,max_periphery=50,\
+            edge_cost_function=self.edge_cost_function,verbose=False) 
+        spa.exec() 
+        h = spa.shortest_path(ref,v,by_weight=True)  
+        P.add_path(h) 
+
+        return P 
+
+    def travel_two_reduced_nodes(self,base_node,p0,p1): 
+
+        q0 = self.node_to_base_nodeset(p0)
+        q1 = self.node_to_base_nodeset(p1)
+        qconn,qconn1 = connected_nodes_to_other_nodeset(self.base_graph,q0,q1)
+
+        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
+        g1 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q1).dg 
+
+        # 
+        spa = ShortestPathsApproximator(g0,is_dfs=False,max_subgraph_radius=2,\
+            prg=self.prg,max_periphery=50,\
+            edge_cost_function=self.edge_cost_function,verbose=False) 
+        spa.exec() 
+
+        tx = []  
+        for t in qconn: 
+            # 
+            px = spa.shortest_path(base_node,t,by_weight=True)   
+        
+            next_edge_distances = [] 
+            for t2 in qconn1: 
+                if t2 in self.base_graph[t]: 
+                    c = self.edge_cost_function(t,t2) 
+                    next_edge_distances.append((t2,c)) 
+            next_edge_distances = prg_seqsort_ties(next_edge_distances,self.prg,vf=lambda x:x[1]) 
+            n = next_edge_distances.pop(0) 
+            px = px + n
+ 
+            tx.append((t,px))  
+
+        tx = prg_seqsort_ties(tx,self.prg,vf=lambda x:x[1].cost()) 
+        return tx[0][1]

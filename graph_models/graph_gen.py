@@ -139,6 +139,21 @@ def replace_nodeset_with_node(G,nodeset,node):
 
     return G  
 
+"""
+return: 
+[0] subset of `nodeset_ref` connect to `nodeset_other`,
+[1] subset of `nodeset_other` connect to `nodeset_ref`
+"""
+def connected_nodes_to_other_nodeset(G,nodeset_ref,nodeset_other): 
+    s = set() 
+    inter = set() 
+    for n in nodeset_ref:
+        inter_ = G[n].intersection(nodeset_other)
+        if inter_ != set(): 
+            s |= {n}  
+            inter |= inter_ 
+    return s,inter 
+
 #-------------------------- two elementary graph types 
 
 def generate_graph__path(num_vertices,starting_node_idn:int,is_dsg:bool): 

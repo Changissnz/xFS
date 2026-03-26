@@ -23,11 +23,7 @@ class ModularGraphClass(unittest.TestCase):
             x.one_reduction()
             L.append(len(x.base_graph_))
 
-        ans_l = [366, 166, 97, 79, 34, 33, \
-            32, 31, 30, 29, 28, 27, 26, 25, \
-            24, 23, 22, 21, 20, 19, 18, 17, \
-            16, 15, 14, 13, 12, 11, 10, 1]
-        assert L == ans_l 
+        assert L == [366, 184, 93, 41, 13, 3, 2, 1], "got {}".format(L)
 
         # case 2: multi-reduction 
         x2 = ModularGraph(g.d,1,prg,allow_multireduction=True)
@@ -36,7 +32,7 @@ class ModularGraphClass(unittest.TestCase):
         while not x2.fin_stat: 
             x2.one_reduction()
             L2.append(len(x2.base_graph_))
-        assert L2 == [10,2,1]
+        assert L2 == [11,1], "got {}".format(L2)
 
 
 if __name__ == '__main__':
