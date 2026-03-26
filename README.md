@@ -53,7 +53,7 @@ Here is a list of graph problems in the project:
     of graph G, the subject of strangling. 
     - file: `graph_problems/sb.py` 
 - Controverter Bot (Alpha) 
-    - vantage point for learning: an agent in a multi-agent game, structured as a 
+    - vantage point for learning: an agent in a multi-agent cyclical game, structured as a 
     continually variable chain of decision junction points, each requiring all the 
     agents to make their moves. 
     - file: `graph_problems/cb.py` 
