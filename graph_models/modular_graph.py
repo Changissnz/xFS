@@ -158,7 +158,7 @@ class ModularGraph:
     def travel_reduced_path(self,p,u,v): 
         p_ = p.p 
         ref = u 
-        print("TRAVELING: ",p_) 
+        #print("TRAVELING: ",p_) 
         P = NodePath.preload([],[])
         for i in range(len(p_) - 1): 
             # get the bridging nodes 
@@ -172,14 +172,9 @@ class ModularGraph:
             ref = h.tail()
 
         q0 = self.node_to_base_nodeset(p_[-1])
-        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
-        spa = ShortestPathsApproximator(g0,is_dfs=False,max_subgraph_radius=2,\
-            prg=self.prg,max_periphery=50,\
-            edge_cost_function=self.edge_cost_function,verbose=False) 
-        spa.exec() 
-        h = spa.shortest_path(ref,v,by_weight=True)  
+        approx = self.sp_approx_for_subgraph(q0) 
+        h = approx(ref,v) 
         P.add_path(h) 
-
         return P 
 
     def travel_two_reduced_nodes(self,base_node,p0,p1): 
@@ -188,19 +183,14 @@ class ModularGraph:
         q1 = self.node_to_base_nodeset(p1)
         qconn,qconn1 = connected_nodes_to_other_nodeset(self.base_graph,q0,q1)
 
-        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
         g1 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q1).dg 
-
-        # 
-        spa = ShortestPathsApproximator(g0,is_dfs=False,max_subgraph_radius=2,\
-            prg=self.prg,max_periphery=50,\
-            edge_cost_function=self.edge_cost_function,verbose=False) 
-        spa.exec() 
+        
+        approx = self.sp_approx_for_subgraph(q0)
 
         tx = []  
         for t in qconn: 
             # 
-            px = spa.shortest_path(base_node,t,by_weight=True)   
+            px = approx(base_node,t)  
         
             next_edge_distances = [] 
             for t2 in qconn1: 
@@ -215,3 +205,30 @@ class ModularGraph:
 
         tx = prg_seqsort_ties(tx,self.prg,vf=lambda x:x[1].cost()) 
         return tx[0][1]
+
+    def sp_approx_for_subgraph(self,q0): 
+        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
+
+        # case: <= 100 nodes, use <BDFSCache> 
+        if len(q0) <= 100: 
+            ##print("BD")
+            paths_info,_ = BDFSCache.BFS_full(g0,return_type="paths",\
+                prg=self.prg,max_search_radius=float('inf'),\
+                edge_cost_function=self.edge_cost_function,verbose=False)
+
+            def f(u,v): 
+                return paths_info[(u,v)] 
+
+        # case: > 100 nodes, use approximator 
+        else: 
+            ##print("SPA") 
+            spa = ShortestPathsApproximator(g0,is_dfs=False,\
+                max_subgraph_radius=2,prg=self.prg,max_periphery=50,\
+                edge_cost_function=self.edge_cost_function,verbose=False) 
+            spa.exec() 
+
+            def f(u,v): 
+                return spa.shortest_path(\
+                    u,v,by_weight=True)   
+
+        return f
