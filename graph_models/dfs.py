@@ -36,7 +36,7 @@ class DFSCache(XFSCache):
 
         # case: move to the next reference
         if stat1: 
-            self.reference = self.reference_varcache.pop(0)
+            self.reference = self.reference_varcache.popleft() 
             return True 
 
         # case: move to random available node

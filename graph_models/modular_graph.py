@@ -27,6 +27,7 @@ of operations:
   cannot be used in the node reduction centering on another node n_q in N_s. Setting this mode to 
   True will allow for embedded node reductions in a reduced graph G_r of G'. 
 """
+# NOTE: algorithm is significantly slow for graphs of roughly 5000 or more in node size. 
 class ModularGraph:
 
     def __init__(self,base_graph,upper_nodesize_threshold,prg,\

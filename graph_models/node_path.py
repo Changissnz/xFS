@@ -1,4 +1,4 @@
-from collections import defaultdict 
+from collections import defaultdict,deque 
 from copy import deepcopy
 import numpy as np 
 from morebs2.numerical_generator import prg_seqsort,prg__single_to_int
@@ -203,7 +203,7 @@ class XFSCache:
         self.nnpf = nextnode_priority_function
         self.no_duplicate_touch_nodes = no_duplicate_touch_nodes
         self.reference = None
-        self.reference_varcache = []
+        self.reference_varcache = deque() 
 
         # record-keeping vars
         ## vertex -> nodes travelled

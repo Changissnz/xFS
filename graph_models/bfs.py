@@ -59,5 +59,5 @@ class BFSCache(XFSCache):
         if len(self.reference_varcache) == 0: 
             self.fin_stat = True 
             return False 
-        self.reference = self.reference_varcache.pop(0)
+        self.reference = self.reference_varcache.popleft()
         return True 
