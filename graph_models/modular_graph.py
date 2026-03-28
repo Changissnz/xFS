@@ -71,6 +71,8 @@ class ModularGraph:
         self.pa_mode = False 
         self.preproc_approx = dict() 
         self.peridistance = defaultdict(int) 
+
+        self.module2ecc_map = dict() 
         return 
 
     def set_pa_mode(self,stat:bool): 
@@ -91,13 +93,17 @@ class ModularGraph:
     """
     def one_reduction(self): 
         if self.fin_stat: return 
-
+        l = len(self.base_graph_)
         self.base_reduced = False 
         self.one_reduction_() 
         i = len(self.mod_graphs) 
         self.mod_graphs[i] = deepcopy(self.base_graph_)
 
         if len(self.base_graph_) <= self.upper_nodesize_threshold:
+            self.fin_stat = True 
+
+        # case: no reduction in size, halt. 
+        if len(self.base_graph_) == l:
             self.fin_stat = True 
 
     def one_reduction_(self): 
@@ -193,10 +199,10 @@ class ModularGraph:
         if n in self.base_graph: return {n} 
 
         nodeset = set() 
-        queue = [n] 
+        queue = deque([n]) 
 
         while len(queue) > 0: 
-            x = queue.pop(0) 
+            x = queue.popleft() 
             qx = deepcopy(self.node2nodeset[x])
 
             while len(qx) > 0: 
@@ -235,6 +241,24 @@ class ModularGraph:
             edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False)
         return
 
+    """
+    determines the modules of max shortest distance from module m (most reduced node). 
+    """
+    def farthest_modules(self,m): 
+        q = set(self.base_graph_.keys()) - {m} 
+
+        M = [] 
+        d = 0 
+        for q_ in q: 
+            if (m,q_) in self.paths_info: 
+                x = self.paths_info[(m,q_)] 
+                if x.cost() > d: 
+                    M = [q_] 
+                    d = x.cost() 
+                elif x.cost() == d: 
+                    M.append(q_)
+        return M 
+
     def shortest_path__approx(self,u,v): 
         ured = self.base_node_to_rednode(u) 
         vred = self.base_node_to_rednode(v) 
@@ -250,7 +274,7 @@ class ModularGraph:
         for i in range(len(p_) - 1): 
             # get the bridging nodes 
             p0,p1 = p_[i],p_[i+1] 
-            print("\tx: ",p0,p1)
+            #print("\tx: ",p0,p1)
 
             # travel to the next node 
             h = self.travel_two_reduced_nodes(ref,p0,p1)
@@ -307,6 +331,24 @@ class ModularGraph:
             x = self.sp_approx_for_reduced_node(q_) 
             self.preproc_approx[q_] = x 
         return
+
+    def full_eccentricity_measure(self): 
+        q = sorted(self.base_graph_.keys()) 
+        self.module2ecc_map = dict() 
+        for q_ in q: 
+            self.order_module_nodes_by_ecc(q_) 
+
+    def order_module_nodes_by_ecc(self,m): 
+        assert m in self.preproc_approx 
+
+        q = self.node_to_base_nodeset(m)
+        d = {}
+        for q_ in q: 
+            for q2_ in q: 
+                d[(q_,q2_)] = self.preproc_approx[m](q_,q2_)
+
+        self.module2ecc_map[m] = node_eccentricity_ranking(d,prg=self.prg,return_type="node")  
+        return self.module2ecc_map[m]
 
     def sp_approx_for_reduced_node(self,rednode): 
         q0 = self.node_to_base_nodeset(rednode) 
