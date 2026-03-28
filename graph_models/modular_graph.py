@@ -32,12 +32,15 @@ class ModularGraph:
 
     def __init__(self,base_graph,upper_nodesize_threshold,prg,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
-        allow_multireduction:bool=False,approx_type="std"): 
+        allow_multireduction:bool=False,approx_type="std",\
+        record_peridistance:bool=False,ensure_even_density:bool=False): 
 
         assert type(base_graph) == defaultdict
         assert type(prg) in {MethodType,FunctionType}
         assert type(allow_multireduction) == bool 
         assert approx_type in {"std","mst"} 
+        assert type(record_peridistance) == bool
+        assert type(ensure_even_density) == bool
 
         self.is_directed = is_directed_graph(base_graph)
         
@@ -59,8 +62,29 @@ class ModularGraph:
         self.edge_cost_function = edge_cost_function
         self.allow_multireduction = allow_multireduction
         self.approx_type = approx_type
+        self.record_peridistance = record_peridistance 
+        self.ensure_even_density = ensure_even_density
+        self.even_density_threshold = ceil(1.1 * \
+            len(self.base_graph) / self.upper_nodesize_threshold)
         self.fin_stat = False  
+
+        self.pa_mode = False 
+        self.preproc_approx = dict() 
+        self.peridistance = defaultdict(int) 
         return 
+
+    def set_pa_mode(self,stat:bool): 
+        assert type(stat) == bool 
+        self.pa_mode = stat 
+        if not self.pa_mode: 
+            self.preproc_approx.clear() 
+            return 
+        self.preprocess_sp_approx()
+
+
+    def full_reduction(self):
+        while not self.fin_stat:
+            self.one_reduction() 
 
     """
     main method 
@@ -85,13 +109,15 @@ class ModularGraph:
         ##       in comparison with arbitrary PRNG selection. 
         nodeseq = [(k,v) for k,v in self.node_densities.items()] 
         nodeseq = prg_seqsort_ties(nodeseq,self.prg,vf=lambda x:x[1]) 
-        nodeseq = [n[0] for n in nodeseq]
+        ##print("NS")
+        ##print(nodeseq)
+        nodeseq = deque([n[0] for n in nodeseq]) 
 
         accounted = set() 
         new_nodes = set() 
 
         while len(nodeseq) > 0 and len(self.base_graph_) > self.upper_nodesize_threshold: 
-            x = nodeseq.pop(0) 
+            x = nodeseq.popleft() 
             if x in accounted: continue 
             new_node,q = self.reduce_at_node(x,new_nodes) 
 
@@ -111,23 +137,57 @@ class ModularGraph:
         self.base_reduced = True 
         return
 
-    def reduce_at_node(self,base_node,previous_new_nodes):         
+    def exclude_overdense_nodes(self,center_node,sg): 
+        if self.ensure_even_density: 
+            k = set(sg.keys()) - {center_node} 
+            excluded = set() 
+            for k_ in k: 
+                d = self.node_density(k_)
+                if d >= self.even_density_threshold: 
+                    excluded |= {k_} 
+            q = MicroGraph(sg)
+            q.subgraph_nodeset_exclusion(excluded) 
+            sg = q.dg 
+        return sg 
+
+    def reduce_at_node(self,center_node,previous_new_nodes):         
         q1 = QuickSubgraphFetcher(self.base_graph_,prg=self.prg,\
             edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2) 
-        sg = q1.subgraph(base_node,1) 
+        sg = q1.subgraph(center_node,1) 
         
         if not self.allow_multireduction:
             q = MicroGraph(sg)
             q.subgraph_nodeset_exclusion(previous_new_nodes)
             sg = q.dg 
 
+        sg = self.exclude_overdense_nodes(center_node,sg) 
+
         graph_childkey_fillin(sg) 
         nodeset = set(sg.keys()) 
 
         new_node = self.ctr() 
+
+        if self.record_peridistance: 
+            self.update_peridistance(center_node,sg) 
+
         self.base_graph_ = replace_nodeset_with_node(self.base_graph_,nodeset,new_node) 
         self.node2nodeset[new_node] = nodeset 
         return new_node,nodeset
+
+    def update_peridistance(self,center_node,sg): 
+        
+        q = self.node_to_base_nodeset(center_node) 
+        max_base_distance = max([self.peridistance[q_] for q_ in q])
+
+        other_nodes = set(sg.keys()) - {center_node} 
+
+        other_nodeset = set()  
+        for x in other_nodes:
+            other_nodeset |= self.node_to_base_nodeset(x)
+
+        for o in other_nodeset:
+            self.peridistance[o] += 1 
+        return 
 
     def node_to_base_nodeset(self,n): 
         if n in self.base_graph: return {n} 
@@ -146,6 +206,9 @@ class ModularGraph:
                 else: 
                     queue.append(r) 
         return nodeset
+
+    def node_density(self,n): 
+        return len(self.node_to_base_nodeset(n)) 
 
     def base_node_to_rednode(self,n): 
 
@@ -182,7 +245,7 @@ class ModularGraph:
     def travel_reduced_path(self,p,u,v): 
         p_ = p.p 
         ref = u 
-        print("TRAVELING: ",p_) 
+
         P = NodePath.preload([],[])
         for i in range(len(p_) - 1): 
             # get the bridging nodes 
@@ -196,9 +259,12 @@ class ModularGraph:
             P.add_path(h) 
             ref = h.tail()
 
-        print("last")
-        q0 = self.node_to_base_nodeset(p_[-1])
-        approx = self.sp_approx_for_subgraph(q0) 
+        if self.pa_mode: 
+            approx = self.preproc_approx[p_[-1]] 
+        else: 
+            q0 = self.node_to_base_nodeset(p_[-1])
+            approx = self.sp_approx_for_subgraph(q0) 
+
         h = approx(ref,v) 
         P.add_path(h) 
         return P 
@@ -211,7 +277,10 @@ class ModularGraph:
 
         g1 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q1).dg 
         
-        approx = self.sp_approx_for_subgraph(q0)
+        if self.pa_mode: 
+            approx = self.preproc_approx[p0] 
+        else: 
+            approx = self.sp_approx_for_subgraph(q0)
 
         tx = []  
         for t in qconn: 
@@ -231,6 +300,18 @@ class ModularGraph:
 
         tx = prg_seqsort_ties(tx,self.prg,vf=lambda x:x[1].cost()) 
         return tx[0][1]
+
+    def preprocess_sp_approx(self): 
+        q = sorted(self.base_graph_.keys()) 
+        for q_ in q: 
+            x = self.sp_approx_for_reduced_node(q_) 
+            self.preproc_approx[q_] = x 
+        return
+
+    def sp_approx_for_reduced_node(self,rednode): 
+        q0 = self.node_to_base_nodeset(rednode) 
+        assert len(q0) >= 1 
+        return self.sp_approx_for_subgraph(q0) 
 
     def sp_approx_for_subgraph(self,q0): 
         g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
@@ -265,3 +346,23 @@ class ModularGraph:
                 return spa.shortest_path__approx(u,v) 
 
         return f
+
+    @staticmethod
+    def default_instance(G,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
+        approx_type="std",record_peridistance=False,ensure_even_density=False):  
+        l = len(G)
+        if l < 100: 
+            m0 = min([3,l]) 
+            m1 = min([l,11]) 
+            if m1 == m0: 
+                m1 += 1 
+
+            nodesize = modulo_in_range(int(prg()),[m0,m1])
+        else: 
+            x = modulo_in_range(int(prg()),[20,50]) 
+            nodesize = l // x 
+        
+        return ModularGraph(G,nodesize,prg,edge_cost_function,\
+            allow_multireduction=False,approx_type=approx_type,\
+            record_peridistance=record_peridistance,\
+            ensure_even_density=ensure_even_density)

@@ -335,7 +335,7 @@ class BDFSCache(XFSCache):
             if len(self.reference_varcache) == 0: 
                 return False 
 
-            self.reference = self.reference_varcache.pop(0)
+            self.reference = self.reference_varcache.popleft()
             return True 
 
         if self.is_bfs: 
@@ -375,14 +375,14 @@ class BDFSCache(XFSCache):
 
         if self.is_bfs: 
             if len(self.reference_varcache) > 0: 
-                self.reference = self.reference_varcache.pop(0)
+                self.reference = self.reference_varcache.popleft()
             else: 
                 return False 
         else: 
             if len(untravelled) == 0: 
                 if len(self.reference_varcache) == 0: 
                     return False 
-                self.reference = self.reference_varcache.pop(-1) 
+                self.reference = self.reference_varcache.pop()  
 
         return True 
 
