@@ -3,24 +3,40 @@ from morebs2.graph_basics import is_directed_graph,graph_childkey_fillin
 from .tree_gen import SimpleCounter
 from .graph_gen import replace_nodeset_with_node,connected_nodes_to_other_nodeset
 from .shortest_paths_approx import * 
+from .shortest_paths_type_st import * 
+
 
 """
-reduces `base_graph` into n <= `upper_nodesize_threshold` nodes. 
+Reduces `base_graph` into n <= `upper_nodesize_threshold` nodes. 
 
 Procedure uses <QuickSubgraphFetcher> for modular reduction. Each new 
 node of reduced graph G from `base_graph` represents an i'th degree nodeset of 
 `base_graph`. If i equals 0, then nodeset is of `base_graph`. Otherwise, nodeset 
-is of a node N_j > N_(j-1) > N_0 in `base_graph`. 
+is of a node N_j > N_(j-1) > ... > N_0; N_0 in `base_graph`. 
+
+For a graph G_r of base graph G, G_r either a reduced graph of G or G itself, 
+method<one_reduction> is used to reduce G_r to G_s, |G_s| < |G_r|, by this order 
+of operations:
+- sort nodes of G_r into sequence N_s, by metric of node density (number of base graph nodes 
+    the specific node represents), 
+- iterate through nodes n in N_s: 
+    - if n has already been included in a reduced node during this iteration, ignore it. 
+    - set reduced node r_n = n | neighbors(n).
+* see method for specific details on on this second step. 
+* when `allow_multireduction` is set to False, a node n_x that is a reduction of nodeset N_r in N_s 
+  cannot be used in the node reduction centering on another node n_q in N_s. Setting this mode to 
+  True will allow for embedded node reductions in a reduced graph G_r of G'. 
 """
 class ModularGraph:
 
     def __init__(self,base_graph,upper_nodesize_threshold,prg,\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
-        allow_multireduction:bool=False): 
+        allow_multireduction:bool=False,approx_type="std"): 
 
         assert type(base_graph) == defaultdict
         assert type(prg) in {MethodType,FunctionType}
         assert type(allow_multireduction) == bool 
+        assert approx_type in {"std","mst"} 
 
         self.is_directed = is_directed_graph(base_graph)
         
@@ -41,6 +57,7 @@ class ModularGraph:
         self.prg = prg 
         self.edge_cost_function = edge_cost_function
         self.allow_multireduction = allow_multireduction
+        self.approx_type = approx_type
         self.fin_stat = False  
         return 
 
@@ -62,6 +79,7 @@ class ModularGraph:
         if self.base_reduced: return 
 
         #nodeseq = prg_seqsort(sorted(self.base_graph_.keys()),self.prg)
+        
         ## NOTE: scheme produces a more even distribution of reduced node densities,
         ##       in comparison with arbitrary PRNG selection. 
         nodeseq = [(k,v) for k,v in self.node_densities.items()] 
@@ -83,6 +101,11 @@ class ModularGraph:
             fx = sum([self.node_densities[i] for i in q]) 
             for i in q: del self.node_densities[i] 
             self.node_densities[new_node] = fx 
+            '''
+            print("x: ",x)
+            print("len: ",len(nodeseq))
+            print("accounted:\n{}\n".format(accounted))
+            '''
 
         self.base_reduced = True 
         return
@@ -158,11 +181,12 @@ class ModularGraph:
     def travel_reduced_path(self,p,u,v): 
         p_ = p.p 
         ref = u 
-        #print("TRAVELING: ",p_) 
+        print("TRAVELING: ",p_) 
         P = NodePath.preload([],[])
         for i in range(len(p_) - 1): 
             # get the bridging nodes 
             p0,p1 = p_[i],p_[i+1] 
+            print("\tx: ",p0,p1)
 
             # travel to the next node 
             h = self.travel_two_reduced_nodes(ref,p0,p1)
@@ -171,6 +195,7 @@ class ModularGraph:
             P.add_path(h) 
             ref = h.tail()
 
+        print("last")
         q0 = self.node_to_base_nodeset(p_[-1])
         approx = self.sp_approx_for_subgraph(q0) 
         h = approx(ref,v) 
@@ -218,10 +243,10 @@ class ModularGraph:
 
             def f(u,v): 
                 return paths_info[(u,v)] 
+            return f 
 
-        # case: > 100 nodes, use approximator 
-        else: 
-            ##print("SPA") 
+        # case: > 100 nodes, use approximator         
+        if self.approx_type == "std": 
             spa = ShortestPathsApproximator(g0,is_dfs=False,\
                 max_subgraph_radius=2,prg=self.prg,max_periphery=50,\
                 edge_cost_function=self.edge_cost_function,verbose=False) 
@@ -229,6 +254,13 @@ class ModularGraph:
 
             def f(u,v): 
                 return spa.shortest_path(\
-                    u,v,by_weight=True)   
+                    u,v,by_weight=True)  
+        else: 
+
+            spa = ShortestPathsApproximatorTypeST(g0,self.edge_cost_function,\
+                self.prg,verbose=False)
+
+            def f(u,v): 
+                return spa.shortest_path__approx(u,v) 
 
         return f

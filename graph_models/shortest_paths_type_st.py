@@ -38,13 +38,11 @@ class ShortestPathsApproximatorTypeST:
 
         if self.verbose: 
             print("conducting shortest paths from {}".format(h))
-        spaths1,spaths2 = self.shortest_paths_from_head(h) 
+        spaths1,spaths2 = self.shortest_paths_from_head(h,update_paths_info=True) 
 
         if self.verbose: 
             print("got {} paths for source, {} deductions".format(len(spaths1),len(spaths2))) 
 
-        self.nodepair_path_info = update_shortest_paths_map(self.nodepair_path_info,spaths1)
-        self.nodepair_path_info = update_shortest_paths_map(self.nodepair_path_info,spaths2)
         return len(self.nodepair_path_info) 
 
     def next_head(self): 
@@ -58,7 +56,7 @@ class ShortestPathsApproximatorTypeST:
         q = int(self.prg()) % len(self.components) 
         c = self.components[q] 
         d = int(self.prg()) % len(c) 
-        h = c.pop() 
+        h = c.pop(d) 
 
         if len(c) == 0: 
             self.components.pop(q) 
@@ -69,7 +67,7 @@ class ShortestPathsApproximatorTypeST:
         self.previous_heads |= {h} 
         return h 
 
-    def shortest_paths_from_head(self,head):
+    def shortest_paths_from_head(self,head,update_paths_info=False):
 
         st = SpanningTree(self.G,\
             edge_cost_function=self.edge_cost_function,prg=None) 
@@ -94,4 +92,28 @@ class ShortestPathsApproximatorTypeST:
             
         PI = PathInduction(head,P,self.prg,num_segment_range=[3,7])
      
-        return P_,PI.induce_paths_from_other_references(self.G)   
+        P1 = PI.induce_paths_from_other_references(self.G)   
+
+        if update_paths_info:
+            self.nodepair_path_info = update_shortest_paths_map(self.nodepair_path_info,P_)
+            self.nodepair_path_info = update_shortest_paths_map(self.nodepair_path_info,P1) 
+        return P_,P1 
+
+    def delete_node_from_components(self,n): 
+        for i in range(len(self.components)): 
+            c = self.components[i]
+            if n in c: 
+                i = c.index(n)
+                c.pop(i)
+                return True 
+        return False 
+
+    def shortest_path__approx(self,u,v): 
+        if (u,v) in self.nodepair_path_info: 
+            return self.nodepair_path_info[(u,v)] 
+
+        stat = self.delete_node_from_components(u) 
+        if not stat: return None 
+
+        self.shortest_paths_from_head(u,True) 
+        return self.shortest_path__approx(u,v) 
