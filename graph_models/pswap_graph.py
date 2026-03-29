@@ -11,7 +11,7 @@ DEFAULT_SUBMODULE_NODESIZE_ECC_EST = 3
 
 
 """
-NOTE: not guaranteed to solve token-swapping problem in permutation graph. 
+NOTE: not guaranteed to solve token swapping problem in permutation graph. 
 """
 class PSwapGraph: 
 
@@ -50,12 +50,12 @@ class PSwapGraph:
 
         self.M.full_reduction() 
         self.M.shortest_paths__init()
-        self.reset_sp_approx()
+        self.reset_sp_approx(use_bdfs=False)
         self.estimate_eccentricities()
         return
 
-    def reset_sp_approx(self): 
-        self.M.set_pa_mode(True) 
+    def reset_sp_approx(self,use_bdfs): 
+        self.M.set_pa_mode(True,use_bdfs) 
 
     def estimate_eccentricities(self):
         assert len(self.M.base_graph_) > 1, "estimation scheme does not work!"
@@ -207,18 +207,35 @@ class PSwapGraph:
 
         while max_swaps > 0: 
             i = int(self.prg()) % len(nodeset) 
-            self.greedy_swap_on_node(nodeset[i])
-            max_swaps -= 1 
+
+            ## approach 1: arbitrary swap 
+            #self.greedy_swap_on_node(nodeset[i])
+
+            ## approach 2: greedy swap route. 
+            q0 = min([max_swaps,10])
+            q = self.greedy_route_on_node(nodeset[i],q0)
+            max_swaps -= q 
+
+            if q != q0: break 
         return 
+
+    def greedy_route_on_node(self,node,num_swaps=10): 
+        stat = True 
+
+        x = num_swaps 
+        while stat and num_swaps > 0: 
+            stat,node = self.greedy_swap_on_node(node) 
+            num_swaps -= 1 
+        return x - num_swaps 
     
     def greedy_swap_on_node(self,node):
         # case: solved. 
-        if self.P[node] == node: return 
+        if self.P[node] == node: return False,None 
 
         neighbors = prg_seqsort(sorted(self.G[node]),self.prg) 
 
         n_ = None 
-        best_score = float('inf')
+        best_score = float('inf') 
         d0 = self.token_distance(self.P[node])
         for n in neighbors: 
             d1 = self.token_distance(self.P[n])
@@ -235,9 +252,10 @@ class PSwapGraph:
 
             self.swap_edge(node,n) 
 
-        if type(n_) != type(None): 
-            self.swap_edge(node,n) 
-        return
+        if type(n_) != type(None) and best_score <= 0: 
+            self.swap_edge(node,n_) 
+            return True,n_
+        return False,None 
 
     #--------------------------------------------------------------------------------------------
 

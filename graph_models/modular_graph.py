@@ -75,14 +75,18 @@ class ModularGraph:
         self.module2ecc_map = dict() 
         return 
 
-    def set_pa_mode(self,stat:bool): 
+    """
+    Sets preprocessed approximator mode. If `stat` is True, 
+    method<travel_reduced_path> will use an approximator in 
+    dict<preproc_approx>, instead of instantiating a new approximator. 
+    """
+    def set_pa_mode(self,stat:bool,use_bdfs:bool=False): 
         assert type(stat) == bool 
         self.pa_mode = stat 
         if not self.pa_mode: 
             self.preproc_approx.clear() 
             return 
-        self.preprocess_sp_approx()
-
+        self.preprocess_sp_approx(use_bdfs)
 
     def full_reduction(self):
         while not self.fin_stat:
@@ -134,11 +138,6 @@ class ModularGraph:
             fx = sum([self.node_densities[i] for i in q]) 
             for i in q: del self.node_densities[i] 
             self.node_densities[new_node] = fx 
-            '''
-            print("x: ",x)
-            print("len: ",len(nodeseq))
-            print("accounted:\n{}\n".format(accounted))
-            '''
 
         self.base_reduced = True 
         return
@@ -325,10 +324,16 @@ class ModularGraph:
         tx = prg_seqsort_ties(tx,self.prg,vf=lambda x:x[1].cost()) 
         return tx[0][1]
 
-    def preprocess_sp_approx(self): 
+    def preprocess_sp_approx(self,use_bdfs): 
         q = sorted(self.base_graph_.keys()) 
         for q_ in q: 
-            x = self.sp_approx_for_reduced_node(q_) 
+            # case: always use BDFS 
+            if use_bdfs: 
+                x = self.bdfs_for_reduced_node(q_)
+
+            # case: choose type of approximator based on node density 
+            else: 
+                x = self.sp_approx_for_reduced_node(q_) 
             self.preproc_approx[q_] = x 
         return
 
@@ -356,18 +361,12 @@ class ModularGraph:
         return self.sp_approx_for_subgraph(q0) 
 
     def sp_approx_for_subgraph(self,q0): 
-        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
 
         # case: <= 100 nodes, use <BDFSCache> 
         if len(q0) <= 100: 
-            ##print("BD")
-            paths_info,_ = BDFSCache.BFS_full(g0,return_type="paths",\
-                prg=self.prg,max_search_radius=float('inf'),\
-                edge_cost_function=self.edge_cost_function,verbose=False)
+            return self.bdfs_for_subgraph(q0)
 
-            def f(u,v): 
-                return paths_info[(u,v)] 
-            return f 
+        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
 
         # case: > 100 nodes, use approximator         
         if self.approx_type == "std": 
@@ -388,6 +387,26 @@ class ModularGraph:
                 return spa.shortest_path__approx(u,v) 
 
         return f
+
+    """
+    instantiates a <BDFSCache> shortest paths approximator at reduced node `rednode`.
+    """
+    def bdfs_for_reduced_node(self,rednode): 
+        q0 = self.node_to_base_nodeset(rednode) 
+        assert len(q0) >= 1 
+        return self.bdfs_for_subgraph(q0) 
+
+    def bdfs_for_subgraph(self,q0): 
+        g0 = MicroGraph(self.base_graph).subgraph_by_nodeset_(q0).dg 
+
+        paths_info,_ = BDFSCache.BFS_full(g0,return_type="paths",\
+            prg=self.prg,max_search_radius=float('inf'),\
+            edge_cost_function=self.edge_cost_function,verbose=False)
+
+        def f(u,v): 
+            ##print("xx") 
+            return paths_info[(u,v)] 
+        return f 
 
     @staticmethod
     def default_instance(G,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\
