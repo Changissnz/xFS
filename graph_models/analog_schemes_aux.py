@@ -63,7 +63,7 @@ def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_pat
         min_paths_ = list(min_paths.values())
 
     # iterate through each sequence of shortest paths and select 
-    def prg_(): return int(prg())
+    prg_ = prg__single_to_int(prg,False)
 
     all_selected_paths = None 
 
@@ -79,7 +79,7 @@ def shortest_paths_graph_analogue(G,start_node,is_dsg,num_paths_per_node,num_pat
 #----------------------------------------- for subgraph generation scheme #3
 
 def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg): 
-    def prg_(): return int(prg())
+    prg_ = prg__single_to_int(prg,False)
 
     nodes = sorted(d.keys())
     nodes = prg_seqsort(nodes,prg_) 
@@ -193,7 +193,7 @@ def connect_subgraphs__prior_to_current(prior_sg:defaultdict,current_sg:defaultd
     assert 0. <= sg2sg_conn_ratios[0] <= 1.
     assert 0. <= sg2sg_conn_ratios[1] <= 1.
 
-    def prg_(): return int(prg())
+    prg_ = prg__single_to_int(prg,False)
 
     # select prior nodes 
     rx = sorted([0.08,sg2sg_conn_ratios[0]])
