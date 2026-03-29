@@ -21,7 +21,12 @@ Algorithm first calculates shortest paths between every
 node pair, by a classic breadth-first search approach. 
 Algorithm then proceeds to grouping nodes, in the ordering 
 of greatest to least node eccentricity. Not suitable for 
-larger graphs (> 500 nodes). 
+larger graphs (> 500 nodes).
+
+d := defaultdict, graph 
+prg := PRNG
+max_radius := float, 0 < f <= 1
+rsf := None|RadialSubgraphFetcher
 """
 class RadialGraphCommunities: 
 

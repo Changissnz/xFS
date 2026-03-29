@@ -36,6 +36,7 @@ class ModularGraph:
         record_peridistance:bool=False,ensure_even_density:bool=False): 
 
         assert type(base_graph) == defaultdict
+        assert type(upper_nodesize_threshold) == int and upper_nodesize_threshold > 0 
         assert type(prg) in {MethodType,FunctionType}
         assert type(allow_multireduction) == bool 
         assert approx_type in {"std","mst"} 

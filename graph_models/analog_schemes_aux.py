@@ -113,15 +113,11 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
         return 
     return 
 
-# NOTE: new nodes will always be connected to at least 1 node in reference graph `g`.
-def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function,\
-    max_edge_changes=float('inf')):
-    def prg_(): return int(prg())
+"""
+adds or deletes nodes for graph g. 
+"""
+def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function): 
 
-    # node changes first 
-    num_nodes = ceil(len(g) * abs(node_change_ratio)) 
-    if node_change_ratio < 0: num_nodes = -num_nodes
-    
     old_nodes = sorted(g.keys()) 
     # case: pos node change  
     if num_nodes > 0: 
@@ -143,10 +139,24 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
                 g[n] |= {n2} 
     # case: negative node change 
     else: 
-        to_delete = prg_choose_n(old_nodes,-num_nodes,prg_,is_unique_picker=True)
+        to_delete = prg_choose_n(old_nodes,-num_nodes,prg,is_unique_picker=True)
         mg = MicroGraph(deepcopy(g))  
         mg.subgraph_nodeset_exclusion(to_delete)
         g = mg.dg  
+
+    return g 
+
+# NOTE: new nodes will always be connected to at least 1 node in reference graph `g`.
+def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function,\
+    max_edge_changes=float('inf')):
+    
+    prg_ = prg__single_to_int(prg,False) 
+
+    # node changes first 
+    num_nodes = ceil(len(g) * abs(node_change_ratio)) 
+    if node_change_ratio < 0: num_nodes = -num_nodes
+
+    g = node_changes_to_graph(g,is_dsg,num_nodes,prg_,ctr_function) 
 
     mg = MicroGraph(g) 
     vscore,escore = mg.ve_score()
@@ -164,6 +174,7 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
         num_edges = ceil(rem_edges * edge_change_ratio) 
 
     num_edges = min([num_edges,max_edge_changes])
+
     # cases: add or delete edges 
     stat = edge_change_ratio >= 0 
     for _ in range(num_edges):

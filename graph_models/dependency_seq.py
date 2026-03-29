@@ -14,6 +14,9 @@ def prg_to_set_selector(prg):
         return S_ 
     return f 
 
+"""
+setseq := list<set>. 
+"""
 class DependencySequence: 
 
     def __init__(self,setseq): 

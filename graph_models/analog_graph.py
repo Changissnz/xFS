@@ -17,6 +17,12 @@ def dict_diff(ref_dict, other_dict):
 
 
 # TODO: test this. 
+"""
+reference_graph := defaultdict, graph 
+isomap := node of reference graph -> node of another graph
+prg := PRNG
+isomorphic_subgraph_radius_range := range
+"""
 class AnalogGraph: 
 
     def __init__(self,reference_graph,isomap,prg,isomorphic_subgraph_radius_range=DEFAULT_ANALOG_GRAPH_SUBGRAPH_RADIUS_RANGE):  
@@ -26,7 +32,6 @@ class AnalogGraph:
         assert is_valid_range(isomorphic_subgraph_radius_range,True,False)
 
         self.reference_graph = reference_graph 
-        # node of reference graph -> node of another graph
         self.isomap = isomap 
         self.prg = prg 
         self.iso_sg_radius_range = isomorphic_subgraph_radius_range
