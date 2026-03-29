@@ -12,7 +12,7 @@ Reduces `base_graph` into n <= `upper_nodesize_threshold` nodes.
 Procedure uses <QuickSubgraphFetcher> for modular reduction. Each new 
 node of reduced graph G from `base_graph` represents an i'th degree nodeset of 
 `base_graph`. If i equals 0, then nodeset is of `base_graph`. Otherwise, nodeset 
-is of a node N_j > N_(j-1) > ... > N_0; N_0 in `base_graph`. 
+consists of nodesets N_j > N_(j-1) > ... > N_0; N_0 a nodeset in in `base_graph`. 
 
 For a graph G_r of base graph G, G_r either a reduced graph of G or G itself, 
 method<one_reduction> is used to reduce G_r to G_s, |G_s| < |G_r|, by this order 
