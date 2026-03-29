@@ -12,6 +12,12 @@ DEFAULT_SUBMODULE_NODESIZE_ECC_EST = 3
 
 """
 NOTE: not guaranteed to solve token swapping problem in permutation graph. 
+
+This is an implementation of a solution search to the NP-Complete problem, 
+Token Swapping. The proposed solution search is described in this paper @ 
+
+https://github.com/Changissnz/deline_crypto/blob/master/dc_paper.pdf
+(~ pg. 29). 
 """
 class PSwapGraph: 
 
@@ -28,6 +34,9 @@ class PSwapGraph:
         self.module_eccentricities = defaultdict(float)
 
         self.mod_order = None 
+
+        # for swaps conducted. 
+        self.c = 0 
         return 
 
     #---------------------------------- preprocessing methods 
@@ -54,11 +63,20 @@ class PSwapGraph:
         self.estimate_eccentricities()
         return
 
+    """
+    auxiliary method used to reset shortest paths approximation for 
+    the current <ModularGraph> instance `M`.
+    """
     def reset_sp_approx(self,use_bdfs): 
         self.M.set_pa_mode(True,use_bdfs) 
 
+    """
+    estimates eccentricities of modules. These measures are used to 
+    determine ordering of token-routing. 
+    """
     def estimate_eccentricities(self):
         assert len(self.M.base_graph_) > 1, "estimation scheme does not work!"
+        self.module_eccentricities.clear()
 
         keys = prg_seqsort(sorted(self.M.base_graph_.keys()),self.prg) 
         for k in keys: 
@@ -145,6 +163,9 @@ class PSwapGraph:
         self.mod_order = [v[0] for v in V]
         return
 
+    """
+    main method #1 
+    """
     def module_route_one_round(self): 
         self.set_swapping_order()
         print("one round")
@@ -173,8 +194,14 @@ class PSwapGraph:
         for i in range(l -1): 
             q0,q1 = p[i],p[i+1] 
             self.swap_edge(q0,q1) 
+            self.c += 1 
         return 
 
+    """
+    return: 
+    - # of mismatched nodes of module `m` OR 
+      subset of mismatched nodes of `m`. 
+    """
     def module_mismatch(self,m,return_type="count"):
         assert return_type in {"count","subset"}
 
@@ -189,6 +216,9 @@ class PSwapGraph:
 
     #----------------------------------------- token-swapping by greedy swap (negative change in distance of swapped token pair)
 
+    """
+    main method #2
+    """
     def module_greedy_swap_one_round(self): 
         self.set_swapping_order()
         print("one round")
@@ -254,6 +284,7 @@ class PSwapGraph:
 
         if type(n_) != type(None) and best_score <= 0: 
             self.swap_edge(node,n_) 
+            self.c += 1 
             return True,n_
         return False,None 
 
