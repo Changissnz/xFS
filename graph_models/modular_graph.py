@@ -76,25 +76,17 @@ class ModularGraph:
         self.module2ecc_map = dict() 
         return 
 
-    """
-    Sets preprocessed approximator mode. If `stat` is True, 
-    method<travel_reduced_path> will use an approximator in 
-    dict<preproc_approx>, instead of instantiating a new approximator. 
-    """
-    def set_pa_mode(self,stat:bool,use_bdfs:bool=False): 
-        assert type(stat) == bool 
-        self.pa_mode = stat 
-        if not self.pa_mode: 
-            self.preproc_approx.clear() 
-            return 
-        self.preprocess_sp_approx(use_bdfs)
+    #----------------------------- main methods 
 
+    """
+    main method #1 
+    """
     def full_reduction(self):
         while not self.fin_stat:
             self.one_reduction() 
 
     """
-    main method 
+    main method #2 
     """
     def one_reduction(self): 
         if self.fin_stat: return 
@@ -142,6 +134,8 @@ class ModularGraph:
 
         self.base_reduced = True 
         return
+
+    #------------------------------- auxiliary methods for main methods 
 
     def exclude_overdense_nodes(self,center_node,sg): 
         if self.ensure_even_density: 
@@ -195,6 +189,8 @@ class ModularGraph:
             self.peridistance[o] += 1 
         return 
 
+    #-------------------------------- operations with reduced graph 
+
     def node_to_base_nodeset(self,n): 
         if n in self.base_graph: return {n} 
 
@@ -235,12 +231,6 @@ class ModularGraph:
                 return k 
         return None 
 
-    def shortest_paths__init(self): 
-
-        self.paths_info,_ = BDFSCache.BFS_full(self.base_graph_,return_type="paths",prg=self.prg,max_search_radius=float('inf'),\
-            edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False)
-        return
-
     """
     determines the modules of max shortest distance from module m (most reduced node). 
     """
@@ -258,6 +248,14 @@ class ModularGraph:
                 elif x.cost() == d: 
                     M.append(q_)
         return M 
+
+    #-------------------------------- calculating shortest paths 
+
+    def shortest_paths__init(self): 
+
+        self.paths_info,_ = BDFSCache.BFS_full(self.base_graph_,return_type="paths",prg=self.prg,max_search_radius=float('inf'),\
+            edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False)
+        return
 
     def shortest_path__approx(self,u,v): 
         ured = self.base_node_to_rednode(u) 
@@ -325,18 +323,7 @@ class ModularGraph:
         tx = prg_seqsort_ties(tx,self.prg,vf=lambda x:x[1].cost()) 
         return tx[0][1]
 
-    def preprocess_sp_approx(self,use_bdfs): 
-        q = sorted(self.base_graph_.keys()) 
-        for q_ in q: 
-            # case: always use BDFS 
-            if use_bdfs: 
-                x = self.bdfs_for_reduced_node(q_)
-
-            # case: choose type of approximator based on node density 
-            else: 
-                x = self.sp_approx_for_reduced_node(q_) 
-            self.preproc_approx[q_] = x 
-        return
+    #--------------------------------- for calculating eccentricities 
 
     def full_eccentricity_measure(self): 
         q = sorted(self.base_graph_.keys()) 
@@ -355,6 +342,8 @@ class ModularGraph:
 
         self.module2ecc_map[m] = node_eccentricity_ranking(d,prg=self.prg,return_type="node")  
         return self.module2ecc_map[m]
+
+    #--------------------------- instantiates shortest paths approximators 
 
     def sp_approx_for_reduced_node(self,rednode): 
         q0 = self.node_to_base_nodeset(rednode) 
@@ -408,6 +397,38 @@ class ModularGraph:
             ##print("xx") 
             return paths_info[(u,v)] 
         return f 
+
+    #--------------------- for preprocess approximators mode: allows for faster routing during 
+    #--------------------- shortest pairwise paths approximation 
+
+    """
+    Sets preprocessed approximator mode. If `stat` is True, 
+    method<travel_reduced_path> will use an approximator in 
+    dict<preproc_approx>, instead of instantiating a new approximator. 
+    """
+    def set_pa_mode(self,stat:bool,use_bdfs:bool=False): 
+        assert type(stat) == bool 
+        self.pa_mode = stat 
+        if not self.pa_mode: 
+            self.preproc_approx.clear() 
+            return 
+        self.preprocess_sp_approx(use_bdfs)
+
+
+    def preprocess_sp_approx(self,use_bdfs): 
+        q = sorted(self.base_graph_.keys()) 
+        for q_ in q: 
+            # case: always use BDFS 
+            if use_bdfs: 
+                x = self.bdfs_for_reduced_node(q_)
+
+            # case: choose type of approximator based on node density 
+            else: 
+                x = self.sp_approx_for_reduced_node(q_) 
+            self.preproc_approx[q_] = x 
+        return
+
+    #------------------------------------------------------
 
     @staticmethod
     def default_instance(G,prg,edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,\

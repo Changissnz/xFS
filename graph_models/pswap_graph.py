@@ -7,8 +7,12 @@ from .modular_graph import *
 from .community import graph_component_size
 from morebs2.numerical_generator import prg_decimal
 
+DEFAULT_PSWAP_NUM_MODULES_RANGE = [15,25] 
 DEFAULT_SUBMODULE_NODESIZE_ECC_EST = 3 
 
+DEFAULT_PSWAP_NUM_TIMESTAMPS_DEFAULT_TOKEN_ROUTE = 5 
+DEFAULT_PSWAP_NUM_TIMESTAMPS__NO_IMPROVEMENT_UPDATE = 3 
+DEFAULT_PSWAP_NUM_GREEDYROUTE_ITERATIONS_POSTUPDATE = 2 
 
 """
 NOTE: not guaranteed to solve token swapping problem in permutation graph. 
@@ -21,16 +25,22 @@ https://github.com/Changissnz/deline_crypto/blob/master/dc_paper.pdf
 """
 class PSwapGraph: 
 
-    def __init__(self,G,P,prg,edge_cost_function): 
+    def __init__(self,G,P,prg,edge_cost_function,record_swaps:bool=False,verbose:bool=False): 
         assert type(G) == defaultdict 
+        assert len
         assert graph_component_size(G) == 1
         assert len(P) == len(G) 
         assert set(P.keys()) == set(P.values()) == set(G.keys()) 
+        assert type(edge_cost_function) in {FunctionType,MethodType}
+        assert type(record_swaps) == bool == type(verbose)
 
         self.G = G 
         self.P = P 
         self.prg = prg 
         self.edge_cost_function = edge_cost_function
+        self.record_swaps = record_swaps
+        self.verbose = verbose 
+        self.swap_seq = deque() 
         self.module_eccentricities = defaultdict(float)
 
         self.mod_order = None 
@@ -38,6 +48,9 @@ class PSwapGraph:
         # for swaps conducted. 
         self.c = 0 
         return 
+
+    def __len__(self): 
+        return len(self.G) 
 
     #---------------------------------- preprocessing methods 
 
@@ -52,7 +65,15 @@ class PSwapGraph:
             ensure_even_density=True) 
         '''
 
-        self.M = ModularGraph(self.G,20,self.prg,\
+        l = len(self.G)
+        x = modulo_in_range(int(self.prg()),DEFAULT_PSWAP_NUM_MODULES_RANGE) 
+
+        if x > l: 
+            d = prg_decimal(self.prg,[0.35,65]) 
+            x = ceil(l * d)
+
+
+        self.M = ModularGraph(self.G,x,self.prg,\
             edge_cost_function=self.edge_cost_function,\
             approx_type="mst",record_peridistance=True,\
             ensure_even_density=True)
@@ -168,14 +189,14 @@ class PSwapGraph:
     """
     def module_route_one_round(self): 
         self.set_swapping_order()
-        print("one round")
+        if self.verbose: print("one round")
         for m in self.mod_order:
             self.route_to_module(m) 
 
     def route_to_module(self,m): 
         c = self.module_mismatch(m,"count")
         stat = c == 0
-        print("-- mod: {}  is solved? {}  mismatch #: {}".format(m,stat,c))
+        if self.verbose: print("-- mod: {}  is solved? {}  mismatch #: {}".format(m,stat,c))
 
         if stat:
             return 
@@ -193,8 +214,7 @@ class PSwapGraph:
         l = len(p)
         for i in range(l -1): 
             q0,q1 = p[i],p[i+1] 
-            self.swap_edge(q0,q1) 
-            self.c += 1 
+            self.swap_edge(q0,q1,log_swap=True) 
         return 
 
     """
@@ -270,7 +290,7 @@ class PSwapGraph:
         for n in neighbors: 
             d1 = self.token_distance(self.P[n])
 
-            self.swap_edge(node,n) 
+            self.swap_edge(node,n,log_swap=False) 
             d0_ = self.token_distance(self.P[n])
             d1_ = self.token_distance(self.P[node]) 
 
@@ -280,17 +300,108 @@ class PSwapGraph:
                 best_score = dx 
                 n_ = n 
 
-            self.swap_edge(node,n) 
+            self.swap_edge(node,n,log_swap=False) 
 
         if type(n_) != type(None) and best_score <= 0: 
-            self.swap_edge(node,n_) 
-            self.c += 1 
+            self.swap_edge(node,n_,log_swap=True) 
             return True,n_
         return False,None 
 
     #--------------------------------------------------------------------------------------------
 
     # NOTE: does not check for existence of edge 
-    def swap_edge(self,n0,n1): 
+    def swap_edge(self,n0,n1,log_swap:bool=False): 
         self.P[n0],self.P[n1] = self.P[n1],self.P[n0]
+
+        if log_swap: 
+            self.c += 1 
+
+            if self.record_swaps: 
+                self.swap_seq.append((n0,n1)) 
         return 
+
+"""
+handles the token-swapping operations for a <PSwapGraph> instance. 
+
+The method<auto_solution_search> is the approach <PSGraphHandler> 
+takes.
+
+By default, approach calls method<PSwapGraph.module_greedy_swap_one_round> 
+for `num_timestamps_default_move`. If there is no improvement in number of solved 
+tokens for `no_improvement_update` iterations of method<auto_solution_search>, 
+method<update_PSwapGraph_paths> is called. When method<update_PSwapGraph_paths> 
+is called, a new modularization is calculated, along with new shortest paths, and 
+method<PSwapGraph.module_greedy_swap_one_round> is called for `greedy_route_iterations` 
+iterations.
+
+Method<auto_solution_search> is called repeatedly until <PSwapGraph> is solved, or 
+solution cannot be obtained via the PRNG <pg.prg>. 
+"""
+class PSGraphHandler: 
+
+    def __init__(self,pg:PSwapGraph,\
+        num_timestamps_default_move:int=DEFAULT_PSWAP_NUM_TIMESTAMPS_DEFAULT_TOKEN_ROUTE,\
+        no_improvement_update:int=DEFAULT_PSWAP_NUM_TIMESTAMPS__NO_IMPROVEMENT_UPDATE,\
+        greedy_route_iterations:int=DEFAULT_PSWAP_NUM_GREEDYROUTE_ITERATIONS_POSTUPDATE): 
+        assert type(pg) == PSwapGraph
+        assert num_timestamps_default_move > 0 
+        assert 6 >= no_improvement_update > 0 
+        assert 6 >= greedy_route_iterations > 0 
+
+        self.pg = pg 
+        self.num_timestamps_default_move = num_timestamps_default_move
+        self.no_improvement_update = no_improvement_update
+        self.greedy_route_iterations = greedy_route_iterations
+
+        self.pg.preswap_analysis()
+        self.highest_token_score = 0
+        self.num_no_improvement = 0 
+
+        self.fin_stat = False 
+        return 
+
+    """
+    main method 
+    """
+    def auto_solution_search(self): 
+        if self.fin_stat: 
+            return 
+
+        if self.highest_token_score == len(self.pg): 
+            self.fin_stat = True 
+            return 
+
+        self.update_PSwapGraph_paths() 
+        self.default_move() 
+
+        return
+
+
+    def default_move(self): 
+        highest_score = self.highest_token_score
+
+        for _ in range(self.num_timestamps_default_move): 
+            self.pg.module_route_one_round()
+            t = self.pg.cumulative_token_distance()[1]
+            self.highest_token_score = max([\
+                self.highest_token_score,t]) 
+            if t == len(self.pg): 
+                break 
+
+        if self.highest_token_score > highest_score:
+            self.num_no_improvement = 0
+        else: 
+            self.num_no_improvement += 1 
+        return
+
+    def update_PSwapGraph_paths(self): 
+        
+        if self.num_no_improvement < self.no_improvement_update: 
+            return 
+
+        self.pg.preswap_analysis() 
+        self.num_no_improvement = 0 
+
+        for _ in range(self.greedy_route_iterations): 
+            self.pg.module_greedy_swap_one_round() 
+        return
