@@ -57,6 +57,9 @@ Here is a list of graph problems in the project:
     continually variable chain of decision junction points, each requiring all the 
     agents to make their moves. 
     - file: `graph_problems/cb.py` 
+- Token-Swapping Bot (Alpha) 
+    - vantage point for learning: an agent that has to solve the NP-Complete problem, Token Swapping, 
+    for an arbitrary graph. 
 - Middleman Bot (work in progress) 
 
 #### NOTE: 

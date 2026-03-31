@@ -22,6 +22,7 @@ Token Swapping. The proposed solution search is described in this paper @
 
 https://github.com/Changissnz/deline_crypto/blob/master/dc_paper.pdf
 (~ pg. 29). 
+---------------------------------------------------------------------------
 """
 class PSwapGraph: 
 
@@ -91,6 +92,8 @@ class PSwapGraph:
     def reset_sp_approx(self,use_bdfs): 
         self.M.set_pa_mode(True,use_bdfs) 
 
+    #------------------------------ eccentricity approximation; used in preprocessing. 
+
     """
     estimates eccentricities of modules. These measures are used to 
     determine ordering of token-routing. 
@@ -127,6 +130,13 @@ class PSwapGraph:
                 dx.append(d.cost()) 
         return max(dx)  
 
+    """
+    chooses q <= DEFAULT_SUBMODULE_NODESIZE_ECC_EST nodes of 
+    nodeset for reduced node `n`. 
+
+    Oscillates between choosing the most and least eccentric 
+    nodes in the node queue. 
+    """
     def choose_submod_nodeseq(self,n): 
         q = self.M.node_to_base_nodeset(n)
         x = [(q_,self.M.peridistance[q_]) for q_ in q] 
@@ -320,8 +330,20 @@ class PSwapGraph:
                 self.swap_seq.append((n0,n1)) 
         return 
 
+    @staticmethod
+    def generate_token_placement(num_nodes,prg): 
+        assert type(num_nodes) == int and num_nodes >= 1 
+
+        p = [i for i in range(num_nodes)] 
+        p0 = prg_seqsort(deepcopy(p),prg) 
+        P = {p_:p0_ for (p_,p0_) in zip(p,p0)}
+        return P 
+
 """
-handles the token-swapping operations for a <PSwapGraph> instance. 
+Handles the token-swapping operations for a <PSwapGraph> instance. 
+
+NOTE: Not guaranteed to solve token swapping problem in permutation graph. 
+      Obtaining swapping solution depends on PRNG. 
 
 The method<auto_solution_search> is the approach <PSGraphHandler> 
 takes.
@@ -361,7 +383,14 @@ class PSGraphHandler:
         return 
 
     """
-    main method 
+    main method #2 
+    """
+    def full_auto_search(self): 
+        while not self.fin_stat: 
+            self.auto_solution_search() 
+
+    """
+    main method #1 
     """
     def auto_solution_search(self): 
         if self.fin_stat: 

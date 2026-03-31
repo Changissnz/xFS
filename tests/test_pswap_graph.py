@@ -9,10 +9,7 @@ def PSwapGraph__sample_VAR(num_nodes,ratio,prg):
     g.full_run() 
     graph_to_one_component(g.d,prg) 
 
-    p = [i for i in range(num_nodes)] 
-    p0 = prg_seqsort(deepcopy(p),prg) 
-    P = {p_:p0_ for (p_,p0_) in zip(p,p0)}
-
+    P = PSwapGraph.generate_token_placement(len(g.d),prg)
     return g.d,P,prg 
 
 
