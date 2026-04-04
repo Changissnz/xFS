@@ -15,7 +15,8 @@ DEFAULT_PSWAP_NUM_TIMESTAMPS__NO_IMPROVEMENT_UPDATE = 3
 DEFAULT_PSWAP_NUM_GREEDYROUTE_ITERATIONS_POSTUPDATE = 2 
 
 """
-NOTE: not guaranteed to solve token swapping problem in permutation graph. 
+NOTE: not guaranteed to solve token swapping problem in permutation graph, 
+      arbitrary PRNG.
 
 This is an implementation of a solution search to the NP-Complete problem, 
 Token Swapping. The proposed solution search is described in this paper @ 

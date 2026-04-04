@@ -1,5 +1,5 @@
 import numpy as np 
-from collections import defaultdict 
+from collections import defaultdict
 from morebs2.numerical_generator import prg_seqsort_ties
 
 # TODO: test 
@@ -36,6 +36,7 @@ class BaseNode:
             if x.identifier == identifier: return i 
         return -1 
 
+DEFAULT_NAVIGATOR_NODE_COUNTER = lambda loc,value: value + 1
 
 # TODO: test 
 """
@@ -51,7 +52,7 @@ A node-by-node navigator. Does not consider edge costs.
 class NodeObjectiveNavigator:
 
     def __init__(self,loc,avoid_nodeset,take_nodeset,objective_nodeset,prg,path_log_length=float('inf'),\
-        absolute_avoid:bool=False,risk_possible_avoid:bool=False): 
+        absolute_avoid:bool=False,risk_possible_avoid:bool=False,nav_ctr=DEFAULT_NAVIGATOR_NODE_COUNTER): 
         assert type(avoid_nodeset) == type(take_nodeset) == type(objective_nodeset) 
         assert len(avoid_nodeset.intersection(take_nodeset)) == 0 
         assert len(take_nodeset.intersection(objective_nodeset)) == 0 
@@ -60,10 +61,11 @@ class NodeObjectiveNavigator:
 
         self.path_log_length = path_log_length
         self.encountered = defaultdict(int,{loc: 1}) 
-        self.path_log = [loc]  
+        self.path_log = [loc]
         self.loc = loc 
         self.avoid = avoid_nodeset
         self.possible_avoid = set() 
+        self.nav_ctr = nav_ctr 
         self.absolute_avoid = absolute_avoid
         self.risk_possible_avoid = risk_possible_avoid
 
@@ -156,13 +158,14 @@ class NodeObjectiveNavigator:
         return q[i] 
 
     def update_travel_log(self):
-        self.encountered[self.loc] += 1 
+        k,v = self.loc,self.encountered[self.loc] 
+        self.encountered[self.loc] = self.nav_ctr(k,v) 
         self.path_log.append(self.loc) 
 
         lx = self.path_log_length - len(self.path_log) 
 
         while lx < 0: 
-            self.path_log.pop(0) 
+            self.path_log.pop(0)  
             lx += 1 
 
         self.c += 1 
