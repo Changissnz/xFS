@@ -23,3 +23,9 @@ class NavigatorGraphHandler:
 
         self.navigator.receive_context(C) 
         return self.navigator.make_choice()
+
+    @staticmethod
+    def iterate_n_rounds(nh,num_rounds): 
+        assert type(nh) == NavigatorGraphHandler
+        for _ in range(num_rounds): 
+            next(nh)   

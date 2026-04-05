@@ -50,6 +50,8 @@ class CycleObjective:
             self.target_finished = True 
             return None 
 
+        if len(neighbors) == 0: return None 
+
         l = len(self.current_target)
         q = self.current_index + 1 
         if q >= l: 
@@ -80,8 +82,12 @@ Shortest paths between nodes are not recorded into node memory. Node-to-cycle
 relations are also not recorded into node memory. Navigator bases its decisions 
 on the travel log sequence.
 
-Frequency of travel is calculated by Poison distribution probabilities, given 
-`frequency_range`. 
+Frequency of travel is calculated by Poisson distribution probabilities, given 
+`frequency_range`. The boolean `skew_frequency` specifies whether navigator 
+can extend its iteration over a cycle after the Poisson target frequency for 
+travelling that cycle has been reached. When this parameter is set to True, 
+navigator uses a decision process found in method<travel__objective_cycle> 
+to determine the number of additional iterations to travel current cycle. 
 
 NOTE: 
 Navigator can be used with both directed and undirected graphs, but some of the 
@@ -89,11 +95,14 @@ decision-making processes suit undirected graph more.
 
 NOTE: 
 Code is designed for navigator with radial vision of 1 edge. 
+
+NOTE: 
+Navigator is designed for use with immutable graphs (no changes in nodes and edges). 
 """
 class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator): 
 
     def __init__(self,starting_loc,prg,frequency_range,max_drift:int,\
-        skew_frequency:bool=False,path_log_length=150): 
+        skew_frequency:bool=False,path_log_length=150,verbose=False): 
 
         assert type(starting_loc) != type(None)
         assert type(prg) in {MethodType,FunctionType}        
@@ -101,7 +110,7 @@ class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator):
         assert is_valid_range(frequency_range,True,False)
         assert frequency_range[0] > 0 
         assert type(max_drift) == int and max_drift > 1 
-        assert type(skew_frequency) == bool
+        assert type(skew_frequency) == bool == type(verbose)
 
         super().__init__(starting_loc,set(),set(),set(),prg,path_log_length,absolute_avoid=False,\
             risk_possible_avoid=False,nav_ctr=DEFAULT_NAVIGATOR_NODE_COUNTER)
@@ -111,6 +120,7 @@ class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator):
         self.max_drift = max_drift
         self.frequency_range = frequency_range
         self.skew_frequency = skew_frequency
+        self.verbose = verbose 
 
         self.context = None
         self.is_roaming = False 
@@ -188,7 +198,11 @@ class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator):
         return
 
     def drift_one(self): 
+        if self.verbose: print("drifting") 
+
         neighbors = self.context[self.loc]
+        if len(neighbors) == 0: return 
+
         N = sorted(neighbors) 
         i = int(self.prg()) % len(N)
         n = N[i] 
@@ -206,6 +220,8 @@ class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator):
 
     def travel__objective_cycle(self): 
         neighbors = self.context[self.loc]
+        if len(neighbors) == 0: return False 
+
         q = self.cycle_objective.decide(neighbors) 
 
         # case: finished with cycling 
@@ -214,9 +230,10 @@ class CyclicalNodeNavigatorTypeSM(NodeObjectiveNavigator):
             if self.skew_frequency:
                 m = (self.frequency_range[1] - self.frequency_range[0]) / 2
                 r = [0,ceil(m)]
-                f = self.freq_gen.out(0,r) 
+                f = self.freq_gen.out(ceil(m/2),r) 
                 # subcase: extending cycling 
                 if f > 0: 
+                    if self.verbose: print("extending travel of current cycle with {} iterations".format(f)) 
                     self.cycle_objective.reset_frequency(f) 
                     return self.travel__objective_cycle()
 
