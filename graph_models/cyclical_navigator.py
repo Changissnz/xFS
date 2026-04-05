@@ -1,14 +1,7 @@
 from .base_node import * 
 from morebs2.frequency_generator import * 
+from morebs2.seq_repr import greatest_index_of_occurrence
 
-def greatest_index_of_occurrence(l,v): 
-    assert type(l) == list 
-
-    i = None 
-    for (j,l_) in enumerate(l): 
-        if l_ == v: 
-            i = j 
-    return i 
 
 """
 used to store information on cycle for <CyclicalNodeNavigatorTypeSM> to travel.

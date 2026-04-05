@@ -195,7 +195,6 @@ class GameControverter:
         ranked_moves = prg_seqsort_ties(ranked_moves,self.prg,vf=lambda x:x[1])         
         return ranked_moves
 
-    # TODO 
     def adjust_agent_payoff_range(self,agent_idn): 
         q0 = self.agent2payoff_range[agent_idn]
         # no change 
