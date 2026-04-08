@@ -25,7 +25,8 @@ of operations:
 * see method for specific details on on this second step. 
 * when `allow_multireduction` is set to False, a node n_x that is a reduction of nodeset N_r in N_s 
   cannot be used in the node reduction centering on another node n_q in N_s. Setting this mode to 
-  True will allow for embedded node reductions in a reduced graph G_r of G'. 
+  True will allow for embedded node reductions in a reduced graph G_r of G', during the same 
+  reducing iteration.  
 """
 # NOTE: algorithm is significantly slow for graphs of roughly 5000 or more in node size. 
 class ModularGraph:

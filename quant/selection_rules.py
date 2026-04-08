@@ -1,6 +1,7 @@
 '''
 NOTE: requirements are positive, restrictions are negative 
 '''
+from types import MethodType,FunctionType
 
 #------------------------------------------ weight functions for boolean choice of rule. 
 
@@ -88,9 +89,15 @@ def boolean_selection__type_F2(input_val,requirement_value,restriction_value,rou
 
 #----------------------------------------- effect functions for float output from boolean choice 
 
+"""
+echo choice 
+"""
 def boolean_choice_effect__type_1(output_value): 
-    return output_value >= 0.0  
+    return True 
 
+"""
+?is predominant? choice 
+"""
 def boolean_choice_effect__type_2(output_value):
     maximum = 1.0 if output_value >= 0. else -1.
     anti = maximum - output_value
@@ -99,6 +106,8 @@ def boolean_choice_effect__type_2(output_value):
 #--------------------------------------------------------------------------------------------------
 
 """
+re(Q)uirement + re(S)triction selection rule. 
+
 A decision structure that determines if agent input value satisfies rules to be of or do `label`, 
 given two non-negative floats `requirement_value` (positive) and `restriction_value` (negative) 
 that add up to 1.0. 
@@ -109,10 +118,14 @@ Decision consists of 2 layers:
     con: < 0. 
 - layer 2: boolean for `pro` XOR `con`. 
 """
-class BasicSelectionRule: 
+class QSSelectionRule: 
 
     def __init__(self,label,requirement_value,restriction_value,selection_value_function,\
-        value_effect_function):   
+        value_effect_function):  
+
+        assert type(selection_value_function) in {MethodType,FunctionType}
+        assert type(value_effect_function) in {MethodType,FunctionType}
+ 
         self.label = label 
         self.req_val = requirement_value
         self.res_val = restriction_value
@@ -135,13 +148,17 @@ class BasicSelectionRule:
 A decision structure that associates one `label` with n >= 0 `antilabels`. 
 Agent input value determines each antilabel's degree of exclusion and whether 
 the boolean from that degree bears effect (a boolean). 
+
+Decision structure is an XOR-extended relative of <QSSelectionRule>. 
 """
-class BasicSelectionExclusionRule: 
+class QSSelectionExclusionRule: 
 
     def __init__(self,label,requirement_value,antilabel_map,selection_value_function,\
         value_effect_function): 
         assert type(antilabel_map) == dict
         assert 0. <= requirement_value <= 1. 
+        assert type(selection_value_function) in {MethodType,FunctionType}
+        assert type(value_effect_function) in {MethodType,FunctionType}
 
         self.label = label 
         self.req_val = requirement_value
