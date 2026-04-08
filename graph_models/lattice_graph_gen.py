@@ -44,7 +44,7 @@ class ParallelGraphSurface:
         self.is_dsg = is_dsg 
         self.parallels = []
         self.parallel_heads = [] 
-
+        self.parallel_tails = []
         self.parallels_nodeset = []  
 
     def nodeset(self): 
@@ -71,7 +71,8 @@ class ParallelGraphSurface:
         G = generate_graph__path(num_vertices,self.current_index,self.is_dsg)
         self.parallels.append(G) 
         self.parallel_heads.append(self.current_index) 
-        self.current_index += num_vertices 
+        self.current_index += num_vertices
+        self.parallel_tails.append(self.current_index - 1) 
 
         self.parallels_nodeset.append(set(G.keys()))
         return
