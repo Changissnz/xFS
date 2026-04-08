@@ -18,10 +18,6 @@ def PSwapGraph__sample_VAR(num_nodes,ratio,prg):
 """
 py -m tests.test_pswap_graph 
 """
-###
-# NOTE: the results in these test cases rely on Python/Numpy random. 
-#       The specific Python version is Python 3.14.2. 
-#       User output may differ from this output. 
 class PSwapGraphClass(unittest.TestCase):
 
     """

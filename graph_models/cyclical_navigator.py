@@ -71,8 +71,8 @@ navigator that can travel a graph, repeating cycles, using `sparse memory`.
 `Sparse memory` consists of the travel log sequence of k <= `path_log_length` 
 nodes, possibly non-unique, that the navigator has already travelled over. 
 
-Shortest paths between nodes are not recorded into node memory. Node-to-cycle 
-relations are also not recorded into node memory. Navigator bases its decisions 
+Shortest paths between nodes are not recorded into navigator memory. Node-to-cycle 
+relations are also not recorded into navigator memory. Navigator bases its decisions 
 on the travel log sequence.
 
 Frequency of travel is calculated by Poisson distribution probabilities, given 
