@@ -2,6 +2,7 @@
 NOTE: requirements are positive, restrictions are negative 
 '''
 from types import MethodType,FunctionType
+import numpy as np 
 
 #------------------------------------------ weight functions for boolean choice of rule. 
 
@@ -37,7 +38,7 @@ the "predominant" selection
 return: 
 - float, 
   F = predominant element (req XOR res) 
-  + non-predominant if `input_val` equals predominant element 
+  + non-predominant if `input_val` equals predominant element, 
   - non-predominant otherwise. 
 
 """
@@ -135,7 +136,7 @@ class QSSelectionRule:
 
     """
     return: 
-    - degree for label, ?accepted? 
+    - degree for `input_val` to `label`, ?accepted? 
     """
     def output(self,input_val): 
         assert type(input_val) in {bool,float} 
