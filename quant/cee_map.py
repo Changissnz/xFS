@@ -1,6 +1,7 @@
 from graph_models.hypergraph import * 
 from graph_models.lattice_graph_gen import * 
 
+# TODO: delete or use. 
 DEFAULT_MAX_CATEGORY_SIZE__LATTICE_REPR = 10 
 
 # TODO: test this. 
@@ -132,6 +133,9 @@ the expected path for label l_j. In the extended case of l_k not being of the sa
 category c_j of l_j, the path is piecewise (multiple disconnected paths), from one 
 category c_{i} to the next connected category c_{i+1}, up through the category c_j. 
 """ 
+# NOTE: this structure is a more complex variant of class<HomoScriptNetwork>, in regards 
+#       to its map, 
+#           agent idn -> requirement idn -> path::list.   
 class PRClassExpectedEffectTypeHL: 
 
     def __init__(self,hg,prg):   
