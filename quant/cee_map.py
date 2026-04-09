@@ -128,7 +128,9 @@ a label l_j to operate for l_j in the context of category c_i, via its expected 
 in R_i (see variable<label2path_map>). A label l_k, not equal to l_j but is 
 of the same category of c_i, can substitute for l_j via function<R_i.path_for_label_substitution>. 
 This path P_kj will have a non-zero cost associated with it, since P_kj != P_j, 
-the expected path for label l_j. 
+the expected path for label l_j. In the extended case of l_k not being of the same 
+category c_j of l_j, the path is piecewise (multiple disconnected paths), from one 
+category c_{i} to the next connected category c_{i+1}, up through the category c_j. 
 """ 
 class PRClassExpectedEffectTypeHL: 
 
@@ -176,14 +178,14 @@ class PRClassExpectedEffectTypeHL:
 
         # case: two labels equal each other
         if l0 == l1: 
-            return self.cat2lattice_map[l1_cat].path_for_label(l1),True 
+            return [self.cat2lattice_map[l1_cat].path_for_label(l1)] 
 
         categories = self.hg.base_node_to_H_nodeset(l0) 
         
         # case: l1_cat is one of the categories for l0 
         if l1_cat in categories: 
             q = self.cat2lattice_map[cat].path_for_label_substitution(l0,l1) 
-            return q,True 
+            return [q] 
 
         # choose a category c0 associated with l0 
         categories = sorted(categories) 
@@ -191,7 +193,7 @@ class PRClassExpectedEffectTypeHL:
         c0 = categories[i]
 
         # calculate a path 
-        return self.categorical_label2label_path_(l0,l1,c0,l1_cat,ext_prg),False 
+        return self.categorical_label2label_path_(l0,l1,c0,l1_cat,ext_prg) 
 
     def categorical_label2label_path_(self,l0,l1,l0_cat,l1_cat,ext_prg): 
 
@@ -217,24 +219,9 @@ class PRClassExpectedEffectTypeHL:
             L = self.cat2lattice_map[l0_cat] 
             P = L.path_for_label_substitution(current_label,l1_) 
             N.append(P) 
-
-            """
-            # add the path 
-            print("NN: ")
-            print(N)
-            print("PP: ")
-            print(P)
-            print("---")
-            print("CATLAB")
-            print(current_cat)
-            print(current_label)
-            print("================")
-            N.add_path(P) 
-            """ 
             
             current_cat = next_cat 
             current_label = l1_ 
-
             index += 1 
 
         last = hg_path.p[-1] 
@@ -243,5 +230,4 @@ class PRClassExpectedEffectTypeHL:
 
         # add the path 
         N.append(P)
-
         return N 
