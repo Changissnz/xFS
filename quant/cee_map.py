@@ -15,6 +15,8 @@ head and tail nodes of `G`. Additionally, label l_i has an associated expected
 path P, found in `label2path_map`. 
 
 A label l_j that is to substitute for label l_k must take a path P_jk such that 
+head(P_jk) = h_j, the head of the expected path for label l_j  
+    AND 
 tail(P_jk) = t_k, the tail of the expected path for label l_k. 
 """
 class AssociativeCategoryLatticeRepr: 
