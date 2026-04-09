@@ -31,10 +31,7 @@ class AssociativeCategoryLatticeRepr:
         assert label_set == set(label2ht_map.keys()) 
         q = [] 
         for v in label2ht_map.values(): 
-            q.extend(v) 
-
-        print("LLLL")
-        print(label2ht_map)
+            q.extend(v)
 
         assert len(q) == len(set(q)) 
         
@@ -108,7 +105,7 @@ Used for situations where there are expected effects from class.
 
 A connected hypergraph is used to associate n categories with each other. 
 Each category c_i has l_i labels belonging to it. A label l_q can belong to 
-more than one category. 
+more than one category.
 
 In this specification, however, a label l_k that does not belong to the same 
 category c_j of another label l_j still has a non-zero association with that 
@@ -121,6 +118,9 @@ with traversing a path P_rs such that
     P_rs != P_s; P_s the expected (ideal) path for a label l_s. 
 NOTE: see the description of class<AssociativeCategoryLatticeRepr> for more 
       information on the expected path difference. 
+In other words, every label is interchangeable with every other, regardless of 
+status of inclusion in an arbitrary category. This interchangeability is not 
+agnostic, requiring non-zero costs. 
 
 For every category c_i, there is an <AssociativeCategoryLatticeRepr> R_i that 
 contains the label-to-path info for the labels of c_i. There is 0 cost for 
