@@ -52,10 +52,23 @@ class HyperGraph:
         q1 = self.node2nodeset[n1] 
         return q0.intersection(q1)  
 
+    def H_node_density_map(self): 
+        return {k:len(self.node2nodeset[k]) for k in self.rep.keys()} 
+
+    def nodepair_exists(self,H_node,base_node): 
+        if H_node not in self.rep: return False 
+
+        if base_node not in self.node2nodeset[H_node]: 
+            return False 
+
+        return True 
+
     """
     NOTE: number of base nodes, `approx_base_nodesize`, must be at least equal to that of HyperGraph nodesize. 
 
     NOTE: number of base nodes in generated HyperGraph does not have to equal  `approx_base_nodesize`.
+
+    NOTE: generation scheme can exceed upper bound of `node2nodeset_sizerange`. 
     """
     @staticmethod 
     def generate_instance(hg_nodesize,hg_connectivity,is_directed:bool,approx_base_nodesize,node2nodeset_sizerange,prg):
@@ -109,8 +122,10 @@ class HyperGraph:
             q2.append([q_,sorted(nodeset)])  
         neighbor_inter_stat = {q_:False for q_ in q} 
 
+        ## scheme 1: results in nodeset sizes that might exceed upper bound of 
+        ##           node2nodeset_sizerange
         # iterate through each present neighbor, and select at least 
-        # 1 node from it. 
+        # 1 node from it.
         the_nodeset = set() 
         for q_ in q2: 
             x = q_[1] 
@@ -131,6 +146,7 @@ class HyperGraph:
             for q2_ in q2: 
                 i2 = intersect.intersection(set(q2_[1])) 
                 q2_[1] = sorted(set(q2_[1]) - i2)
+
 
         # check that `the_nodeset` is unique 
         is_unique = True 

@@ -4,6 +4,8 @@ NOTE: requirements are positive, restrictions are negative
 from types import MethodType,FunctionType
 import numpy as np 
 
+# TODO: test method<generate_instance> 
+
 #------------------------------------------ weight functions for boolean choice of rule. 
 
 def selection_rule_parameter_assertion(input_val,requirement_value,restriction_value,is_bool_type:bool): 
@@ -106,6 +108,13 @@ def boolean_choice_effect__type_2(output_value):
 
 #--------------------------------------------------------------------------------------------------
 
+DEFAULT_QS_BOOLEAN_SELECTION_FUNCTIONS = {boolean_selection__type_B1,\
+    boolean_selection__type_B2,boolean_selection__type_F1,\
+    boolean_selection__type_F2}
+
+DEFAULT_QS_BOOLEAN_EFFECT_FUNCTIONS = {boolean_choice_effect__type_1,\
+    boolean_choice_effect__type_2}
+
 """
 re(Q)uirement + re(S)triction selection rule. 
 
@@ -143,7 +152,24 @@ class QSSelectionRule:
         if type(input_val) == float: assert 0 <= input_val <= 1
 
         x = self.sel_val_function(input_val,self.req_val,self.res_val) 
-        return x,self.val_effect_function(x) 
+        return x,self.val_effect_function(x)
+
+    @staticmethod 
+    def generate_instance(label,selection_value_function,\
+        value_effect_function,prg):
+
+        assert selection_value_function in DEFAULT_QS_BOOLEAN_SELECTION_FUNCTIONS
+        assert value_effect_function in DEFAULT_QS_BOOLEAN_EFFECT_FUNCTIONS
+
+        req_val = prg_decimal(prg,[0.,1.]) 
+        res_val = prg_decimal(prg,[0.,1.]) 
+
+        s = req_val + res_val 
+        req_val = zero_div(req_val,s,0.5) 
+        res_val = zero_div(res_val,s,0.5) 
+
+        return QSSelectionRule(label,req_val,res_val,\
+            selection_value_function,value_effect_function)
 
 """
 A decision structure that associates one `label` with n >= 0 `antilabels`. 
@@ -175,8 +201,27 @@ class QSSelectionExclusionRule:
     """
     def output(self,input_val):
         D = dict() 
-        for k,v in self.antilabel_map.items(): 
-            s = self.sel_val_function(input_val,v,self.req_val) 
+        for k,v in self.antilabel_map.items():
+            q = self.req_val + v 
+            weighted_req = zero_div(self.req_val,q,0.5)
+            weighted_anti = zero_div(v,q,0.5)
+            s = self.sel_val_function(input_val,weighted_anti,weighted_req)  
             b = self.val_effect_function(s) 
             D[k] = (s,b) 
         return D
+
+    @staticmethod
+    def generate_instance(label,antilabels,selection_value_function,\
+        value_effect_function,prg):
+        
+        assert type(antilabels) == set 
+        assert selection_value_function in DEFAULT_QS_BOOLEAN_SELECTION_FUNCTIONS
+        assert value_effect_function in DEFAULT_QS_BOOLEAN_EFFECT_FUNCTIONS
+
+        antilabels = sorted(antilabels)
+
+        requirement_value = prg_decimal(prg,[0.,1.])
+        antilabel_map = {a:prg_decimal(prg,[0.,1.]) for a in antilabels} 
+        
+        return QSSelectionExclusionRule(label,requirement_value,antilabel_map,\
+            selection_value_function,value_effect_function) 
