@@ -70,7 +70,7 @@ specific requirements, given as variable<independent_demands>. For every i'th
 demand this agent is to conduct, chosen by method<next_move>, it must also conduct 
 the i'th 3rd-party demand. 
 
-There are an equal number of 3rd-party demands as independent demands.
+There are an equal number of 3rd-party demands and independent demands.
 """
 class DualRoleAgentTypeHL: 
 
@@ -131,7 +131,8 @@ class DualEnvTypeHL:
         # dual agent chooses next index and associated independent demand 
         index,indep_demand = self.dual_agent.next_move() 
 
-        if type(index) == 0: 
+        if type(index) == type(None):
+            self.fin_stat = True  
             return 
 
         # environment chooses 3rd-party demand of equal index 
