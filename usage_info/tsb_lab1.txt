@@ -5,6 +5,10 @@ Here is the base code.
 
 ##################################################################################
 
+from graph_problems.tsb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence,merge_two_prgs
+
 prg = prg__LCG(8907.25,938.66,-7823.66,158318.22)
 tbot = TokenSwappingBot.generate_instance(prg,verbose=False)
 
@@ -26,7 +30,7 @@ while not S.fin_stat:
 
 ############# Trial 1 
 
-Delete Line 10. Add in this line. 
+Delete Line 15. Add in this line. 
 
 ```
 prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
@@ -36,7 +40,7 @@ The lowest number of token swaps from this PRNG sequence is 4840.
 
 ############## Trial 2 
 
-Delete Line 10. Add in these lines. 
+Delete Line 15. Add in these lines. 
 
 ```
 prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
@@ -52,7 +56,7 @@ The lowest number of token swaps from this PRNG sequence is 4564.
 
 ################ Trial 3 
 
-Delete Line 10. Add in these lines. 
+Delete Line 15. Add in these lines. 
 
 ```
 prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
