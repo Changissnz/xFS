@@ -147,9 +147,10 @@ This is the basic gist of the dual role problem the agent is forced to contend w
   After the third-party demand, still at the same timestamp, agent goes ahead to 
   conducting its own independent demand, travelling the expected route of the HyperGraph-Lattice 
   for that demand's (category,label). The cost associated with this route for independent 
-  demand is equal to the sum of the weights (see variable<negative_node_weight_map>) for 
+  demand is equal to the sum of the node weights (see variable<negative_node_weight_map>) for 
   that route's node sequence. See method<DualCostsTypeHL.register_agent_path__independent_req> 
-  for more information. 
+  for more information. Node weights are non-constant, increasing in relation to the alternative 
+  route R taken to achieve the third-party demand, of expected route R1, R != R1. 
 """
 class DualEnvTypeHL: 
 
