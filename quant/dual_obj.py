@@ -149,8 +149,8 @@ This is the basic gist of the dual role problem the agent is forced to contend w
   for that demand's (category,label). The cost associated with this route for independent 
   demand is equal to the sum of the node weights (see variable<negative_node_weight_map>) for 
   that route's node sequence. See method<DualCostsTypeHL.register_agent_path__independent_req> 
-  for more information. Node weights are non-constant, increasing in relation to the alternative 
-  route R taken to achieve the third-party demand, of expected route R1, R != R1. 
+  for more information. Node weights are non-constant, increasing in relation to every alternative 
+  route R taken to achieve a third-party demand, of expected route R1, R != R1. 
 """
 class DualEnvTypeHL: 
 
