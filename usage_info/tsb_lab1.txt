@@ -1,0 +1,75 @@
+This lab consists of 3 trials on a graph of 307 nodes and 1414 edges. Graph is simple, undirected, and connected.  
+Every trial uses 20 PRNGs. All of them are LCGs. 
+
+Here is the base code. 
+
+##################################################################################
+
+prg = prg__LCG(8907.25,938.66,-7823.66,158318.22)
+tbot = TokenSwappingBot.generate_instance(prg,verbose=False)
+
+prng_seq = ?? 
+
+run_function = TSB_env_run_(50) 
+
+S = SimulationSolutionSearch(tbot,run_function,prng_seq,\
+        TSB_env_prng_assignment_function,TSB_env_mode_shift_function,\
+        TSB_env_solution_fetch_function,TSB_env_cmp_solution,verbose=True) 
+
+i = 0 
+while not S.fin_stat:     
+    S.process_one()
+    i += 1 
+
+
+##################################################################################
+
+############# Trial 1 
+
+Delete Line 10. Add in this line. 
+
+```
+prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
+```
+
+The lowest number of token swaps from this PRNG sequence is 4840. 
+
+############## Trial 2 
+
+Delete Line 10. Add in these lines. 
+
+```
+prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
+prng_seq_ = [deepcopy(prg)] 
+
+for p in prng_seq: 
+    p0 = prng_seq_[-1] 
+    prng_seq_.append(merge_two_prgs(p0,p,add)) 
+prng_seq = prng_seq_
+```
+
+The lowest number of token swaps from this PRNG sequence is 4564. 
+
+################ Trial 3 
+
+Delete Line 10. Add in these lines. 
+
+```
+prng_seq = prg_to_prg__LCG_sequence(deepcopy(prg),20,3 + 6/7)
+prng_seq_ = [deepcopy(prg)] 
+prng_seq1_ = [deepcopy(prg)] 
+
+for p in prng_seq:
+    p0 = prng_seq_[-1] 
+    prng_seq_.append(merge_two_prgs(p0,p,sub)) 
+
+for p in prng_seq[::-1]:
+    p0 = prng_seq1_[-1] 
+    prng_seq1_.append(merge_two_prgs(p0,p,sub)) 
+
+prng_seq = [] 
+for (p0,p) in zip(prng_seq_,prng_seq1_): 
+    prng_seq.append(merge_two_prgs(p0,p,add)) 
+``` 
+
+The lowest number of token swaps from this PRNG sequence is 4420. 
