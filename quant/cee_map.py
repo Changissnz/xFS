@@ -2,7 +2,16 @@ from graph_models.hypergraph import *
 from graph_models.lattice_graph_gen import * 
 
 # TODO: delete or use. 
-DEFAULT_MAX_CATEGORY_SIZE__LATTICE_REPR = 10 
+##DEFAULT_MAX_CATEGORY_SIZE__LATTICE_REPR = 10 
+
+def NodePath_sequence_to_1d_sequence(nseq): 
+    assert type(nseq) == list 
+
+    S = [] 
+    for seq in nseq: 
+        q = seq.p
+        S.extend(q) 
+    return S 
 
 # TODO: test this. 
 
@@ -188,7 +197,7 @@ class PRClassExpectedEffectTypeHL:
         
         # case: l1_cat is one of the categories for l0 
         if l1_cat in categories: 
-            q = self.cat2lattice_map[cat].path_for_label_substitution(l0,l1) 
+            q = self.cat2lattice_map[l1_cat].path_for_label_substitution(l0,l1) 
             return [q] 
 
         # choose a category c0 associated with l0 
@@ -220,7 +229,7 @@ class PRClassExpectedEffectTypeHL:
             l1_ = nodeset[i] 
 
             # get the path 
-            L = self.cat2lattice_map[l0_cat] 
+            L = self.cat2lattice_map[current_cat]    
             P = L.path_for_label_substitution(current_label,l1_) 
             N.append(P) 
             

@@ -8,15 +8,6 @@ def assert_HyperGraph_nodepair_existence(hg,nodepair_seq):
         n0,n1 = n[0],n[1]
         assert hg.nodepair_exists(n0,n1)
 
-def NodePath_sequence_to_1d_sequence(nseq): 
-    assert type(nseq) == list 
-
-    S = [] 
-    for seq in nseq: 
-        q = seq.p
-        S.extend(q) 
-    return S 
-
 """
 Container that stores the costs for a <DualRoleAgent> to fulfill requirements 
 for two roles:
@@ -220,3 +211,7 @@ class DualEnvTypeHL:
             indep_label,indep_label,indep_cat,ext_prg) 
         independent_path = NodePath_sequence_to_1d_sequence(independent_path)
         return independent_path
+
+    @staticmethod 
+    def generate_instance(): 
+        return -1 
