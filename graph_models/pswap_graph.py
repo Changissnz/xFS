@@ -435,3 +435,6 @@ class PSGraphHandler:
         for _ in range(self.greedy_route_iterations): 
             self.pg.module_greedy_swap_one_round() 
         return
+
+    def num_swaps(self): 
+        return self.pg.c 

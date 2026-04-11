@@ -3,6 +3,9 @@ from graph_models.pswap_graph import *
 
 DEFAULT_TOKEN_SWAPPING_BOT_NODE_SIZE = [40,1000]
 
+"""
+A bot w/ solution implementation for the NP-Complete problem, token swapping. 
+"""
 class TokenSwappingBot(PSGraphHandler): 
 
     def __init__(self,pg:PSwapGraph):

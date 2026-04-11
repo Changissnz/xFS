@@ -105,9 +105,12 @@ class DualRoleAgentTypeHL:
         return i,self.independent_demands.pop(i)
 
     def select_option_for_3rd_party_demand(self,actual_label,labels): 
+        # case: actual label is that of current demand. Choose it to 
+        #       avoid non-zero costs. 
         if actual_label == self.current_demand[1]: 
             return actual_label 
 
+        # case: choose a label using `prg` 
         i = int(self.prg()) % len(labels)  
         return labels[i]
 
