@@ -1,4 +1,15 @@
 from .cee_map import * 
+from .levenschtein import simple_string_cmp_metric
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+from collections import Counter 
+
+DEFAULT_DUAL_ENV_HG_NODESIZE_RANGE = [10,24] 
+DEFAULT_DUAL_ENV_HG_CONNECTIVITY_RANGE = [0.17,0.37] 
+DEFAULT_DUAL_ENV_HG_BASE_NODESIZE_MULTIPLIER = 2.7 
+DEFAULT_DUAL_ENV_HG_BASE_NODE2NODESET_SIZE_RANGE = [2,6]
+
+DEFAULT_DUAL_ENV_DEMAND_SIZE_RATIO_RANGE = [0.15,0.5] 
+DEFAULT_DUAL_ENV_OPTION_SIZE_RANGE = [4,12] 
 
 def assert_HyperGraph_nodepair_existence(hg,nodepair_seq): 
     assert type(hg) == HyperGraph
@@ -53,6 +64,12 @@ class DualCostsTypeHL:
             negative_weights
         return 
 
+    def __str__(self): 
+        S = "independent: {}\n".format(self.independent)
+        S += "third party: {}\n".format(self.third_party) 
+        S += "negative weight counter\n\n{}\n".format(self.negative_node_weight_map)
+        return S 
+
 """
 A dual role agent that is specially programmed for decision environments that center on 
 <PRClassExpectedEffectTypeHL>. The associated <PRClassExpectedEffectTypeHL> instance 
@@ -70,6 +87,8 @@ class DualRoleAgentTypeHL:
         # list, element is (category,label) 
         self.independent_demands = independent_demands
         self.set_prg(prg)
+
+        self.current_demand = None 
         return
 
     def set_prg(self,prg):
@@ -81,16 +100,32 @@ class DualRoleAgentTypeHL:
         if l == 0: return None,None 
 
         i = int(self.prg()) % l 
+
+        self.current_demand = self.independent_demands[i] 
         return i,self.independent_demands.pop(i)
 
-    def select_option_for_3rd_party_demand(self,labels): 
+    def select_option_for_3rd_party_demand(self,actual_label,labels): 
+        if actual_label == self.current_demand[1]: 
+            return actual_label 
+
         i = int(self.prg()) % len(labels)  
         return labels[i]
+
+    @staticmethod
+    def generate_instance(hg:HyperGraph,num_demands,prg): 
+        assert type(hg) == HyperGraph
+        assert type(num_demands) == int and num_demands > 0 
+        assert type(prg) in {MethodType,FunctionType}
+
+        indep_demands = hg.select_nodepairs_with_PRNG(num_demands,prg)
+        return DualRoleAgentTypeHL(indep_demands,prg) 
+
 
 # TODO: write description 
 class DualEnvTypeHL: 
 
     def __init__(self,dual_agent,ce_effect,third_party_demands,option_size_range,prg): 
+        assert type(dual_agent) == DualRoleAgentTypeHL
         assert type(prg) in {MethodType,FunctionType}
         
         assert len(dual_agent.independent_demands) == len(third_party_demands) 
@@ -110,6 +145,9 @@ class DualEnvTypeHL:
         self.cost_record = DualCostsTypeHL() 
         self.fin_stat = False 
         return
+
+    def running_score(self): 
+        print(self.cost_record) 
 
     def check_requirements(self): 
         D = self.dual_agent.independent_demands
@@ -133,7 +171,8 @@ class DualEnvTypeHL:
         labels = self.choose_n_labels()
 
         # dual agent chooses 
-        chosen_label_for_demand_3rd = self.dual_agent.select_option_for_3rd_party_demand(labels)
+        actual_label = demand_3rd[1] 
+        chosen_label_for_demand_3rd = self.dual_agent.select_option_for_3rd_party_demand(actual_label,labels)
 
         # dual agent calculates a path to satisfy third party demand 
         expected_path,chosen_path = self.pathpair_from_third_party_demand(chosen_label_for_demand_3rd,demand_3rd) 
@@ -187,12 +226,18 @@ class DualEnvTypeHL:
         agent_chosen_path = self.ce_effect.categorical_label2label_path(\
             agent_chosen_label,l1,l1_cat,ext_prg) 
 
-        expected_seq = NodePath_sequence_to_1d_sequence(expected_path)
+        expected_path = NodePath_sequence_to_1d_sequence(expected_path)
         agent_chosen_path = NodePath_sequence_to_1d_sequence(agent_chosen_path)
 
         return expected_path,agent_chosen_path
 
     def negative_weights_for_agent_3rd_party_demand_path(self,expected_path,agent_chosen_path):
+        print("E")
+        print(expected_path)
+        print()
+        print("C")
+        print(agent_chosen_path)
+        print() 
 
         F = filter(lambda x: x not in expected_path,agent_chosen_path)
         chosen_seq_ = list(F) 
@@ -213,5 +258,38 @@ class DualEnvTypeHL:
         return independent_path
 
     @staticmethod 
-    def generate_instance(): 
-        return -1 
+    def generate_instance(prg):
+        # generate the HyperGraph 
+        hg = DualEnvTypeHL.generate_default_HyperGraph(prg) 
+
+        # get the number of demands 
+        total_base_nodes = len(hg.base_nodeset()) 
+        d = modulo_in_range(prg(),DEFAULT_DUAL_ENV_DEMAND_SIZE_RATIO_RANGE)
+        num_demands = ceil(d * total_base_nodes) 
+
+        prgs = prg_to_prg__LCG_sequence(prg,2,4/3+9/7) 
+        prg0,prg1 = prgs[0],prgs[1] 
+
+        # generate the agent 
+        agent = DualRoleAgentTypeHL.generate_instance(hg,num_demands,prg0)
+
+        # declare a class expected effects 
+        cee = PRClassExpectedEffectTypeHL(hg,prg1)  
+
+        # generate 3rd-party demands 
+        demands_3rd = hg.select_nodepairs_with_PRNG(num_demands,prg)
+
+        return DualEnvTypeHL(agent,cee,demands_3rd,DEFAULT_DUAL_ENV_OPTION_SIZE_RANGE,prg)
+
+    @staticmethod 
+    def generate_default_HyperGraph(prg): 
+        hg_nodesize = modulo_in_range(int(prg()),DEFAULT_DUAL_ENV_HG_NODESIZE_RANGE) 
+        hg_connectivity = modulo_in_range(prg(),DEFAULT_DUAL_ENV_HG_CONNECTIVITY_RANGE)
+        is_directed = False 
+        base_nodesize = ceil(hg_nodesize * DEFAULT_DUAL_ENV_HG_BASE_NODESIZE_MULTIPLIER) 
+        node2nodeset_sizerange = DEFAULT_DUAL_ENV_HG_BASE_NODE2NODESET_SIZE_RANGE
+
+        hg = HyperGraph.generate_instance(hg_nodesize,\
+            hg_connectivity,is_directed,base_nodesize,\
+            node2nodeset_sizerange,prg)
+        return hg 

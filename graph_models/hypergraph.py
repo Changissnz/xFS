@@ -63,6 +63,22 @@ class HyperGraph:
 
         return True 
 
+    def select_nodepairs_with_PRNG(self,num_pairs,ext_prg): 
+
+        hg_nodes = sorted(self.rep.keys()) 
+
+        nodepairs = [] 
+        for _ in range(num_pairs):
+            i = int(ext_prg()) % len(hg_nodes) 
+            h_node = hg_nodes[i] 
+
+            nodeset = sorted(self.node2nodeset[h_node]) 
+            i = int(ext_prg()) % len(nodeset) 
+            label = nodeset[i] 
+
+            nodepairs.append((h_node,label))
+        return nodepairs
+
     """
     NOTE: number of base nodes, `approx_base_nodesize`, must be at least equal to that of HyperGraph nodesize. 
 
