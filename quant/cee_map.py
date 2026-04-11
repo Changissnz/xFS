@@ -1,9 +1,6 @@
 from graph_models.hypergraph import * 
 from graph_models.lattice_graph_gen import * 
 
-# TODO: delete or use. 
-##DEFAULT_MAX_CATEGORY_SIZE__LATTICE_REPR = 10 
-
 def NodePath_sequence_to_1d_sequence(nseq): 
     assert type(nseq) == list 
 

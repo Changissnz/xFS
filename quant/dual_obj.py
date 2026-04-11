@@ -124,11 +124,37 @@ class DualRoleAgentTypeHL:
         return DualRoleAgentTypeHL(indep_demands,prg) 
 
 
-# TODO: write description 
+# TODO: write description
+"""
+An environment for a dual role agent (see class<DualRoleAgentTypeHL>) to operate in.
+Environment contains a sequence of third-party demands, each demand a 
+    (category::(HyperGraph node),label::(HyperGraph base node)). 
+There is a <PRClassExpectedEffectTypeHL>, used by this environment, that has the 
+associated HyperGraph, as well as the lattice graphs for each of these HyperGraph 
+nodes. 
+
+The order-of-operations for every active timestamp can be found in the comments of 
+method<move_one>. 
+
+This is the basic gist of the dual role problem the agent is forced to contend with. 
+- At an active timestamp, agent chooses it's i'th independent demand to conduct. 
+- Agent must also conduct the i'th third-party demand that timestamp, as well. 
+- If independent demand is the same label as the third-party demand, there is 0 cost. 
+- Otherwise, agent must choose a route through the HyperGraph-Lattice to satisfy the 
+  third-party demand. This route is not the expected route, so there are penalties 
+  associated with conduct through that route; see 
+  function<DualCostsTypeHL.register_agent_path__3rd_party_req> for more information 
+  on the penalty mechanism. 
+
+  After the third-party demand, still at the same timestamp, agent goes ahead to 
+  conducting its own independent demand, travelling the expected route of the HyperGraph-Lattice 
+  for that demand's (category,label). 
+"""
 class DualEnvTypeHL: 
 
     def __init__(self,dual_agent,ce_effect,third_party_demands,option_size_range,prg): 
         assert type(dual_agent) == DualRoleAgentTypeHL
+        assert type(ce_effect) == PRClassExpectedEffectTypeHL
         assert type(prg) in {MethodType,FunctionType}
         
         assert len(dual_agent.independent_demands) == len(third_party_demands) 
