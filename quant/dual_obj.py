@@ -123,8 +123,6 @@ class DualRoleAgentTypeHL:
         indep_demands = hg.select_nodepairs_with_PRNG(num_demands,prg)
         return DualRoleAgentTypeHL(indep_demands,prg) 
 
-
-# TODO: write description
 """
 An environment for a dual role agent (see class<DualRoleAgentTypeHL>) to operate in.
 Environment contains a sequence of third-party demands, each demand a 
