@@ -138,6 +138,10 @@ This path P_kj will have a non-zero cost associated with it, since P_kj != P_j,
 the expected path for label l_j. In the extended case of l_k not being of the same 
 category c_j of l_j, the path is piecewise (multiple disconnected paths), from one 
 category c_{i} to the next connected category c_{i+1}, up through the category c_j. 
+
+NOTE: each of these lattice representatives are lattice graphs disconnected from every 
+      other; for every pair of categories C0,C1, their lattice graphs L(C0) and L(C1) 
+      are disjoint to each other.
 """ 
 # NOTE: this structure is a more complex variant of class<HomoScriptNetwork>, in regards 
 #       to its map, 
