@@ -13,6 +13,10 @@ NOTE: Project has entered progressive mode on 3/3/2026. Further developments wil
 go according to previous rate of development. 
 ```
 
+```
+NOTE: no graphical user interface provided
+``` 
+
 ## Graph Problems of Interest (in my words)
 
 Here is a list of graph problems in the project: 

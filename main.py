@@ -1,3 +1,3 @@
-from face.xfs_ui import * 
+from graph_problems import * 
 
-run_xfs_app() 
+print("There is no graphical user interface for this suite of algorithms.\nMain bots are found in folder<graph_problems>.")
