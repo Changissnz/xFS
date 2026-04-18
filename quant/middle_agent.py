@@ -1,7 +1,12 @@
-from graph_models.base_node import * 
+from graph_models.node_navigator_handler import * 
+from types import MethodType,FunctionType
+from morebs2.numerical_generator import is_number,safe_modulo_in_range
+from morebs2.matrix_methods import is_valid_range
+from morebs2.numerical_generator import prg_decimal,prg_to_prg__LCG_sequence
 
 def one_plus_x_PRNG_value(src,prg,x): 
-    r = safe_modulo_in_range(prg(),1+x) 
+    rx = [1 + x[0],1 + x[1]]
+    r = safe_modulo_in_range(prg(),rx) 
     return round(src * r,5)
 
 DEFAULT_MIDDLE_AGENT_TAX_RANGE = [0.02,0.15]
@@ -12,12 +17,14 @@ DEFAULT_REPRODUCED_MIDDLE_AGENT_PRNG_LCG_MULTIPLIER_RANGE = [1.1,5+7/9]
 class MiddleAgentSeller: 
 
     def __init__(self,idn,source,source_price,prg,unit_shelf_life,\
-        tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,deduction_range=DEFAULT_MIDDLE_AGENT_DEDUCTION_RANGE):
+        seller_lifespan,tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
+        deduction_range=DEFAULT_MIDDLE_AGENT_DEDUCTION_RANGE):
 
         assert type(source) in {MiddleAgentSeller,type(None)} 
         assert source_price > 0 
         assert type(prg) in {MethodType,FunctionType} 
         assert type(unit_shelf_life) == int and unit_shelf_life > 0 
+        assert type(seller_lifespan) == int and seller_lifespan > 0 
         assert is_valid_range(tax_range,False,True)
         assert is_valid_range(deduction_range,False,True)
         assert tax_range[0] > 0 
@@ -27,6 +34,7 @@ class MiddleAgentSeller:
         self.source = source 
         self.prg = prg 
         self.unit_shelf_life = unit_shelf_life
+        self.seller_lifespan = seller_lifespan
         self.tax_range = tax_range 
         self.deduction_range = deduction_range
 
@@ -47,13 +55,14 @@ class MiddleAgentSeller:
 
         self.units_dumped = 0
 
-    def mark_sold(self): 
-        self.prev_is_sold = True 
+    def mark_sold(self,stat:bool):
+        assert type(stat) == bool 
+
+        self.prev_is_sold = stat  
         return
 
     def update(self): 
         q = self.prev_is_sold 
-        self.prev_is_sold = False 
 
         # case: sold. reset sitting product counter to 0. update all 
         #       distributors in chain 
@@ -68,7 +77,7 @@ class MiddleAgentSeller:
         if self.sitting_prod_ctr >= self.unit_shelf_life: 
             self.sitting_prod_ctr = 0 
             self.units_dumped += 1 
-            self.price = initial_price 
+            self.price = self.initial_price 
         return None 
 
     def update_sold_to_all_in_chain(self,chain_members=set()):
@@ -88,9 +97,10 @@ class MiddleAgentSeller:
     next three values from this agent's PRNG. 
     """
     def reproduce(self,new_idn): 
-        multiplier = modulo_in_range(self.prg(),DEFAULT_REPRODUCED_MIDDLE_AGENT_PRNG_LCG_MULTIPLIER_RANGE) 
+        multiplier = safe_modulo_in_range(self.prg(),DEFAULT_REPRODUCED_MIDDLE_AGENT_PRNG_LCG_MULTIPLIER_RANGE) 
         new_prng = prg_to_prg__LCG_sequence(self.prg,1,multiplier)[0] 
-        M = MiddleAgentSeller(new_idn,self,self.initial_price,self.unit_shelf_life,self.tax_range) 
+        M = MiddleAgentSeller(new_idn,self,self.initial_price,new_prng,self.unit_shelf_life,\
+            self.seller_lifespan,self.tax_range) 
         return M 
 
 class MiddleAgentBuyer:
@@ -109,6 +119,8 @@ class MiddleAgentBuyer:
         self.ref_graph = None 
         self.sellers = None 
 
+        self.cumulative_expenses = 0 
+        self.units_bought = 0 
         self.preproc() 
         return 
 
@@ -133,7 +145,7 @@ class MiddleAgentBuyer:
 
         touched_nodes = set([self.starting_loc]) 
 
-        H = GraphNavigatorHandler(self.ref_graph,1,self.n,self.prg)
+        H = GraphNavigatorHandler(self.ref_graph,1,self.navigator,self.prg)
         for _ in range(max_travel): 
 
             # case: maximum number of sellers contacted 
@@ -146,7 +158,7 @@ class MiddleAgentBuyer:
 
             q = next(H) 
             touched_nodes |= {q} 
-            if q in sellers: 
+            if q in self.sellers: 
                 self.seller_price_map[q] = None 
 
 
@@ -168,7 +180,7 @@ class MiddleAgentBuyer:
     """
     def load_context(self,ref_graph,sellers:set): 
         assert type(ref_graph) == defaultdict
-        assert self.loc in ref_graph 
+        assert self.starting_loc in ref_graph 
         assert type(sellers) == set and len(sellers) > 0 
 
         self.ref_graph = ref_graph 
@@ -186,8 +198,11 @@ class MiddleAgentBuyer:
 
     def choose_seller(self): 
         q = [(k,v) for k,v in self.seller_price_map.items()]
-        q_ = prg_seqsort_ties(q,self.prg,vf=lambda x:x[1])[-1]
+        q_ = prg_seqsort_ties(q,self.prg,vf=lambda x:x[1])[0]
 
         self.seller_price_map.clear() 
         self.price_loaded = False 
+
+        self.cumulative_expenses += q_[1] 
+        self.units_bought += 1 
         return q_[0] 

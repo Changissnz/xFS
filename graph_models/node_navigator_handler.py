@@ -6,7 +6,7 @@ for use with class<NodeObjectiveNavigator>,class<CyclicalNodeNavigatorTypeSM>.
 
 See file<base_node>, file<cyclical_navigator>. 
 """
-class NavigatorGraphHandler: 
+class GraphNavigatorHandler: 
 
     def __init__(self,reference_graph,radius,navigator,prg): 
         assert issubclass(type(navigator),NodeObjectiveNavigator)
@@ -26,6 +26,6 @@ class NavigatorGraphHandler:
 
     @staticmethod
     def iterate_n_rounds(nh,num_rounds): 
-        assert type(nh) == NavigatorGraphHandler
+        assert type(nh) == GraphNavigatorHandler
         for _ in range(num_rounds): 
             next(nh)   

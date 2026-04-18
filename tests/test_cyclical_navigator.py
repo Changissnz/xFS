@@ -47,11 +47,11 @@ class CyclicalNodeNavigatorTypeSMClass(unittest.TestCase):
     def test__CyclicalNodeNavigatorTypeSM__make_choice__case_1(self):
         csm,G,prg = CyclicalNodeNavigatorTypeSM__sample_CNN() 
 
-        nh = NavigatorGraphHandler(G,radius=1,navigator=csm,prg=prg) 
+        nh = GraphNavigatorHandler(G,radius=1,navigator=csm,prg=prg) 
 
         csm.set_roaming_mode(True)
 
-        NavigatorGraphHandler.iterate_n_rounds(nh,15) 
+        GraphNavigatorHandler.iterate_n_rounds(nh,15) 
 
         csm.set_roaming_mode(False)
 
@@ -62,7 +62,7 @@ class CyclicalNodeNavigatorTypeSMClass(unittest.TestCase):
 
         for _ in range(csm.cycle_objective.target_frequency + 1): 
             assert csm.cycle_objective.current_target == C0 
-            NavigatorGraphHandler.iterate_n_rounds(nh,L)
+            GraphNavigatorHandler.iterate_n_rounds(nh,L)
 
         C1 = [36, 5]
         assert csm.cycle_objective.current_target == C1, "got {}".format(csm.cycle_objective.current_target)
@@ -72,7 +72,7 @@ class CyclicalNodeNavigatorTypeSMClass(unittest.TestCase):
     """
     def test__CyclicalNodeNavigatorTypeSM__make_choice__case_2(self):
         csm,G,prg = CyclicalNodeNavigatorTypeSM__sample_UNI() 
-        nh = NavigatorGraphHandler(G,radius=1,navigator=csm,prg=prg) 
+        nh = GraphNavigatorHandler(G,radius=1,navigator=csm,prg=prg) 
 
         csm.set_roaming_mode(False)
 
@@ -90,7 +90,7 @@ class CyclicalNodeNavigatorTypeSMClass(unittest.TestCase):
     def test__CyclicalNodeNavigatorTypeSM__make_choice__case_3(self):
         prg = prg__LCG(-22.7,13.17,460.5,-1220.5959) 
         csm,G,prg = CyclicalNodeNavigatorTypeSM__sample_CNN(prg,skew_frequency=True)
-        nh = NavigatorGraphHandler(G,radius=1,navigator=csm,prg=prg) 
+        nh = GraphNavigatorHandler(G,radius=1,navigator=csm,prg=prg) 
 
         csm.verbose = True 
         csm.set_roaming_mode(True)
@@ -106,7 +106,7 @@ class CyclicalNodeNavigatorTypeSMClass(unittest.TestCase):
         C0 = [11,36]
         assert csm.cycle_objective.current_target == C0,"got {}".format(csm.cycle_objective.current_target)        
         for _ in range(csm.cycle_objective.target_frequency + 1): 
-            NavigatorGraphHandler.iterate_n_rounds(nh,L)
+            GraphNavigatorHandler.iterate_n_rounds(nh,L)
 
         # additional frequency 
         assert csm.cycle_objective.current_target == C0,"got {}".format(csm.cycle_objective.current_target)

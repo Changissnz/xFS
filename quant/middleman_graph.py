@@ -15,6 +15,7 @@ class MiddleManNetwork:
         assert is_number(unit_price) 
         assert type(unit_shelf_life) == int and unit_shelf_life > 0 
         assert type(reprod_rate) == int and reprod_rate > 0 
+        assert type(seller_lifespan) == int and seller_lifespan > 0 
 
         assert issubclass(type(jg),JammingGraph) 
         assert len(jg) == 3  
@@ -23,11 +24,14 @@ class MiddleManNetwork:
         self.unit_price = unit_price 
         self.unit_shelf_life = unit_shelf_life
         self.reprod_rate = reprod_rate 
+        self.seller_lifespan = seller_lifespan
         self.jg = jg 
         self.prg = prg 
 
         self.middle_agents = dict()
-        self.num_transactions = 0      
+        self.num_transactions = 0    
+
+        self.preproc()  
         return
 
     def __next__(self): 
@@ -56,14 +60,14 @@ class MiddleManNetwork:
 
         # instantiate a MiddleAgentSeller for node 2 (original seller)
         s = MiddleAgentSeller(2,None,self.unit_price,self.prg,self.unit_shelf_life,\
-            tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
+            self.seller_lifespan,tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
             deduction_range=DEFAULT_MIDDLE_AGENT_DEDUCTION_RANGE)
         self.middle_agents[2] = s 
 
         # instantiate x middle-agents 
         
             # choose nodes for the agents 
-        num_middle_agents = modulo_in_range(int(prg()),\
+        num_middle_agents = modulo_in_range(int(self.prg()),\
             DEFAULT_MIDDLE_AGENT_BUYER__MAX_NUMBER_OF_SELLER_CANDIDATES_RANGE)
 
         stat = True 
@@ -81,7 +85,7 @@ class MiddleManNetwork:
             # instantiate each middle-agent 
         for m in middle_agents: 
             s2 = MiddleAgentSeller(m,s,s.initial_price,self.prg,self.unit_shelf_life,\
-                tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
+                self.seller_lifespan,tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
                 deduction_range=DEFAULT_MIDDLE_AGENT_DEDUCTION_RANGE)
             self.middle_agents[m] = s2 
         return  
@@ -91,8 +95,9 @@ class MiddleManNetwork:
 
     def move_buyer(self): 
         # travel network to search for seller with cheapest price 
+        x = set(self.middle_agents.keys())
         self.buying_agent.load_context(self.jg.G,\
-            sellers=set(self.middle_agents.keys()))
+            sellers=x)
         self.buying_agent.travel_graph() 
 
         # send prices to buyer 
@@ -106,7 +111,8 @@ class MiddleManNetwork:
     time duration. 
     """
     def transmit_prices_to_buyer(self): 
-        for k in self.buying_agent.seller_price_map(): 
+        d = dict()
+        for k in self.buying_agent.seller_price_map.keys(): 
             d[k] = self.middle_agents[k].price 
         self.buying_agent.load_prices(d) 
 
@@ -114,15 +120,14 @@ class MiddleManNetwork:
 
     def reset_seller_sold_stat(self): 
         for s in self.middle_agents.values(): 
-            s.mark_sold = False
+            s.mark_sold(False)
 
     def one_transaction(self,seller_idn): 
         # register all sellers in chain of sellers related 
         # to direct seller that sold  
         s = self.middle_agents[seller_idn]
-        s.mark_sold = True 
+        s.mark_sold(True) 
         chain_members = s.update() 
-
         # register all other sellers that did not sell 
         q = set(self.middle_agents.keys()) - chain_members 
 
@@ -155,7 +160,7 @@ class MiddleManNetwork:
             new_nodes = sorted(self.jg.new_nodes) 
 
             # choose a new node to be another seller 
-            i = modulo_in_range(int(self.prg()),new_nodes) 
+            i = int(self.prg()) % len(new_nodes)
             n = new_nodes[i] 
 
             # reproduce 
@@ -191,8 +196,10 @@ class MiddleManNetwork:
         return
 
     @staticmethod
-    def generate_instance(jamming_graph_type,unit_price,allow_buyer_memoryless_navigation:bool,prg1,prg2):
-        max_seller_candidates = modulo_in_range(int(prg()),\
+    def generate_instance(jamming_graph_type,unit_price,\
+        allow_buyer_memoryless_navigation:bool,prg1,prg2):
+
+        max_seller_candidates = modulo_in_range(int(prg1()),\
             DEFAULT_MIDDLE_AGENT_BUYER__MAX_NUMBER_OF_SELLER_CANDIDATES_RANGE)
 
         buyer = MiddleAgentBuyer(location=0,max_seller_candidates=max_seller_candidates,\
@@ -201,4 +208,10 @@ class MiddleManNetwork:
         jg = JammingGraph.generate_3node_instance(is_directed=False,jam_type=jamming_graph_type,\
             prg=prg2,jam_nodesize_range=DEFAULT_JAMMING_GRAPH_JAMSIZE_RANGE)
 
-        return MiddleManNetwork(buyer,unit_price,jg,prg2) 
+        unit_shelf_life = modulo_in_range(int(prg2()),DEFAULT_MIDDLE_AGENT_UNIT_SHELF_LIFE)
+        reprod_rate = modulo_in_range(int(prg2()),\
+            DEFAULT_MIDDLE_AGENT_SOLD_UNITS_TO_REPRODUCE_RANGE)
+        seller_rate = modulo_in_range(int(prg2()),\
+            DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE)
+        return MiddleManNetwork(buyer,unit_price,unit_shelf_life,\
+            reprod_rate,seller_rate,jg,prg2)
