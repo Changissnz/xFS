@@ -40,12 +40,16 @@ class MiddleAgentSeller:
         self.prev_is_sold = False 
         self.sitting_prod_ctr = 0 
 
+        # cumulative 
         self.units_sold = 0 
+        # counter used for reprod. 
+        self.units_sold_ = 0 
+
         self.units_dumped = 0
 
     def mark_sold(self): 
         self.prev_is_sold = True 
-        return 
+        return
 
     def update(self): 
         q = self.prev_is_sold 
@@ -54,8 +58,7 @@ class MiddleAgentSeller:
         # case: sold. reset sitting product counter to 0. update all 
         #       distributors in chain 
         if q: 
-            self.supdate_sold_to_all_in_chain()
-            return 
+            return self.update_sold_to_all_in_chain()
 
         # case: not sold. update sitting product counter. price reduction. if 
         #       counter surpasses `unit_shelf_life`, dump product and reset price 
@@ -66,15 +69,19 @@ class MiddleAgentSeller:
             self.sitting_prod_ctr = 0 
             self.units_dumped += 1 
             self.price = initial_price 
+        return None 
 
-    def update_sold_to_all_in_chain(self): 
+    def update_sold_to_all_in_chain(self,chain_members=set()):
+        chain_members |= {self.idn}
+
         self.sitting_prod_ctr = 0
-        self.units_sold += 1 
+        self.units_sold += 1
+        self.units_sold_ += 1  
 
         q = self.source 
         if type(q) == type(None): 
-            return 
-        q.update_sold()
+            return chain_members 
+        return q.update_sold_to_all_in_chain(chain_members)
 
     """
     instantiates another <MiddleAgentSeller> with an LCG PRNG, using the 
@@ -83,7 +90,7 @@ class MiddleAgentSeller:
     def reproduce(self,new_idn): 
         multiplier = modulo_in_range(self.prg(),DEFAULT_REPRODUCED_MIDDLE_AGENT_PRNG_LCG_MULTIPLIER_RANGE) 
         new_prng = prg_to_prg__LCG_sequence(self.prg,1,multiplier)[0] 
-        M = MiddleAgentSeller(new_idn,self,self.price,self.unit_shelf_life,self.tax_range) 
+        M = MiddleAgentSeller(new_idn,self,self.initial_price,self.unit_shelf_life,self.tax_range) 
         return M 
 
 class MiddleAgentBuyer:

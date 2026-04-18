@@ -55,6 +55,9 @@ class JammingGraph:
 
         self.G = nodepath.to_graph(is_path_directed)
         self.dead_nodes = set() 
+
+        # from the most recent jam 
+        self.new_nodes = set() 
         return
 
     def __len__(self): 
@@ -201,12 +204,16 @@ class JammingGraph:
         # replace the direct nodeset and subgraph 
         q0,q1 = self.nodeset_index_for_node(node)
 
+        # TODO: delete this. 
+        """
         if type(q0) == type(None): 
+            print("NODE IS: ",q0) 
             mg = MicroGraph(self.G) + MicroGraph(G_)  
             self.G = mg.dg
             self.G = graph_to_one_component(self.G,self.prg)
             self.node2nodesets[node].append(set(G_.keys()))
             return 
+        """
 
         nodeset_ = self.node2nodesets[q0][q1]
         subgraph = MicroGraph(self.G).subgraph_by_nodeset_(nodeset_)
@@ -233,7 +240,6 @@ class JammingGraph:
 
         # update graph 
         nodeset = flatten_setseq(self.node2nodesets[q0])
-        replacement = MicroGraph(self.G).subgraph_by_nodeset_(nodeset) 
 
         mg = MicroGraph(self.G) + MicroGraph(G_)  
         self.G = mg.dg 
@@ -256,6 +262,31 @@ class JammingGraph:
         if remove_original_node:
             self.dead_nodes |= {node}
         return G,node 
+
+    """
+    NOTE: deletion of nodeset could lead to disconnected graph 
+    """
+    def delete_nodeset(self,nodeset): 
+        # delete nodeset from `node2nodesets` 
+        for k in self.node2nodesets.keys(): 
+            q = self.node2nodesets[k] 
+
+            i = 0   
+            while i < len(q): 
+                q_ = q[i] - nodeset 
+                q[i] = q_ 
+                if len(q[i]) == 0: 
+                    q.pop(i) 
+                else: 
+                    i += 1 
+            self.node2nodesets[k] = q 
+
+        # delete nodeset from G 
+        G_ = self.G
+        d = MicroGraph(G_)
+        d.subgraph_nodeset_exclusion(nodeset) 
+        self.G = d.dg 
+        return 
 
     """
     generates a Type C or Type O instance, with 3 base nodes 
@@ -322,6 +353,7 @@ class JammingGraphTypeC(JammingGraph):
             if prev not in G: 
                 G[prev] = set()
         
+        self.new_nodes = set(G.keys())
         return self.subgraph_edit(node,G,remove_original_node) 
 
 """
@@ -347,6 +379,7 @@ class JammingGraphTypeO(JammingGraph):
         gg = GraphGen(self.is_directed,self.prg,is_realtime_gen,num_nodes,edge_connectivity)
         gg.full_run()
         G = gg.d 
+        graph_childkey_fillin(G)  
         G,_ = graph_automorphism(G,self.ctr)
 
         if not remove_original_node: 
@@ -359,4 +392,5 @@ class JammingGraphTypeO(JammingGraph):
                 G[node] |= {x} 
                 if not self.is_directed: G[x] |= {node} 
             
+        self.new_nodes = set(G.keys())
         return self.subgraph_edit(node,G,remove_original_node)  

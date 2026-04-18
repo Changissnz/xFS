@@ -72,6 +72,40 @@ class JammingGraphTypeCClass(unittest.TestCase):
             jg.one_jam(10,bool(_ % 2)) 
         return 
 
+    def test__JammingGraphTypeC__delete_nodeset__case_1(self): 
+        jg = JammingGraphTypeC__sample_JC1()
+        jg.one_jam(10,True) 
+        jg.one_jam(10,False)
+        jg.one_jam(10,False)
+        jg.one_jam(10,False)
+        jg.one_jam(10,True)
+        jg.one_jam(10,True)
+
+        # initial check 
+        q = jg.node2nodesets[10] 
+        ans = [{15, 17, 19, 21, 23, 24, 26, 27, 28, 29}, {32, 33, 30, 31}, {34, 35, 36}]
+        assert q == ans 
+
+        # delete one nodeset 
+        x = ans[1] 
+        jg.delete_nodeset(x) 
+
+        q2 = jg.node2nodesets[10] 
+        assert q2 == [{15, 17, 19, 21, 23, 24, 26, 27, 28, 29}, {34, 35, 36}]
+
+        y = set(jg.G.keys()).intersection(x)
+        assert y == set() 
+
+        # delete another nodeset 
+        x2 = {34,36} 
+        jg.delete_nodeset(x2) 
+
+        q2 = jg.node2nodesets[10] 
+        assert q2 == [{15, 17, 19, 21, 23, 24, 26, 27, 28, 29}, {35}]
+
+        y2 = set(jg.G.keys()).intersection(x2)
+        assert y2 == set() 
+
 class JammingGraphTypeOClass(unittest.TestCase):
 
     """

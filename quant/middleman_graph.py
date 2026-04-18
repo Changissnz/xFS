@@ -9,9 +9,13 @@ DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE = [6,16]
 class MiddleManNetwork:  
 
     def __init__(self,buying_agent:MiddleAgentBuyer,unit_price,unit_shelf_life,\
-        reprod_rate,jg:JammingGraph,prg):
+        reprod_rate,seller_lifespan:int,jg:JammingGraph,prg):
 
         assert type(buying_agent) == MiddleAgentBuyer
+        assert is_number(unit_price) 
+        assert type(unit_shelf_life) == int and unit_shelf_life > 0 
+        assert type(reprod_rate) == int and reprod_rate > 0 
+
         assert issubclass(type(jg),JammingGraph) 
         assert len(jg) == 3  
 
@@ -23,17 +27,18 @@ class MiddleManNetwork:
         self.prg = prg 
 
         self.middle_agents = dict()
-
         self.num_transactions = 0      
         return
 
     def __next__(self): 
+        self.reset_seller_sold_stat() 
 
-        return -1 
+        # move buyer 
+        seller_idn = self.move_buyer()
 
-    def move_buyer(self): 
-
-        return -1 
+        # move sellers 
+        self.one_transaction(seller_idn)
+        return
 
     def set_prg(self,prg,agent_idn):
         assert type(prg) in {MethodType,FunctionType}
@@ -75,11 +80,115 @@ class MiddleManNetwork:
 
             # instantiate each middle-agent 
         for m in middle_agents: 
-            s2 = MiddleAgentSeller(m,s,self.unit_price,self.prg,self.unit_shelf_life,\
+            s2 = MiddleAgentSeller(m,s,s.initial_price,self.prg,self.unit_shelf_life,\
                 tax_range=DEFAULT_MIDDLE_AGENT_TAX_RANGE,\
                 deduction_range=DEFAULT_MIDDLE_AGENT_DEDUCTION_RANGE)
             self.middle_agents[m] = s2 
         return  
+
+    #-------------------------------- code for buyer actions
+    #-------------------- travelling the network, choosing a seller to buy from 
+
+    def move_buyer(self): 
+        # travel network to search for seller with cheapest price 
+        self.buying_agent.load_context(self.jg.G,\
+            sellers=set(self.middle_agents.keys()))
+        self.buying_agent.travel_graph() 
+
+        # send prices to buyer 
+        self.transmit_prices_to_buyer() 
+
+        # have buyer decide 
+        return self.buying_agent.choose_seller()
+
+    """
+    sends the prices of all sellers buyer contacted, during this 
+    time duration. 
+    """
+    def transmit_prices_to_buyer(self): 
+        for k in self.buying_agent.seller_price_map(): 
+            d[k] = self.middle_agents[k].price 
+        self.buying_agent.load_prices(d) 
+
+    #------------------------------------------ seller actions 
+
+    def reset_seller_sold_stat(self): 
+        for s in self.middle_agents.values(): 
+            s.mark_sold = False
+
+    def one_transaction(self,seller_idn): 
+        # register all sellers in chain of sellers related 
+        # to direct seller that sold  
+        s = self.middle_agents[seller_idn]
+        s.mark_sold = True 
+        chain_members = s.update() 
+
+        # register all other sellers that did not sell 
+        q = set(self.middle_agents.keys()) - chain_members 
+
+        for q_ in q: 
+            s2 = self.middle_agents[q_] 
+            s2.update() 
+
+        # clear bankrupt 
+        self.clear_bankrupt_sellers() 
+
+        # reproduce 
+        self.reproduce_sellers() 
+
+    def fetch_reproducible_sellers(self): 
+        reproducible = set() 
+
+        for k,v in self.middle_agents.items(): 
+            if v.units_sold_ >= self.reprod_rate:  
+                reproducible |= {k}
+        return reproducible 
+
+    def reproduce_sellers(self): 
+        reproducible = sorted(self.fetch_reproducible_sellers()) 
+
+        for r in reproducible: 
+            # one jam 
+            self.jg.one_jam(1,False)
+            
+            # fetch new nodes from that jam 
+            new_nodes = sorted(self.jg.new_nodes) 
+
+            # choose a new node to be another seller 
+            i = modulo_in_range(int(self.prg()),new_nodes) 
+            n = new_nodes[i] 
+
+            # reproduce 
+            source = self.middle_agents[r] 
+            m = source.reproduce(n) 
+            self.middle_agents[n] = m  
+        return 
+
+
+    def fetch_bankrupt_sellers(self): 
+        bankrupt = set() 
+
+        for k,v in self.middle_agents.items(): 
+            if v.units_dumped >= self.seller_lifespan: 
+                bankrupt |= {k} 
+        return bankrupt 
+
+    def clear_bankrupt_sellers(self): 
+        bankrupt = self.fetch_bankrupt_sellers() 
+
+        # case: none are bankrupt 
+        if len(bankrupt) == 0: return 
+
+        # case: delete bankrupt nodes 
+        self.jg.delete_nodeset(bankrupt) 
+
+            # ensure graph is one component 
+        self.jg.G = graph_to_one_component(self.jg.G,self.prg) 
+
+            # delete the agents from the map 
+        for b in bankrupt: 
+            del self.middle_agents[b]  
+        return
 
     @staticmethod
     def generate_instance(jamming_graph_type,unit_price,allow_buyer_memoryless_navigation:bool,prg1,prg2):
