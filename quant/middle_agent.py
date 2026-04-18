@@ -97,6 +97,7 @@ class MiddleAgentSeller:
     next three values from this agent's PRNG. 
     """
     def reproduce(self,new_idn): 
+        self.units_sold_ = 0 
         multiplier = safe_modulo_in_range(self.prg(),DEFAULT_REPRODUCED_MIDDLE_AGENT_PRNG_LCG_MULTIPLIER_RANGE) 
         new_prng = prg_to_prg__LCG_sequence(self.prg,1,multiplier)[0] 
         M = MiddleAgentSeller(new_idn,self,self.initial_price,new_prng,self.unit_shelf_life,\

@@ -1,15 +1,33 @@
 from graph_models.jamming_graph import * 
 from .middle_agent import * 
+from collections import Counter 
 
+# starting number of middle agent sellers 
 DEFAULT_MIDDLE_AGENT_BUYER__MAX_NUMBER_OF_SELLER_CANDIDATES_RANGE = [10,25]
+
+# number of units a middle agent must sell before reproducing 
 DEFAULT_MIDDLE_AGENT_SOLD_UNITS_TO_REPRODUCE_RANGE = [6,16] 
+
+# number of timestamps an agent has to sell an existing unit 
 DEFAULT_MIDDLE_AGENT_UNIT_SHELF_LIFE = [3,8] 
+
+# number of dumped units before bankruptcy (termination)
 DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE = [6,16]
+
+# number of units a seller can sell before pseudo-random termination 
+# by network 
+DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE = \
+    [int(DEFAULT_MIDDLE_AGENT_SOLD_UNITS_TO_REPRODUCE_RANGE[1] * 1.5),
+    DEFAULT_MIDDLE_AGENT_SOLD_UNITS_TO_REPRODUCE_RANGE[1] * 2] 
+
+# length of seller idn. log used by network for dominant seller termination 
+DEFAULT_MIDDLE_AGENT_SELLER_LOG_SIZE = \
+    DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE[1] * 20 
 
 class MiddleManNetwork:  
 
     def __init__(self,buying_agent:MiddleAgentBuyer,unit_price,unit_shelf_life,\
-        reprod_rate,seller_lifespan:int,jg:JammingGraph,prg):
+        reprod_rate,seller_lifespan:int,jg:JammingGraph,prg,verbose:bool=False):
 
         assert type(buying_agent) == MiddleAgentBuyer
         assert is_number(unit_price) 
@@ -19,6 +37,8 @@ class MiddleManNetwork:
 
         assert issubclass(type(jg),JammingGraph) 
         assert len(jg) == 3  
+        assert type(prg) in {MethodType,FunctionType}
+        assert type(verbose) == bool 
 
         self.buying_agent = buying_agent
         self.unit_price = unit_price 
@@ -27,21 +47,32 @@ class MiddleManNetwork:
         self.seller_lifespan = seller_lifespan
         self.jg = jg 
         self.prg = prg 
+        self.verbose = verbose 
 
         self.middle_agents = dict()
         self.num_transactions = 0    
 
         self.preproc()  
+        self.seller_idn_log = [] 
         return
 
     def __next__(self): 
         self.reset_seller_sold_stat() 
 
         # move buyer 
+        if self.verbose: 
+            print("timestamp: {}".format(self.buying_agent.units_bought)) 
+
         seller_idn = self.move_buyer()
+
+        if self.verbose: 
+            print("\t buy from seller: {}".format(seller_idn))
 
         # move sellers 
         self.one_transaction(seller_idn)
+
+        # delete any seller that is dominant 
+        self.eliminate_dominant_sellers() 
         return
 
     def set_prg(self,prg,agent_idn):
@@ -104,7 +135,17 @@ class MiddleManNetwork:
         self.transmit_prices_to_buyer() 
 
         # have buyer decide 
-        return self.buying_agent.choose_seller()
+        s = self.buying_agent.choose_seller()
+
+        # log seller into log 
+        self.log_seller(s) 
+        
+        return s 
+
+    def log_seller(self,idn): 
+        self.seller_idn_log.append(idn) 
+        while len(self.seller_idn_log) > DEFAULT_MIDDLE_AGENT_SELLER_LOG_SIZE: 
+            self.seller_idn_log.pop(0) 
 
     """
     sends the prices of all sellers buyer contacted, during this 
@@ -114,6 +155,13 @@ class MiddleManNetwork:
         d = dict()
         for k in self.buying_agent.seller_price_map.keys(): 
             d[k] = self.middle_agents[k].price 
+        
+        if self.verbose: 
+            q = sorted([(k,v) for k,v in d.items()],key=lambda x:x[1])
+            print("--- seller / prices")
+            for q_ in q: 
+                print("\t\t{} / {}".format(q_[0],q_[1]))
+
         self.buying_agent.load_prices(d) 
 
     #------------------------------------------ seller actions 
@@ -128,6 +176,12 @@ class MiddleManNetwork:
         s = self.middle_agents[seller_idn]
         s.mark_sold(True) 
         chain_members = s.update() 
+
+        if self.verbose: 
+            print("total number of sellers: {}".format(len(self.middle_agents)))
+            print("all sellers involved")
+            print(sorted(chain_members)) 
+
         # register all other sellers that did not sell 
         q = set(self.middle_agents.keys()) - chain_members 
 
@@ -151,6 +205,9 @@ class MiddleManNetwork:
 
     def reproduce_sellers(self): 
         reproducible = sorted(self.fetch_reproducible_sellers()) 
+
+        if self.verbose: 
+            print("sellers reproducing:\n{}".format(sorted(reproducible)))
 
         for r in reproducible: 
             # one jam 
@@ -184,16 +241,53 @@ class MiddleManNetwork:
         # case: none are bankrupt 
         if len(bankrupt) == 0: return 
 
+        if self.verbose: 
+            print("bankrupt sellers: {}".format(sorted(bankrupt))) 
+
+        self.delete_sellers(bankrupt) 
+
+    def delete_sellers(self,nodeset):
         # case: delete bankrupt nodes 
-        self.jg.delete_nodeset(bankrupt) 
+        self.jg.delete_nodeset(nodeset) 
 
             # ensure graph is one component 
         self.jg.G = graph_to_one_component(self.jg.G,self.prg) 
 
             # delete the agents from the map 
-        for b in bankrupt: 
+        for b in nodeset:
+            if b not in self.middle_agents: continue 
+
             del self.middle_agents[b]  
         return
+
+    def eliminate_dominant_sellers(self): 
+        l = len(self.seller_idn_log) - 1
+
+        # case: empty log 
+        if l < 0: 
+            return 
+
+        sold_units_threshold = safe_modulo_in_range(int(self.prg()),\
+            DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE)
+
+        c = Counter(self.seller_idn_log)
+        x = sorted([(k,v) for k,v in c.items()],key=lambda x:x[1])  
+
+        to_eliminate = set() 
+        while len(x) > 0: 
+            q = x.pop(-1) 
+            if q[1] >= sold_units_threshold:
+                to_eliminate |= {q[0]}
+            else: 
+                break 
+
+        to_eliminate = to_eliminate.intersection(set(self.middle_agents.keys()))
+
+        if len(to_eliminate) > 0: 
+            if self.verbose: 
+                print("** eliminating dominant sellers {}".format(\
+                    sorted(to_eliminate))) 
+            self.delete_sellers(to_eliminate)
 
     @staticmethod
     def generate_instance(jamming_graph_type,unit_price,\
