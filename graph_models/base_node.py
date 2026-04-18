@@ -183,3 +183,7 @@ class NodeObjectiveNavigator:
         self.take.clear() 
         self.encountered = defaultdict(int,{self.loc: 1}) 
         self.path_log.clear() 
+
+    def reset_location(self,loc):
+        self.loc = loc 
+        self.path_log.append(self.loc) 

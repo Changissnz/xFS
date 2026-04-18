@@ -57,6 +57,9 @@ class JammingGraph:
         self.dead_nodes = set() 
         return
 
+    def __len__(self): 
+        return len(self.G) 
+
     def one_jam(self,node,remove_original_node:bool):
         return -1 
 
@@ -252,7 +255,22 @@ class JammingGraph:
         # case: add removed node to dead nodes
         if remove_original_node:
             self.dead_nodes |= {node}
-        return G 
+        return G,node 
+
+    """
+    generates a Type C or Type O instance, with 3 base nodes 
+    0,1,2, such that base node 1 is the only modifiable node. 
+    """
+    @staticmethod
+    def generate_3node_instance(is_directed,jam_type,prg,jam_nodesize_range=DEFAULT_JAMMING_GRAPH_JAMSIZE_RANGE):
+        assert jam_type in {"c","o"} 
+
+        p = NodePath.preload([0,1,2],[1,1]) 
+        modifiable = {1} 
+
+        if jam_type == "c": 
+            return JammingGraphTypeC(p,modifiable,prg,is_directed,jam_nodesize_range) 
+        return JammingGraphTypeO(p,modifiable,prg,is_directed,jam_nodesize_range)        
 
 
 """
@@ -265,6 +283,9 @@ class JammingGraphTypeC(JammingGraph):
         super().__init__(nodepath,modifiable_nodeset,prg,is_path_directed,jam_nodesize_range,ctr_function)
         return
 
+    """
+    main method 
+    """
     def one_jam(self,base_node,remove_original_node:bool):
         assert base_node in self.modifiable_nodeset
 
@@ -313,6 +334,9 @@ class JammingGraphTypeO(JammingGraph):
         super().__init__(nodepath,modifiable_nodeset,prg,is_path_directed,jam_nodesize_range,ctr_function)
         return
 
+    """
+    main method 
+    """
     def one_jam(self,base_node,remove_original_node:bool):
         assert base_node in self.modifiable_nodeset
 

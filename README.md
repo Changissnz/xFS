@@ -14,7 +14,7 @@ go according to previous rate of development.
 ```
 
 ```
-NOTE: no graphical user interface provided
+NOTE: no graphical user interface provided. 
 ``` 
 
 ## Graph Problems of Interest (in my words)
