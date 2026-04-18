@@ -65,8 +65,8 @@ Here is a list of graph problems in the project:
     - vantage point for learning: an agent that has to solve the NP-Complete problem, Token Swapping, 
     for an arbitrary graph. 
     - file: `graph_problems/tsb.py` 
-- Dual Role Bot (work in progress) 
-- Middleman Bot (work in progress) 
+- Dual Role Bot (Beta) 
+- Middleman Bot (Beta) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
