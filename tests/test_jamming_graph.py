@@ -106,6 +106,34 @@ class JammingGraphTypeCClass(unittest.TestCase):
         y2 = set(jg.G.keys()).intersection(x2)
         assert y2 == set() 
 
+    def test__JammingGraphTypeC__IS_DETERMINISTIC(self): 
+
+        def fx(jg): 
+
+            l = [len(jg.G)]
+            jg.one_jam(10,True) 
+            l.append(len(jg.G))
+            jg.one_jam(10,False)
+            l.append(len(jg.G))
+            jg.one_jam(10,False)
+            l.append(len(jg.G))
+            jg.one_jam(10,False)
+            l.append(len(jg.G))
+            jg.one_jam(10,True)
+            l.append(len(jg.G))
+            jg.one_jam(10,True)
+            l.append(len(jg.G))
+            return l 
+
+        jg = JammingGraphTypeC__sample_JC1()
+        l = fx(jg) 
+
+        for _ in range(10): 
+            jg = JammingGraphTypeC__sample_JC1()
+            l2 = fx(jg) 
+            assert l == l2 
+
+
 class JammingGraphTypeOClass(unittest.TestCase):
 
     """

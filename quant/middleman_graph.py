@@ -24,6 +24,13 @@ DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE = \
 DEFAULT_MIDDLE_AGENT_SELLER_LOG_SIZE = \
     DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE[1] * 20 
 
+"""
+The network structure used for the Middleman bot. 
+
+Features 1 buying agent and a variable number of sellers. Number of sellers increases 
+and decreases according to specific seller frequencies that satisfy the parameter 
+values of the middle agent default variables (top of this file).
+"""
 class MiddleManNetwork:  
 
     def __init__(self,buying_agent:MiddleAgentBuyer,unit_price,unit_shelf_life,\
@@ -50,7 +57,9 @@ class MiddleManNetwork:
         self.verbose = verbose 
 
         self.middle_agents = dict()
-        self.num_transactions = 0    
+        self.num_transactions = 0   
+        self.eliminated_dominants = set()  
+        self.eliminated_bankrupts = set() 
 
         self.preproc()  
         self.seller_idn_log = [] 
@@ -244,6 +253,7 @@ class MiddleManNetwork:
         if self.verbose: 
             print("bankrupt sellers: {}".format(sorted(bankrupt))) 
 
+        self.eliminated_bankrupts |= bankrupt 
         self.delete_sellers(bankrupt) 
 
     def delete_sellers(self,nodeset):
@@ -284,6 +294,7 @@ class MiddleManNetwork:
         to_eliminate = to_eliminate.intersection(set(self.middle_agents.keys()))
 
         if len(to_eliminate) > 0: 
+            self.eliminated_dominants |= to_eliminate
             if self.verbose: 
                 print("** eliminating dominant sellers {}".format(\
                     sorted(to_eliminate))) 

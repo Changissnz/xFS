@@ -55,6 +55,9 @@ class MiddleAgentSeller:
 
         self.units_dumped = 0
 
+        # sellers produced through method<reproduce> 
+        self.intermediate_sellers = [] 
+
     def mark_sold(self,stat:bool):
         assert type(stat) == bool 
 
@@ -102,6 +105,8 @@ class MiddleAgentSeller:
         new_prng = prg_to_prg__LCG_sequence(self.prg,1,multiplier)[0] 
         M = MiddleAgentSeller(new_idn,self,self.initial_price,new_prng,self.unit_shelf_life,\
             self.seller_lifespan,self.tax_range) 
+
+        self.intermediate_sellers.append(new_idn) 
         return M 
 
 class MiddleAgentBuyer:
