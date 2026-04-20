@@ -27,7 +27,7 @@ DEFAULT_MIDDLE_AGENT_SELLER_LOG_SIZE = \
 """
 The network structure used for the Middleman bot. 
 
-Features 1 buying agent and a variable number of sellers. Number of sellers increases 
+Features one buying agent and a variable number of sellers. Number of sellers increases 
 and decreases according to specific seller frequencies that satisfy the parameter 
 values of the middle agent default variables (top of this file).
 """
@@ -256,20 +256,6 @@ class MiddleManNetwork:
         self.eliminated_bankrupts |= bankrupt 
         self.delete_sellers(bankrupt) 
 
-    def delete_sellers(self,nodeset):
-        # case: delete bankrupt nodes 
-        self.jg.delete_nodeset(nodeset) 
-
-            # ensure graph is one component 
-        self.jg.G = graph_to_one_component(self.jg.G,self.prg) 
-
-            # delete the agents from the map 
-        for b in nodeset:
-            if b not in self.middle_agents: continue 
-
-            del self.middle_agents[b]  
-        return
-
     def eliminate_dominant_sellers(self): 
         l = len(self.seller_idn_log) - 1
 
@@ -299,6 +285,20 @@ class MiddleManNetwork:
                 print("** eliminating dominant sellers {}".format(\
                     sorted(to_eliminate))) 
             self.delete_sellers(to_eliminate)
+
+    def delete_sellers(self,nodeset):
+        # case: delete nodeset 
+        self.jg.delete_nodeset(nodeset) 
+
+            # ensure graph is one component 
+        self.jg.G = graph_to_one_component(self.jg.G,self.prg) 
+
+            # delete the agents from the map 
+        for b in nodeset:
+            if b not in self.middle_agents: continue 
+
+            del self.middle_agents[b]  
+        return
 
     @staticmethod
     def generate_instance(jamming_graph_type,unit_price,\

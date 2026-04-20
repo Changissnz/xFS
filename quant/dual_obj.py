@@ -143,8 +143,7 @@ This is the basic gist of the dual role problem the agent is forced to contend w
   associated with conduct through that route; see 
   method<DualCostsTypeHL.register_agent_path__3rd_party_req> for more information 
   on the penalty mechanism. 
-
-  After the third-party demand, still at the same timestamp, agent goes ahead to 
+- After the third-party demand, still at the same timestamp, agent goes ahead to 
   conducting its own independent demand, travelling the expected route of the HyperGraph-Lattice 
   for that demand's (category,label). The cost associated with this route for independent 
   demand is equal to the sum of the node weights (see variable<negative_node_weight_map>) for 
