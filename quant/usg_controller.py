@@ -2,7 +2,7 @@ from graph_models.dfs import *
 from graph_models.bfs import * 
 
 """
-controller for navigating an undirected simple graph. Can use BFS or DFS. 
+Controller for navigating an undirected simple graph. Can use BFS or DFS. 
 Main features include target node search and travel cost accounting. 
 """
 class USGController:

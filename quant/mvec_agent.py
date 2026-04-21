@@ -3,11 +3,18 @@ from morebs2.pa_derivative import *
 MOBILE_VECTOR_AGENT_ROLES = {"chaser","target"}
 
 """
+Used by class<MVTrackingGroupTypeSO> to predict mobile vector 
+target, an instance of class<MobileVectorAgent>. 
+
 Given a sequence of PRNGs, 
     S = <p_0,p_1,...,p_{k-1}>, 
-forms a new PRNG by adding all PRNGs of S together, like such: 
+forms a new PRNG P by adding all PRNGs of S together, like such: 
     P() = p_0() + p_1() + ... + p_{k-1}(). 
 
+Uses P to predict the next location, given input parameters 
+[0] current target location (a vector)  
+[1] partial derivative d0 
+[2] total derivative sum 
 """
 class GroupedPRNGDerivativePredictor: 
 
@@ -45,8 +52,7 @@ class GroupedPRNGDerivativePredictor:
 """
 Used by <MobileVectorAgent> of role `target`. 
 Can be used to generate additive derivatives, as well as partial information 
-additive segments for each of those derivatives.
-
+of additive segments for each of those derivatives.
 """
 class MVAgentDerivativeGenerator: 
 
@@ -86,25 +92,49 @@ class MVAgentDerivativeGenerator:
             is_unique_picker=True)
         return partial 
 
+"""
+An agent that is essentially a mutable vector in dimension n. Agent 
+is exactly one of two roles: chaser or target. 
+
+Method<next_derivative> allows the agent to 'move', according to the 
+programmed logistics of its role. 
+
+Specifically, if agent is a target, it uses an <MVAgentDerivativeGenerator> 
+to calculate every next derivative. If agent is a chaser, it is given a 
+derivative that is calculated from a <GroupedPRNGDerivativePredictor>. 
+This <GroupedPRNGDerivativePredictor> operates using this agent's PRNG, as 
+well as all other <MobileVectorAgent>s that are part of the same group. 
+"""
 class MobileVectorAgent: 
 
-    def __init__(self,v,role,prg,cumulative_diff_range=None,segment_size_range=None):   
+    def __init__(self,idn,v,role,prg,cumulative_diff_range=None,segment_size_range=None,\
+        derivative_log_length=200):   
         assert is_vector(v) 
         assert role in MOBILE_VECTOR_AGENT_ROLES
         if role == "target": 
+            assert is_valid_range(cumulative_diff_range,False,False) or \
+                is_valid_range(cumulative_diff_range,True,False) 
+            assert cumulative_diff_range[0] > 0 
+
             assert is_valid_range(segment_size_range,True,False) 
+            assert segment_size_range[0] > 0 
         else: 
+            assert type(cumulative_diff_range) == type(None) 
             assert type(segment_size_range) == type(None) 
 
+        self.idn = idn 
         self.v = v 
         self.role = role 
         self.prg = prg 
 
-        self.cumulative_diff_range = None 
-        self.segment_size_range = None 
+        self.cumulative_diff_range = cumulative_diff_range 
+        self.segment_size_range = segment_size_range
 
         self.d_op = None 
         self.init_derivative_op() 
+
+        self.derivative_log_length = derivative_log_length
+        self.derivative_log = deque() 
 
         self.weight = None 
         self.label = None 
@@ -122,17 +152,157 @@ class MobileVectorAgent:
         self.label = label  
         return
 
-    def next_derivative(self,predicted_target_location=None): 
+    def next_derivative(self,calculated_derivative=None): 
         if self.role == "target": 
-            assert type(predicted_target_location) == type(None)
-            self.d_op()
+            assert type(calculated_derivative) == type(None)
+            diff = modulo_in_range(self.prg(),self.cumulative_diff_range) 
+            self.d_op.process_full_derivative(diff) 
+            q = self.d_op.full_derivative()
+
+            self.update_dlog(q) 
+            self.v += q 
         else: 
-            assert is_vector(predicted_target_location) 
+            assert is_vector(calculated_derivative) 
+            self.update_dlog(calculated_derivative) 
+            self.v += calculated_derivative
 
-class MVTrackingGroup: 
+    def update_dlog(self,derivative): 
+        self.derivative_log.append(derivative) 
 
-    def __init__(self): 
-        return -1 
+        while len(self.derivative_log) > self.derivative_log_length: 
+            self.derivative_log.pop()
 
-    def predict_next_location(self): 
-        assert False 
+"""
+Mobile Vector Tracking Group, Type Symmetric Objective. 
+
+Container for a group of n <MobileVectorAgent>s, Chaser role.
+"""
+class MVTrackingGroupTypeSO: 
+
+    def __init__(self,mva_map,weight_range,point_dispersal_max_float:float):
+        assert type(mva_map) == dict 
+        for k,v in mva_map.items(): 
+            assert k == v.idn 
+            assert v.role == "chaser"
+        assert len(mva_map) > 1 
+
+        assert is_valid_range(weight_range,False,False) or is_valid_range(weight_range,True,False)
+        assert weight_range[0] > 0 
+        assert is_number(point_dispersal_max_float) 
+        assert point_dispersal_max_float > 0 
+
+        self.mva_map = mva_map 
+        self.weight_range = weight_range
+        self.point_dispersal_max_float = point_dispersal_max_float
+
+        self.predictor = None 
+        self.init_predictor()
+        self.predicted_next_location = None 
+        return
+
+    def init_predictor(self): 
+        keys = sorted(self.mva_map.keys())
+        prng_seq = [] 
+        for k in keys:
+            prng_seq.append(self.mva_map[k])  
+        self.predictor = GroupedPRNGDerivativePredictor(prng_seq) 
+
+    def predict_next_location(self,target_loc,partial_derivative,\
+        total_derivative_sum): 
+
+        self.predictor.feed_context(target_loc,partial_derivative,\
+            total_derivative_sum) 
+        p = self.predictor.predict_next_location()
+        self.predicted_next_location = p 
+        return deepcopy(p)
+
+    def assign_weights_and_labels(self): 
+        prg = self.predictor.prg 
+
+        keys = sorted(self.mva_map.keys())
+        labels = []
+
+        num_zeros = len(keys) // 2 
+        prg_ = prg__single_to_int(prg) 
+
+        keys2 = deepcopy(keys)
+        zeros = prg_choose_n(keys2,num_zeros,prg_,is_unique_picker=True) 
+        ones = keys 
+
+        for k in keys: 
+            w = modulo_in_range(self.prg(),self.weight_range)
+            A = self.mva_map[k] 
+            A.set_weight_and_label(w,l) 
+        return 
+
+    """
+    return: 
+    - list(vector),list(weight),list(label)
+    """
+    def agent_info(self): 
+
+        keys = sorted(self.mva_map.keys())        
+        V,W,L = [],[],[] 
+        for k in keys: 
+            A = self.mva_map[k] 
+            V.append(deepcopy(A.v)) 
+            W.append(A.weight)
+            L.append(A.label)
+        return np.array(V),np.array(W),np.array(L) 
+
+    def calculate_balance(self):
+        V,W,L = self.agent_info() 
+        rodc = self.classifier_from_points(V,L)
+
+        pos_weights = 0 
+        neg_weights = 0 
+
+        l = len(V) 
+        for i in range(l): 
+            v = V[i] 
+            w = W[i] 
+
+            b = rodc.classify(v)
+            if b: 
+                pos_weights += w 
+            else: 
+                neg_weights += w 
+        return abs(pos_weights - neg_weights)
+
+    def classifier_from_points(self,V,L):  
+        prg = self.predictor.prg 
+        rodc = RecursiveOneDimClassifier(V,L,prg,pscheme=0,verbose=False)
+        rodc.fit()
+        return rodc 
+
+    def move_MVAgents(self,target_loc,partial_derivative,\
+        total_derivative_sum,ext_prg=prg__constant(x=0)): 
+
+        self.predict_next_location(target_loc,partial_derivative,\
+            total_derivative_sum) 
+        self.move_each_MVAgent_(ext_prg) 
+        return 
+
+    def move_each_MVAgent_(self,ext_prg=prg__constant(x=0)): 
+        keys = sorted(self.mva_map.keys()) 
+        l = len(self.predicted_next_location) 
+        for k in keys: 
+            A = self.mva_map[k] 
+            self.move_MVAgent(k,ext_prg) 
+        return 
+
+    def move_MVAgent(self,k,ext_prg=prg__constant(x=0)): 
+
+        l = len(self.predicted_next_location) 
+
+        A = self.mva_map[k]
+        combined_prg = merge_two_prgs(ext_prg,A.prg,add)
+        
+        pdisp_vec = prg_partition_for_float__type2(self.point_dispersal_max_float,l,\
+            combined_prg,m=1) 
+
+        destination = self.predictor.predicted_next_location + pdisp_vec
+
+        derivative = destination - A.v 
+        A.next_derivative(derivative) 
+        return derivative    

@@ -1,5 +1,10 @@
 from .ce_agent import * 
 
+"""
+Base network for Slander Net Bot (class<SNBot>). 
+
+cea_map := dict, agent idn -> CEAgent 
+"""
 class CEAgentNetwork:
 
     def __init__(self,cea_map:dict,prg,reaction_requires_connection:bool=False): 
