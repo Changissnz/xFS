@@ -2,6 +2,9 @@ from morebs2.pa_derivative import *
 
 MOBILE_VECTOR_AGENT_ROLES = {"chaser","target"}
 
+# method used for parameter in function<morebs2.prg_to_prg__LCG_sequence> 
+DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER = [1.,5 + 18/19]
+
 """
 Used by class<MVTrackingGroupTypeSO> to predict mobile vector 
 target, an instance of class<MobileVectorAgent>. 
@@ -125,7 +128,8 @@ class MobileVectorAgent:
         self.idn = idn 
         self.v = v 
         self.role = role 
-        self.prg = prg 
+        self.prg = None 
+        self.set_prg(prg) 
 
         self.cumulative_diff_range = cumulative_diff_range 
         self.segment_size_range = segment_size_range
@@ -139,6 +143,10 @@ class MobileVectorAgent:
         self.weight = None 
         self.label = None 
         return 
+
+    def set_prg(self,prg): 
+        assert type(prg) in {MethodType,FunctionType} 
+        self.prg = prg 
 
     def init_derivative_op(self): 
         if self.role == "target": 
@@ -176,14 +184,47 @@ class MobileVectorAgent:
 Mobile Vector Tracking Group, Type Symmetric Objective. 
 
 Container for a group of n <MobileVectorAgent>s, Chaser role.
+
+This structure is used in class<MobileVectorNetwork>, and represents the 
+Chaser faction. 
+
+The acronym SO (Symmetric Objective) is given for this structure because 
+of the objective of 'symmetric' formation of the group members around 
+an external target <MobileVectorAgent>. 
+
+Every time the group moves, via 1 different vector per agent, to the next 
+timestamp to track a target <MobileVectorAgent>, every agent A_i is assigned 
+a weight w_i and binary label l_i. For m = |<MobileVectorAgents>|, there are 
+floor(m / 2) agents with 0 label, the remaining with 1 label (roughly equal 
+in set size). 
+
+A classification structure, that is, <morebs2.RecursiveOneDimClassifier> C is 
+used to classify the agent vectors V and their labels L. Classifier classifies 
+V into two sets, 1 label and 0 label. Then the score of symmetric balance of 
+the agent vectors is 
+
+ |  [ sum       W(C(v_i)) ]  -  [ sum       W(C(v_j)) ]   |;  
+    C(v_i) = 0                  C(v_j) = 0            
+
+    v_i,v_j in V. 
+
+In natural language, this would be the absolute difference in weighted sum of 
+the agents labeled 0 and the agents labeled 1. 
+
 """
 class MVTrackingGroupTypeSO: 
 
     def __init__(self,mva_map,weight_range,point_dispersal_max_float:float):
         assert type(mva_map) == dict 
+
+        dimension = set() 
         for k,v in mva_map.items(): 
+            dimension |= {len(v.v)} 
+
             assert k == v.idn 
             assert v.role == "chaser"
+            assert len(dimension) == 1 
+
         assert len(mva_map) > 1 
 
         assert is_valid_range(weight_range,False,False) or is_valid_range(weight_range,True,False)
@@ -198,6 +239,24 @@ class MVTrackingGroupTypeSO:
         self.predictor = None 
         self.init_predictor()
         self.predicted_next_location = None 
+
+        self.vdim = dimension 
+        return
+
+    """
+    uses 1 PRNG `prg` to create |`mva_map`| LCGs. Every i'th 
+    agent is set with the i'th LCG. 
+    """
+    def load_prg_into_agents(self,prg): 
+
+        keys = sorted(self.mva_map.keys())
+        prng_seq = prg_to_prg__LCG_sequence__v2(prg,len(keys),\
+            mod_scale_range=\
+            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER)
+
+        for (i,k) in enumerate(keys): 
+            p = prng_seq[i] 
+            self.mva_map[k].set_prg(p)
         return
 
     def init_predictor(self): 
@@ -220,14 +279,16 @@ class MVTrackingGroupTypeSO:
         prg = self.predictor.prg 
 
         keys = sorted(self.mva_map.keys())
-        labels = []
 
         num_zeros = len(keys) // 2 
         prg_ = prg__single_to_int(prg) 
 
         keys2 = deepcopy(keys)
         zeros = prg_choose_n(keys2,num_zeros,prg_,is_unique_picker=True) 
-        ones = keys 
+        ones = keys2 
+        labels = [0] * len(keys) 
+        for o in ones: 
+            labels[o] = 1
 
         for k in keys: 
             w = modulo_in_range(self.prg(),self.weight_range)
@@ -306,3 +367,30 @@ class MVTrackingGroupTypeSO:
         derivative = destination - A.v 
         A.next_derivative(derivative) 
         return derivative    
+
+    @staticmethod
+    def generate_instance(num_agents,vector_bound_range,prg,weight_range,point_dispersal_max_float:float):  
+        assert is_bounds_vector(vector_bound_range) 
+
+        # generate vectors 
+        prgv = prg__single_to_nvec(prg,vector_bound_range.shape[0])
+        agent_vectors = [vector_modulo_in_range(prgv(),vector_bound_range) \
+            for _ in range(num_agents)] 
+
+        # generate the PRNG-LCGs for each agent 
+        prng_seq = prg_to_prg__LCG_sequence__v2(prg,num_agents,\
+            mod_scale_range=\
+            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER)
+
+        # instantiate each Chaser 
+        mva_map = dict() 
+        role = "chaser"
+        for i in range(num_agents): 
+            idn = i 
+            v = agent_vectors[i] 
+            prg = prng_seq[i] 
+
+            C = MobileVectorAgent(idn,v,role,prg,None,None) 
+            mva_map[i] = C 
+
+        return MVTrackingGroupTypeSO(mva_map,weight_range,point_dispersal_max_float)

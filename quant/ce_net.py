@@ -1,7 +1,8 @@
 from .ce_agent import * 
 
 """
-Base network for Slander Net Bot (class<SNBot>). 
+Base network for Slander Net Bot (class<SNBot>). Comprised of one or more 
+<CEAgent>s. See file<ce_agent> for more details. 
 
 cea_map := dict, agent idn -> CEAgent 
 """

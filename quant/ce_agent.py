@@ -3,6 +3,13 @@ from .ul_vec_classifier import *
 
 """
 communication/execution agent 
+
+A port-based agent. There are three types of ports belonging to this agent: 
+- R-port: port that relays the 'reaction' (typically a numerical vector) about 
+          a <CEAgent> A, information received through the T-port, 
+          from this agent to that agent A. 
+- S-port: port that receives information on other <CEAgent>s.
+- T-port: port that transmits information about one <CEAgent> to another <CEAgent>. 
 """
 class CEAgent: 
 
