@@ -1,4 +1,6 @@
 from morebs2.pa_derivative import * 
+from morebs2.numerical_generator import vector_modulo_in_bounds 
+from collections import deque 
 
 MOBILE_VECTOR_AGENT_ROLES = {"chaser","target"}
 
@@ -97,13 +99,13 @@ class MVAgentDerivativeGenerator:
 
 """
 An agent that is essentially a mutable vector in dimension n. Agent 
-is exactly one of two roles: chaser or target. 
+is exactly one of two roles: `chaser` or `target`. 
 
 Method<next_derivative> allows the agent to 'move', according to the 
 programmed logistics of its role. 
 
-Specifically, if agent is a target, it uses an <MVAgentDerivativeGenerator> 
-to calculate every next derivative. If agent is a chaser, it is given a 
+Specifically, if agent is a `target`, it uses an <MVAgentDerivativeGenerator> 
+to calculate every next derivative. If agent is a `chaser`, it is given a 
 derivative that is calculated from a <GroupedPRNGDerivativePredictor>. 
 This <GroupedPRNGDerivativePredictor> operates using this agent's PRNG, as 
 well as all other <MobileVectorAgent>s that are part of the same group. 
@@ -183,10 +185,10 @@ class MobileVectorAgent:
 """
 Mobile Vector Tracking Group, Type Symmetric Objective. 
 
-Container for a group of n <MobileVectorAgent>s, Chaser role.
+Container for a group of n <MobileVectorAgent>s, `chaser` role.
 
 This structure is used in class<MobileVectorNetwork>, and represents the 
-Chaser faction. 
+`chaser` faction. 
 
 The acronym SO (Symmetric Objective) is given for this structure because 
 of the objective of 'symmetric' formation of the group members around 
@@ -241,6 +243,9 @@ class MVTrackingGroupTypeSO:
         self.predicted_next_location = None 
 
         self.vdim = dimension 
+
+        self.cumulative_balance = 0 
+        self.balance_log = deque() 
         return
 
     """
@@ -266,6 +271,8 @@ class MVTrackingGroupTypeSO:
             prng_seq.append(self.mva_map[k])  
         self.predictor = GroupedPRNGDerivativePredictor(prng_seq) 
 
+    #--------------------------------- target location prediction 
+
     def predict_next_location(self,target_loc,partial_derivative,\
         total_derivative_sum): 
 
@@ -274,6 +281,8 @@ class MVTrackingGroupTypeSO:
         p = self.predictor.predict_next_location()
         self.predicted_next_location = p 
         return deepcopy(p)
+
+    #---------------------------------- symmetric balance 
 
     def assign_weights_and_labels(self): 
         prg = self.predictor.prg 
@@ -334,7 +343,20 @@ class MVTrackingGroupTypeSO:
         prg = self.predictor.prg 
         rodc = RecursiveOneDimClassifier(V,L,prg,pscheme=0,verbose=False)
         rodc.fit()
-        return rodc 
+        return rodc
+
+    #----------------------------- moving agents 
+
+    """
+    main method 
+    """
+    def move_one(self,target_loc,partial_derivative,\
+        total_derivative_sum,ext_prg=prg__constant(x=0)):  
+
+        self.move_MVAgents(target_loc,partial_derivative,\
+            total_derivative_sum,ext_prg)
+        self.assign_weights_and_labels()
+        self.calculate_balance() 
 
     def move_MVAgents(self,target_loc,partial_derivative,\
         total_derivative_sum,ext_prg=prg__constant(x=0)): 
@@ -374,7 +396,7 @@ class MVTrackingGroupTypeSO:
 
         # generate vectors 
         prgv = prg__single_to_nvec(prg,vector_bound_range.shape[0])
-        agent_vectors = [vector_modulo_in_range(prgv(),vector_bound_range) \
+        agent_vectors = [vector_modulo_in_bounds(prgv(),vector_bound_range) \
             for _ in range(num_agents)] 
 
         # generate the PRNG-LCGs for each agent 
