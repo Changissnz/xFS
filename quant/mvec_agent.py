@@ -51,14 +51,12 @@ class GroupedPRNGDerivativePredictor:
         remaining = self.dsum - np.sum(self.partial_derivative) 
 
         l = len(self.target_loc) 
-        print("PRG: ",self.prg)
-        print("XX: ",self.prg())
-        print(prg_partition_for_float__type2)
 
         m = modulo_in_range(self.prg(),DEFAULT_MAX_SINGLE_FLOAT_RATIO_RANGE)
         partition = prg_partition_for_float__type2(remaining,l,self.prg,m=1) 
         partition = np.array(partition) 
-        return np.round(partition + remaining,5) 
+
+        return np.round(partition + self.partial_derivative + self.target_loc,5)  
 
 """
 Used by <MobileVectorAgent> of role `target`. 
@@ -77,7 +75,7 @@ class MVAgentDerivativeGenerator:
         self.d_outputter = VectorPiecewiseAdditiveDerivative(self.length,0,self.prg,\
             segment_size=self.segment_size_range[0],record_derivative_info=True)
 
-    def load_sum(cumulative_diff): 
+    def load_sum(self,cumulative_diff): 
         assert is_number(cumulative_diff)
         seg_size = modulo_in_range(int(self.prg()),self.segment_size_range)
         self.d_outputter.reset(cumulative_diff,seg_size) 
@@ -177,10 +175,16 @@ class MobileVectorAgent:
 
             self.update_dlog(q) 
             self.v += q 
+            return diff 
         else: 
             assert is_vector(calculated_derivative) 
             self.update_dlog(calculated_derivative) 
             self.v += calculated_derivative
+            return None 
+
+    def partial_info_on_derivative(self): 
+        assert self.role == "target" 
+        return self.d_op.partial_info_on_derivative() 
 
     def update_dlog(self,derivative): 
         self.derivative_log.append(derivative) 
@@ -203,7 +207,8 @@ Mobile Vector Tracking Group, Type Symmetric Objective.
 Container for a group of n <MobileVectorAgent>s, `tracker` role.
 
 This structure is used in class<MobileVectorNetwork>, and represents the 
-`tracker` faction. 
+`tracker` faction. Group uses class<GroupedPRNGDerivativePredictor> to 
+predict target's next location, based on partial information obtained. 
 
 The acronym SO (Symmetric Objective) is given for this structure because 
 of the objective of 'symmetric' formation of the group members around 
@@ -225,7 +230,7 @@ the agent vectors is
 
     v_i,v_j in V. 
 
-In natural language, this would be the absolute difference in weighted sum of 
+In natural language, this would be the absolute difference in weighted sum b/t  
 the agents labeled 0 and the agents labeled 1. 
 
 """
@@ -390,6 +395,7 @@ class MVTrackingGroupTypeSO:
         self.update_balance(b)
         
     def update_balance(self,b): 
+        b = round(b,5)
         self.cumulative_balance += b 
         self.balance_log.append(b) 
 
