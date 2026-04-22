@@ -55,6 +55,7 @@ class DualCostsTypeHL:
         for n in agent_path: 
             c += self.negative_node_weight_map[n] 
         self.independent += c
+        self.independent = round(self.independent,5) 
         return
 
     def update_negative_weights(self,negative_weights:Counter): 
@@ -262,19 +263,14 @@ class DualEnvTypeHL:
         return expected_path,agent_chosen_path
 
     def negative_weights_for_agent_3rd_party_demand_path(self,expected_path,agent_chosen_path):
-        print("E")
-        print(expected_path)
-        print()
-        print("C")
-        print(agent_chosen_path)
-        print() 
 
         F = filter(lambda x: x not in expected_path,agent_chosen_path)
         chosen_seq_ = list(F) 
 
         neg_weights = Counter() 
         for c in chosen_seq_: 
-            neg_weights[c] += prg_decimal(self.prg,[0.,1.]) 
+            d = prg_decimal(self.prg,[0.,1.]) * 10 
+            neg_weights[c] += d 
 
         self.cost_record.update_negative_weights(neg_weights) 
 
