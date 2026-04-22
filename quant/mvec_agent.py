@@ -37,7 +37,7 @@ class GroupedPRNGDerivativePredictor:
         self.partial_derivative = None 
         self.dsum = None 
 
-    def feed_context(self,target_loc,partial_derivative,total_derivative_sum):  
+    def recv_context(self,target_loc,partial_derivative,total_derivative_sum):  
         assert is_vector(target_loc)
         assert is_vector(partial_derivative) 
         assert len(target_loc) == len(partial_derivative) 
@@ -308,7 +308,7 @@ class MVTrackingGroupTypeSO:
     def predict_next_location(self,target_loc,partial_derivative,\
         total_derivative_sum): 
 
-        self.predictor.feed_context(target_loc,partial_derivative,\
+        self.predictor.recv_context(target_loc,partial_derivative,\
             total_derivative_sum) 
         p = self.predictor.predict_next_location()
         self.predicted_next_location = p 
