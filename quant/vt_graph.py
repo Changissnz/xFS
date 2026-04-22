@@ -30,6 +30,13 @@ class VectorTrackingNetwork:
         S += "\n\n-- tracking group:\n\n{}\n".format(str(self.mt_group)) 
         return S 
 
+    def load_prg(self,prg,for_target:bool): 
+        assert type(for_target) == bool 
+        if for_target: 
+            self.target.set_prg(prg) 
+        else: 
+            self.mt_group.load_prg_into_agents(prg) 
+
     def __next__(self): 
 
         # have target move first 
