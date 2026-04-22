@@ -55,6 +55,8 @@ class MiddleManNetworkClass(unittest.TestCase):
         assert mm.eliminated_dominants == {30},"got {}".format(mm.eliminated_dominants)
 
         c = Counter(mm.seller_idn_log) 
+        print("counter ")
+        print(c) 
         assert DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE[0] <= c[30] < DEFAULT_MIDDLE_AGENT_DOMINANT_SELLER_TERMINATION_RANGE[1] 
 
     """

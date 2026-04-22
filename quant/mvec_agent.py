@@ -1,11 +1,12 @@
 from morebs2.pa_derivative import * 
 from morebs2.numerical_generator import vector_modulo_in_bounds 
+from morebs2.onedimprt_classifier import * 
 from collections import deque 
 
-MOBILE_VECTOR_AGENT_ROLES = {"chaser","target"}
+MOBILE_VECTOR_AGENT_ROLES = {"tracker","target"}
 
 # method used for parameter in function<morebs2.prg_to_prg__LCG_sequence> 
-DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER = [1.,5 + 18/19]
+DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER_RANGE = [1.,5 + 18/19]
 
 """
 Used by class<MVTrackingGroupTypeSO> to predict mobile vector 
@@ -50,6 +51,11 @@ class GroupedPRNGDerivativePredictor:
         remaining = self.dsum - np.sum(self.partial_derivative) 
 
         l = len(self.target_loc) 
+        print("PRG: ",self.prg)
+        print("XX: ",self.prg())
+        print(prg_partition_for_float__type2)
+
+        m = modulo_in_range(self.prg(),DEFAULT_MAX_SINGLE_FLOAT_RATIO_RANGE)
         partition = prg_partition_for_float__type2(remaining,l,self.prg,m=1) 
         partition = np.array(partition) 
         return np.round(partition + remaining,5) 
@@ -99,13 +105,13 @@ class MVAgentDerivativeGenerator:
 
 """
 An agent that is essentially a mutable vector in dimension n. Agent 
-is exactly one of two roles: `chaser` or `target`. 
+is exactly one of two roles: `tracker` or `target`. 
 
 Method<next_derivative> allows the agent to 'move', according to the 
 programmed logistics of its role. 
 
 Specifically, if agent is a `target`, it uses an <MVAgentDerivativeGenerator> 
-to calculate every next derivative. If agent is a `chaser`, it is given a 
+to calculate every next derivative. If agent is a `tracker`, it is given a 
 derivative that is calculated from a <GroupedPRNGDerivativePredictor>. 
 This <GroupedPRNGDerivativePredictor> operates using this agent's PRNG, as 
 well as all other <MobileVectorAgent>s that are part of the same group. 
@@ -182,13 +188,22 @@ class MobileVectorAgent:
         while len(self.derivative_log) > self.derivative_log_length: 
             self.derivative_log.pop()
 
+    @staticmethod
+    def generate_instance__role_target(idn,vector_bound_range,cumulative_diff_range,\
+        segment_size_range,prg):
+
+        prgv = prg__single_to_nvec(prg,vector_bound_range.shape[0])
+        v = vector_modulo_in_bounds(prgv(),vector_bound_range)
+
+        return MobileVectorAgent(idn,v,"target",prg,cumulative_diff_range,segment_size_range) 
+
 """
 Mobile Vector Tracking Group, Type Symmetric Objective. 
 
-Container for a group of n <MobileVectorAgent>s, `chaser` role.
+Container for a group of n <MobileVectorAgent>s, `tracker` role.
 
 This structure is used in class<MobileVectorNetwork>, and represents the 
-`chaser` faction. 
+`tracker` faction. 
 
 The acronym SO (Symmetric Objective) is given for this structure because 
 of the objective of 'symmetric' formation of the group members around 
@@ -224,7 +239,7 @@ class MVTrackingGroupTypeSO:
             dimension |= {len(v.v)} 
 
             assert k == v.idn 
-            assert v.role == "chaser"
+            assert v.role == "tracker"
             assert len(dimension) == 1 
 
         assert len(mva_map) > 1 
@@ -248,6 +263,18 @@ class MVTrackingGroupTypeSO:
         self.balance_log = deque() 
         return
 
+    def __str__(self): 
+        keys = sorted(self.mva_map.keys())
+
+        S = "" 
+        for k in keys: 
+            v = self.mva_map[k].v 
+
+            S += "{} : {}\n".format(k,vector_to_string(v)) 
+        S += "\n"
+        return S 
+
+
     """
     uses 1 PRNG `prg` to create |`mva_map`| LCGs. Every i'th 
     agent is set with the i'th LCG. 
@@ -257,7 +284,7 @@ class MVTrackingGroupTypeSO:
         keys = sorted(self.mva_map.keys())
         prng_seq = prg_to_prg__LCG_sequence__v2(prg,len(keys),\
             mod_scale_range=\
-            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER)
+            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER_RANGE)
 
         for (i,k) in enumerate(keys): 
             p = prng_seq[i] 
@@ -268,7 +295,7 @@ class MVTrackingGroupTypeSO:
         keys = sorted(self.mva_map.keys())
         prng_seq = [] 
         for k in keys:
-            prng_seq.append(self.mva_map[k])  
+            prng_seq.append(self.mva_map[k].prg)  
         self.predictor = GroupedPRNGDerivativePredictor(prng_seq) 
 
     #--------------------------------- target location prediction 
@@ -299,8 +326,10 @@ class MVTrackingGroupTypeSO:
         for o in ones: 
             labels[o] = 1
 
-        for k in keys: 
-            w = modulo_in_range(self.prg(),self.weight_range)
+        for (i,k) in enumerate(keys): 
+            w = modulo_in_range(self.predictor.prg(),self.weight_range)
+            l = labels[i]
+
             A = self.mva_map[k] 
             A.set_weight_and_label(w,l) 
         return 
@@ -337,6 +366,7 @@ class MVTrackingGroupTypeSO:
                 pos_weights += w 
             else: 
                 neg_weights += w 
+
         return abs(pos_weights - neg_weights)
 
     def classifier_from_points(self,V,L):  
@@ -356,7 +386,12 @@ class MVTrackingGroupTypeSO:
         self.move_MVAgents(target_loc,partial_derivative,\
             total_derivative_sum,ext_prg)
         self.assign_weights_and_labels()
-        self.calculate_balance() 
+        b = self.calculate_balance() 
+        self.update_balance(b)
+        
+    def update_balance(self,b): 
+        self.cumulative_balance += b 
+        self.balance_log.append(b) 
 
     def move_MVAgents(self,target_loc,partial_derivative,\
         total_derivative_sum,ext_prg=prg__constant(x=0)): 
@@ -381,17 +416,18 @@ class MVTrackingGroupTypeSO:
         A = self.mva_map[k]
         combined_prg = merge_two_prgs(ext_prg,A.prg,add)
         
+        m = modulo_in_range(combined_prg(),DEFAULT_MAX_SINGLE_FLOAT_RATIO_RANGE)
         pdisp_vec = prg_partition_for_float__type2(self.point_dispersal_max_float,l,\
-            combined_prg,m=1) 
+            combined_prg,m=m) 
 
-        destination = self.predictor.predicted_next_location + pdisp_vec
+        destination = self.predicted_next_location + pdisp_vec
 
         derivative = destination - A.v 
         A.next_derivative(derivative) 
         return derivative    
 
     @staticmethod
-    def generate_instance(num_agents,vector_bound_range,prg,weight_range,point_dispersal_max_float:float):  
+    def generate_instance(num_agents,vector_bound_range,weight_range,point_dispersal_max_float:float,prg):  
         assert is_bounds_vector(vector_bound_range) 
 
         # generate vectors 
@@ -402,11 +438,11 @@ class MVTrackingGroupTypeSO:
         # generate the PRNG-LCGs for each agent 
         prng_seq = prg_to_prg__LCG_sequence__v2(prg,num_agents,\
             mod_scale_range=\
-            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER)
+            DEFAULT_MV_TRACKING_GROUP_LCG_INIT_MODULO_MULTIPLIER_RANGE)
 
-        # instantiate each Chaser 
+        # instantiate each tracker 
         mva_map = dict() 
-        role = "chaser"
+        role = "tracker"
         for i in range(num_agents): 
             idn = i 
             v = agent_vectors[i] 
