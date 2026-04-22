@@ -49,7 +49,7 @@ class PRClassExpectedEffectTypeHLClass(unittest.TestCase):
                 tail2 = NodePath_sequence_to_1d_sequence(p2)[-1]
                 assert tail == tail2 
 
-        # check all that label identities yield paths of one segment
+        # check all label identities yield paths of one segment
         for b in base_nodes: 
             # choose a base node in H-node 
             q = sorted(hg.base_node_to_H_nodeset(b))

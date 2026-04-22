@@ -22,6 +22,7 @@ class VectorTrackingNetwork:
         self.target = target 
         self.mt_group = mt_group
 
+        self.timestamp = 0 
         self.euclidean_difference = 0 
         return 
 
@@ -30,7 +31,7 @@ class VectorTrackingNetwork:
         S += "\n\n-- tracking group:\n\n{}\n".format(str(self.mt_group)) 
         return S 
 
-    def load_prg(self,prg,for_target:bool): 
+    def set_prg(self,prg,for_target:bool): 
         assert type(for_target) == bool 
         if for_target: 
             self.target.set_prg(prg) 
@@ -50,6 +51,7 @@ class VectorTrackingNetwork:
             partial_diff,total_diff,ext_prg=self.target.prg)
 
         # register euclidean distance 
+        self.timestamp += 1 
         return self.measure_euclidean_distance() 
 
     def measure_euclidean_distance(self): 

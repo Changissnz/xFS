@@ -84,8 +84,12 @@ class MiddleManNetwork:
         self.eliminate_dominant_sellers() 
         return
 
-    def set_prg(self,prg,agent_idn):
+    def set_prg(self,prg,agent_idn,for_buying_agent:bool=False): 
         assert type(prg) in {MethodType,FunctionType}
+
+        if for_buying_agent:
+            assert type(agent_idn) == type(None) 
+            self.buying_agent.prg = prg 
 
         if type(agent_idn) == type(None): 
             self.prg = prg 
