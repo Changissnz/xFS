@@ -17,7 +17,6 @@ def MVTrackingGroupTypeSO__sample_USUK():
     q = MVTrackingGroupTypeSO.generate_instance(num_agents,\
         vector_bound_range,weight_range,\
         point_dispersal_max_float,prg)
-
     return q 
 
 ### lone file test 
@@ -71,7 +70,38 @@ class MVTrackingGroupTypeSOClass(unittest.TestCase):
         assert len(q.balance_log) == 10 
         assert q.cumulative_balance == 507.68827
 
+class MobileVectorAgentClass(unittest.TestCase): 
 
+    """
+    demonstrates how a <MobileVectorAgent> of role `target` 
+    moves. 
+    """
+    def test__MobileVectorAgent__next_derivative__case_1(self): 
+        idn = 0 
+        vector_bound_range = np.array([\
+            [-12,30],\
+            [-45,79],\
+            [10,132],\
+            [-211,12],\
+            [89,205]])
+        cumulative_diff_range = [5,19] 
+        segment_size_range = [3,14] 
+
+        prg = prg__LCG(-432.55,1756.55,-919,11200.33) 
+
+        mva = MobileVectorAgent.generate_instance__role_target(idn,\
+            vector_bound_range,cumulative_diff_range,\
+            segment_size_range,prg)
+        v = deepcopy(mva.v) 
+
+        for _ in range(10): 
+            mva.next_derivative() 
+            v2 = mva.v 
+            d = abs(np.sum(v2 - v))
+            assert cumulative_diff_range[0] <= \
+            d <= cumulative_diff_range[1]
+
+            v = deepcopy(v2)
 
 if __name__ == '__main__':
     unittest.main()
