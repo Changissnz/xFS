@@ -314,6 +314,13 @@ class MiddleManNetwork:
             if b not in self.middle_agents: continue 
 
             del self.middle_agents[b]  
+
+        # delete every agent in `nodeset` that is a source 
+        # for the remaining agents 
+        for v in self.middle_agents.values(): 
+            q = v.source_idn()
+            if q in nodeset: 
+                v.delete_source() 
         return
 
     @staticmethod

@@ -74,17 +74,17 @@ Buyer chooses to buy from the seller, out of the candidates it reached, with the
 cheapest price for the unit. 
 
     *Seller Termination* 
-The original seller can never be terminated since the buying agent must always 
-purchase from either it or a middle agent seller connected to the original. A 
-seller can be terminated if it goes bankrupt, as already mentioned. 
+The original seller can never be terminated by bankruptcy, since the buying agent must 
+always purchase from either it or a middle agent seller connected to the original. A 
+seller is terminated if it goes bankrupt, as already mentioned.  
 
 In order for the network to maintain a fresh set of sellers such that no seller 
 becomes indeterminately dominant, the network 'spontaneously terminates sellers 
-that have sold some q units, q in the range R. By default, R is based on 
+that have directly sold some q units, q in the range R. By default, R is based on 
 DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE. R is the range 
     [DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE[1] * 1.5,DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE * 2) = 
     [16+8,16+16) = [24,32). 
-
+The original seller can be terminated by being a dominant seller (direct sell to buying agent). 
 
     *Important Aspects* 
 The <MiddleManNetwork> is based on class<JammingGraph>. Every seller is assigned a node in 

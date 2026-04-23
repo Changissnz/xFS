@@ -67,7 +67,8 @@ class MVAgentDerivativeGenerator:
 
     def __init__(self,vector_length,segment_size_range,prg):  
         assert is_valid_range(segment_size_range,True,False) 
-
+        assert segment_size_range[0] > 1 
+        
         self.length = vector_length 
         self.segment_size_range = segment_size_range
         self.prg = prg 

@@ -58,6 +58,13 @@ class MiddleAgentSeller:
         # sellers produced through method<reproduce> 
         self.intermediate_sellers = [] 
 
+    def source_idn(self): 
+        if type(self.source) == type(None): return None 
+        return self.source.idn 
+
+    def delete_source(self): 
+        self.source = None 
+
     def mark_sold(self,stat:bool):
         assert type(stat) == bool 
 
