@@ -3,13 +3,13 @@ LEMMA: In a Dual Role Bot, there is no way for a dual agent to incur zero cost,
     if these conditions are satisfied. 
     (I) there is at least one demand with non-identical independent and 
         third-party subdemands [conflict of independence]. 
-    (II) in the subset of demands that are conflicts of independence, the 
-        options of labels presented to the dual agent to choose as starting 
-        point for fulfilling the third-party demand, every one of those options 
-        results in a chosen path that adds negative weight to the nodes N of 
-        difference with the the expected path. And these nodes N of certainly 
-        negative weight are part of the expected path/s for an independent demand 
-        of this or a future timestamp. 
+    (II) in the subset of demands that are conflicts of independence, there 
+        is a demand with a third-party subdemand such that for the options of labels 
+        presented to the dual agent to choose as starting point for fulfilling that 
+        third-party demand, every one of those options results in a chosen path 
+        that adds negative weight to the nodes N of difference with the the expected 
+        path. And these nodes N of certainly negative weight are part of the expected 
+        path/s for an independent demand of this or a future timestamp. 
 
 -------------------------------------------------------------------------------------------
 
