@@ -74,6 +74,9 @@ class MiddleManNetwork:
 
         seller_idn = self.move_buyer()
 
+        # case: no sell 
+        if type(seller_idn) == type(None): return 
+        
         if self.verbose: 
             print("\t buy from seller: {}".format(seller_idn))
 
@@ -82,6 +85,8 @@ class MiddleManNetwork:
 
         # delete any seller that is dominant 
         self.eliminate_dominant_sellers() 
+
+        self.num_transactions += 1 
         return
 
     def set_prg(self,prg,agent_idn,for_buying_agent:bool=False): 
@@ -117,6 +122,9 @@ class MiddleManNetwork:
         stat = True 
         while stat: 
             self.jg.one_jam(1,False) 
+            for v in self.jg.G.values(): 
+                assert None not in v 
+
             q = self.jg.entire_nodeset_for_node(1)
 
             if len(q) >= num_middle_agents: 
@@ -143,6 +151,10 @@ class MiddleManNetwork:
         self.buying_agent.load_context(self.jg.G,\
             sellers=x)
         self.buying_agent.travel_graph() 
+
+        # case: ?strange,no buyers could be found?
+        if len(self.buying_agent.seller_price_map) == 0: 
+            return None 
 
         # send prices to buyer 
         self.transmit_prices_to_buyer() 
@@ -225,7 +237,7 @@ class MiddleManNetwork:
         for r in reproducible: 
             # one jam 
             self.jg.one_jam(1,False)
-            
+
             # fetch new nodes from that jam 
             new_nodes = sorted(self.jg.new_nodes) 
 

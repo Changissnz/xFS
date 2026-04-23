@@ -18,7 +18,7 @@ def MMB_env_solution_fetch_function(mbot:MiddleManBot):
 """
 maximal score for autonomous agent 
 """
-def MMB_env_cmp_solution(mbot1:MiddleManBot,mbot1:MiddleManBot): 
+def MMB_env_cmp_solution(mbot1:MiddleManBot,mbot2:MiddleManBot): 
     
     s1 = MMB_env_solution_fetch_function(mbot1)
     s2 = MMB_env_solution_fetch_function(mbot2) 

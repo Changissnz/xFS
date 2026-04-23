@@ -28,7 +28,8 @@ are listed below.
 The spawning process, where a seller S 'reproduces' an additional seller, produces a 
 <MiddleAgentSeller> S1 instance that bases its unit price on the original unit price 
 P of a seller. The original unit price of S1 is, by default, P * m, m a float 
-in the range [1+0.02,1+0.15). 
+in the range [1+0.02,1+0.15). Agent S1 is assigned a PRNG that is an LCG, based on 
+four output values from its source seller's PRNG. 
 
 By default, network starts off with one original seller and x number of middle 
 agent sellers spawned from that original. The integer x is in the range of 

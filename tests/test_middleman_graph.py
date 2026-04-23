@@ -28,6 +28,9 @@ class MiddleManNetworkClass(unittest.TestCase):
         for _ in range(30): 
             next(mm) 
 
+            q = len(mm.buying_agent.seller_price_map) 
+            assert q <= mm.buying_agent.max_seller_candidates 
+
         # check for 8 reproducing 
         for k,v in mm.middle_agents.items(): 
             if k == 8: 
@@ -50,6 +53,10 @@ class MiddleManNetworkClass(unittest.TestCase):
         for _ in range(100): 
             next(mm) 
 
+            q = len(mm.buying_agent.seller_price_map) 
+            assert q <= mm.buying_agent.max_seller_candidates 
+
+        print("NETWORK NODE SIZE ",len(mm.jg.G))
         print("LOG")
         print(mm.seller_idn_log)
         assert mm.eliminated_dominants == {30},"got {}".format(mm.eliminated_dominants)
@@ -76,17 +83,29 @@ class MiddleManNetworkClass(unittest.TestCase):
 
         for _ in range(20): 
             next(mm) 
+
+            q = len(mm.buying_agent.seller_price_map) 
+            assert q <= mm.buying_agent.max_seller_candidates 
+
         assert len(mm.eliminated_bankrupts) == 0 
         assert len(mm.jg.G) == 34,"got {}".format(len(mm.jg.G))
 
         for _ in range(20): 
             next(mm) 
+
+            q = len(mm.buying_agent.seller_price_map) 
+            assert q <= mm.buying_agent.max_seller_candidates 
+
         assert len(mm.eliminated_bankrupts) == 0 
         assert len(mm.middle_agents) == 29 
         assert len(mm.jg.G) == 65, "got {}".format(len(mm.jg.G))
 
         for _ in range(20): 
             next(mm) 
+
+            q = len(mm.buying_agent.seller_price_map) 
+            assert q <= mm.buying_agent.max_seller_candidates 
+
         assert len(mm.eliminated_bankrupts) == 4,"got {}".format(len(mm.eliminated_bankrupts)) 
         assert len(mm.jg.G) == 66,  "got {}".format(len(mm.jg.G))
 

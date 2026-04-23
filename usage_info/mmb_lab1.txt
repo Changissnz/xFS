@@ -1,0 +1,101 @@
+
+LEMMA: From the vantage point of the buying agent in Middleman Bot, the greedy approach 
+       yields an approximately optimal solution, that is, for the cheapest cost of x 
+       units purchased through the network. The greedy approach goes as such: at every 
+       timestamp, buying agent chooses the selling agent that is selling a unit for the 
+       cheapest price out of all the selling agents. 
+
+The greedy approach is probably not the optimal solution, given the variance between generated 
+Middleman Networks. The greedy approach, itself, becomes more difficult to accomplish the 
+more middle agents enter the network. Recall that a buying agent is subject to an upper 
+bound on the number of middle agents it can contact to buy a unit, during every 
+timestamp. This upper bound diminishes the probability that a buying agent will travel to 
+the selling agent that is offering the cheapest price. 
+
+The two causes for middle agent seller elimination, bankruptcy and selling dominance, pose 
+difficulty for guaranteeing the greedy approach to yield the optimal solution. Seller elimination 
+is certain. Based on the PRNG methodology of Middleman Bot, the PRNG used by the network stays 
+roughly constant in its output stream of usage. To elaborate, if one agent is eliminated instead 
+of another, the PRNG's specific output values at some index range I correspond to the same task. 
+However, each of the middle agent sellers have their own PRNG. There is a possibility, without 
+further knowledge of the specific MiddleManNetwork agent qualities, that buying from a middle 
+agent seller S0, one with the cheapest price, eliminates another seller S1 through bankruptcy, 
+and S0's reproduction of another and its own certain elimination yields agents that have more 
+expensive prices than the alternative of going through S1. 
+
+Attempting to find the optimal solution for this problem is speculated to be NP-Hard, although 
+no proof of reduction will be provided here. 
+
+Below is code to test out 20 PRNGs on a case of Middleman Bot. 
+
+################################## CODE 
+```
+from graph_problems.mmb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence__v2,merge_two_prgs
+import time 
+
+# instantiate MiddleManNetwork
+prg1_ = prg__LCG(-144.67,200.9,-377.6,-8188.3) 
+prg2_ = prg__LCG(316.7,-22000.9,-467.6,8176.3) 
+
+prg1 = merge_two_prgs(deepcopy(prg1_),deepcopy(prg2_),add) 
+prg2 = merge_two_prgs(deepcopy(prg2_),deepcopy(prg1_),sub) 
+
+jamming_graph_type = "o" 
+
+mm = MiddleManNetwork.generate_instance(jamming_graph_type,2.05,\
+    allow_buyer_memoryless_navigation=True,\
+    prg1=prg1,prg2=prg2)
+mm.verbose = False 
+
+# instantiate 20 PRNGs 
+prng_seq_0 = prg_to_prg__LCG_sequence__v2(prg1_,20,[1.,8.7777]) 
+prng_seq_1 = prg_to_prg__LCG_sequence__v2(prg2_,20,[0.96,7.999]) 
+prng_seq = [] 
+
+opers = [add,sub]
+for i in range(20): 
+    op = opers[i % 2]
+
+    p0 = prng_seq_0[i] 
+    p1 = prng_seq_1[i] 
+    prng_seq.append(merge_two_prgs(p0,p1,op)) 
+
+# search for the best PRNG 
+
+sim_env = mm 
+sim_env_run_function = MMB_env_run_(200)
+sim_env_prng_assignment_function = MMB_env_prng_assignment_function
+sim_mode_shift_function = MMB_env_mode_shift_function
+simsol_fetch_function = MMB_env_solution_fetch_function
+simsol_cmp_function = MMB_env_cmp_solution
+
+S = SimulationSolutionSearch(sim_env,sim_env_run_function,prng_seq,\
+    sim_env_prng_assignment_function,sim_mode_shift_function,\
+    simsol_fetch_function,simsol_cmp_function,verbose=True)
+
+t = time.time() 
+
+i = 0 
+while not S.fin_stat: 
+    t2 = time.time() 
+    S.process_one()
+    print("time elapsed: ",time.time() - t2)
+    i += 1 
+
+print("total time: ",time.time() - t) 
+
+print([s[2] for s in S.results])
+
+```
+
+############ ending display 
+
+total time:  625.7667334079742
+
+[352.16525999999965, 356.09973999999943, 351.48046000000045, 355.55372000000006, \
+370.5136700000001, 376.7533400000002, 391.3804799999996, 399.75922000000054, \
+387.88744999999983, 387.6985199999985, 399.8214399999998, 417.98814999999956, \
+404.6749000000001, 413.2457700000001, 411.61899, 417.50209, \
+421.9245, 420.66268999999994, 419.0130799999998, 420.28741000000025]

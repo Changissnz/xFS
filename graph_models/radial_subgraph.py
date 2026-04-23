@@ -90,7 +90,7 @@ class QuickSubgraphFetcher(SubgraphFetcher):
         covered_edges = set() 
         ref = None
         while len(queue) > 0: 
-            #print("QUEUE ",len(queue)) 
+            
             ref,d = queue.pop(0) 
             neighbors = self.reference_graph[ref] 
             for n in neighbors: 

@@ -188,6 +188,8 @@ class JammingGraph:
         if not conn0: 
             q0 = self.prng_choose_node_in_base_nodeset(ref_base_node,True)
             q1 = self.prng_choose_node_in_base_nodeset(base_node0,True) 
+            if type(q0) == type(None) or type(q1) == type(None): return 
+
             self.G[q0] |= {q1} 
             if not self.is_directed: 
                 self.G[q1] |= {q0} 
@@ -237,7 +239,7 @@ class JammingGraph:
             if not self.is_directed: 
                 for c in cut_conn: 
                     self.G[c] -= {node} 
-
+            
         # update graph 
         nodeset = flatten_setseq(self.node2nodesets[q0])
 
@@ -391,6 +393,5 @@ class JammingGraphTypeO(JammingGraph):
             for x in node_conn: 
                 G[node] |= {x} 
                 if not self.is_directed: G[x] |= {node} 
-            
         self.new_nodes = set(G.keys())
         return self.subgraph_edit(node,G,remove_original_node)  
