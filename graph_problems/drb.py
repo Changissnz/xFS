@@ -30,11 +30,11 @@ of the other categories.
 
 Here are specifics (copied from the comments of method<DualEnvTypeHL.move_one>) on 
 agent A's decision-making process: 
-[0] dual agent chooses next index and associated independent demand 
-[1] environment chooses 3rd-party demand of equal index 
+[0] Dual agent chooses next index and associated independent demand 
+[1] Environment chooses 3rd-party demand of equal index 
 [2] Environment offers n 'labels' for dual agent to choose one. Every label is a 
   Hypergraph subnode (a node on a lattice graph). 
-[3] dual agent chooses one of these 'labels' l, and proceeds to traveling the Hyper-Lattice 
+[3] Dual agent chooses one of these 'labels' l, and proceeds to traveling the Hyper-Lattice 
   graph, from l to that third-party demand's subnode. This path the agent takes is its 
   chosen path. 
 NOTE: the dual agent's chosen path and the expected path can be different. A non-zero difference is 
@@ -51,7 +51,7 @@ NOTE: the dual agent's chosen path and the expected path can be different. A non
       For an independent demand, agent simply takes the label objective of the demand's category. 
 [4] Register the node difference of that 3rd party demand. Environment updates node negative weights 
     for nodes N = chosen_path - expected_path. 
-[5] agent conducts independent demand. 
+[5] Agent conducts independent demand. 
 """
 class DualRoleBot(DualEnvTypeHL): 
 

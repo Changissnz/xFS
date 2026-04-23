@@ -17,6 +17,10 @@ go according to previous rate of development.
 NOTE: no graphical user interface provided. 
 ``` 
 
+```
+NOTE: all of these bots are programmed to run offline, disconnected from other devices. 
+```
+
 ## Graph Problems of Interest (in my words)
 
 Here is a list of graph problems in the project: 
@@ -68,8 +72,9 @@ Here is a list of graph problems in the project:
 - Dual Role Bot (Alpha) 
     - vantage point for learning: a dual agent that has to complete n demands, each demand consisting 
     of an independent and a third-party component, with the least cost from conflicts of independence 
-    within and between the demands. 
-    - file: `graph_problems/drb.py` 
+    within and between the demands.  
+    - NOTE: problem can be reduced to the NP-Hard problem, Set Cover. 
+    - file: `graph_problems/drb.py`  
 - Middleman Bot (Pre-Alpha)
 - Vector-Tracking Bot (Pre-Alpha)  
 
