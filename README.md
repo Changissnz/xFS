@@ -65,7 +65,11 @@ Here is a list of graph problems in the project:
     - vantage point for learning: an agent that has to solve the NP-Complete problem, Token Swapping, 
     for an arbitrary graph. 
     - file: `graph_problems/tsb.py` 
-- Dual Role Bot (Pre-Alpha) 
+- Dual Role Bot (Alpha) 
+    - vantage point for learning: a dual agent that has to complete n demands, each demand consisting 
+    of an independent and a third-party component, with the least cost from conflicts of independence 
+    within and between the demands. 
+    - file: `graph_problems/drb.py` 
 - Middleman Bot (Pre-Alpha)
 - Vector-Tracking Bot (Pre-Alpha)  
 

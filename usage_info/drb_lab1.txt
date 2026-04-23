@@ -1,0 +1,69 @@
+LEMMA: In a Dual Role Bot, there is no way for a dual agent to incur zero cost, 
+    with respect to both areas of conducting independent and third-party demands, 
+    if these conditions are satisfied. 
+    (I) there is at least one demand with non-identical independent and 
+        third-party subdemands [conflict of independence]. 
+    (II) in the subset of demands that are conflicts of independence, the 
+        options of labels presented to the dual agent to choose as starting 
+        point for fulfilling the third-party demand, every one of those options 
+        results in a chosen path that adds negative weight to the nodes N of 
+        difference with the the expected path. And these nodes N of certainly 
+        negative weight are part of the expected path/s for an independent demand 
+        of this or a future timestamp. 
+
+-------------------------------------------------------------------------------------------
+
+Here is the base code for one trial of twenty PRNGs on a Dual Role Bot instance. 
+
+############################## CODE 
+```
+from graph_problems.drb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence__v2,merge_two_prgs
+
+# instantiate bot 
+prg = prg__LCG(-13.45,114.66,-794.55,-91665.55)
+drole = DualRoleBot.generate_instance(prg)
+
+# instantiate 20 PRNGs 
+prg2 = prg__LCG(523.52,-41,511.52,52152.2) 
+prng_seq_ = prg_to_prg__LCG_sequence__v2(prg2,40,[1.,9+1/7]) 
+prng_seq = [] 
+opers = [add,sub]
+for i in range(0,40,2): 
+    p0 = prng_seq_[0] 
+    p1 = prng_seq_[1] 
+
+    j = i % 2 
+    op = opers[j] 
+    p2 = merge_two_prgs(p0,p1,op)
+    prng_seq.append(p2) 
+
+# run simulation 
+sim_env = drole 
+sim_env_run_function = DRB_env_run
+sim_env_prng_assignment_function = DRB_env_prng_assignment_function
+sim_mode_shift_function = DRB_env_mode_shift_function
+simsol_fetch_function = DRB_env_solution_fetch_function
+simsol_cmp_function = DRB_env_cmp_solution
+
+S = SimulationSolutionSearch(sim_env,sim_env_run_function,prng_seq,\
+    sim_env_prng_assignment_function,sim_mode_shift_function,\
+    simsol_fetch_function,simsol_cmp_function,verbose=True)
+
+i = 0 
+while not S.fin_stat: 
+    S.process_one()
+    i += 1 
+
+print([s[2] for s in S.results])
+```
+#####################################################################################
+
+The scores for these twenty PRNGs are, in the order of their occurrence: 
+```
+    321.74546, 343.11704, 471.32468, 320.46118, 476.71536, 
+    359.31231, 367.53818, 185.53376, 409.02833999999996, 409.84346, 
+    258.78196, 239.96339999999998, 427.36951, 353.87446, 396.60235, 
+    454.4329, 291.40138, 379.84425999999996, 341.77324, 169.37401
+```
