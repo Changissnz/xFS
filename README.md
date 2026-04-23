@@ -67,7 +67,7 @@ Here is a list of graph problems in the project:
     - file: `graph_problems/tsb.py` 
 - Dual Role Bot (Pre-Alpha) 
 - Middleman Bot (Pre-Alpha)
-- Vector-Tracking Bot (work in progress) 
+- Vector-Tracking Bot (Pre-Alpha)  
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

@@ -11,7 +11,22 @@ DEFAULT_VECTOR_TARGET__DERIVATIVE_SEGMENT_SIZE_RANGE = [3,13]
 """
 Vector Tracking Network. 
 
-A network comprised of n <MobileVectorAgent>s, (n - 1) of those agents being `chaser`s. 
+A network comprised of n <MobileVectorAgent>s, (n - 1) of those agents being `tracker`s. 
+
+At every timestamp, all trackers are given partial information of the location where 
+target will be next:
+[0] current target vector location 
+[1] partial vector derivative 
+[2] sum of entire vector derivative.  
+
+Each tracker use this partial information to predict the next location of target. Prediction 
+mechanism rests on PRNG operating in constraints for the sum of the entire vector derivative. 
+
+There are two objectives for the tracking group: 
+- minimize cumulative euclidean distance between the tracker locations and the target. 
+- minimize the symmetric imbalance between the members of the tracking group. 
+NOTE: symmetry calculation is done in method<MVTrackingGroupTypeSO.calculate_balance>. 
+      For additional information, see description for class<MVTrackingGroupTypeSO.calculate_balance>. 
 """
 class VectorTrackingNetwork: 
 

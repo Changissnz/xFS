@@ -180,6 +180,15 @@ class DualEnvTypeHL:
     def running_score(self): 
         print(self.cost_record) 
 
+    def set_prg(self,prg,for_dual_agent:bool): 
+        assert type(for_dual_agent) == bool 
+        
+        if for_dual_agent: 
+            self.dual_agent.set_prg(prg) 
+
+        assert type(prg) in {MethodType,FunctionType}
+        self.prg = prg 
+
     def check_requirements(self): 
         D = self.dual_agent.independent_demands
         assert_HyperGraph_nodepair_existence(self.ce_effect.hg,D) 

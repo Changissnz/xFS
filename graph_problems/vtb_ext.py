@@ -25,7 +25,7 @@ def VTB_env_solution_fetch_function(vbot:VTBot):
     return s1 + s2 
 
 """
-maximal score for autonomous agent 
+minimal score
 """
 def VTB_env_cmp_solution(vbot1:VTBot,vbot2:VTBot): 
     
