@@ -1,4 +1,8 @@
-
+There are two important attributes in Vector Tracking Bot that require explicit mention. 
+The first is the PRNGs of the tracking group are LCGs derived from one PRNG user input. 
+The second is the target PRNG is used, as a form of noise induction, alongside each 
+tracker agent's PRNG to influence the tracking agent's prediction of the target's next 
+location. See method<MVTrackingGroupTypeSO.move_MVAgents> for details on this. 
 
 ################################## CODE 
 ```

@@ -76,7 +76,15 @@ Here is a list of graph problems in the project:
     - NOTE: problem can be reduced to the NP-Hard problem, Set Cover. 
     - file: `graph_problems/drb.py`  
 - Middleman Bot (Pre-Alpha)
+    - vantage point for learning: a buying agent that is to buy x units of a product through a network 
+        of sellers, the network starting with one original seller and n middle agents, at the lowest 
+        cumulative price.  
+    - file: `graph_problems/mmb.py`  
 - Vector-Tracking Bot (Pre-Alpha)  
+    - vantage point for learning: a group of n > 1 tracking agents that is to track a moving 
+        target, over q rounds, with the primary goal of minimal cumulative euclidean distance 
+        with the target and the secondary goal of maintaining symmetric balance with one another.  
+    - file: `graph_problems/vtb.py`  
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
