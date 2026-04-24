@@ -88,15 +88,22 @@ The original seller can be terminated by being a dominant seller (direct sell to
 
     *Important Aspects* 
 The <MiddleManNetwork> is based on class<JammingGraph>. Every seller is assigned a node in 
-this graph. The farthest seller from the buyer, at any given time, is the original seller. 
+this graph. If the original seller is not terminated, it is the farthest seller from the buyer. 
+
 Every time a seller spawns another <MiddleAgentSeller> S', the <JammingGraph> adds a subgraph 
 to the existing network. Seller S' is assigned a node of this subgraph. This alteration is 
-a positive change in network size. When a seller is terminated due to bankruptcy or selling 
-dominance, its assigned node is also deleted from the graph. The <MiddleManNetwork> is always 
-a connected graph; every node of the graph is reachable by any other node. Method<JammingGraph.one_jam> 
-of adds a subgraph to the network, in a way that does not disconnect any of its nodes. Similarly, 
-when a seller node is deleted from the graph, the network uses its assigned PRNG to reconnect any 
-node disconnected because of that deletion.  
+a positive change in network size. 
+
+When a seller is terminated due to bankruptcy or selling dominance, its assigned node is also 
+deleted from the graph. 
+
+The <MiddleManNetwork> is always a connected graph; every node of the graph is reachable by any 
+other node. Method<JammingGraph.one_jam> of adds a subgraph to the network, in a way that does 
+not disconnect any of its nodes. Similarly, when a seller node is deleted from the graph, the 
+network uses its assigned PRNG to reconnect any node disconnected because of that deletion. 
+
+There is 0 cost for a buying agent to travel the Middleman Network. The only cost the buying agent 
+incurs is that of buying units through the network. 
 """ 
 class MiddleManBot(MiddleManNetwork): 
 
