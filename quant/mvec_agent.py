@@ -52,8 +52,9 @@ class GroupedPRNGDerivativePredictor:
 
         l = len(self.target_loc) 
 
+        # NOTE: m is unused; by default, m set to 1 
         m = modulo_in_range(self.prg(),DEFAULT_MAX_SINGLE_FLOAT_RATIO_RANGE)
-        partition = prg_partition_for_float__type2(remaining,l,self.prg,m=1) 
+        partition = prg_partition_for_float__type2(remaining,l,self.prg,m=1)  
         partition = np.array(partition) 
 
         return np.round(partition + self.partial_derivative + self.target_loc,5)  

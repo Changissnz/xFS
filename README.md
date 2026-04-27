@@ -85,6 +85,7 @@ Here is a list of graph problems in the project:
         target, over q rounds, with the primary goal of minimal cumulative euclidean distance 
         with the target and the secondary goal of maintaining symmetric balance with one another.  
     - file: `graph_problems/vtb.py`  
+- Probabilistic Impact Bot (work in progress)  
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
