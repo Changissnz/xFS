@@ -37,8 +37,8 @@ def generate_HMM_tables__basic(num_hidden,num_observed,prg):
     # make hidden-to-hidden table 
     T = one_HMM_table(hidden_states,hidden_states,prg)
 
-    # make hidden-to-observed table 
-    B = one_HMM_table(hidden_states,observed_states,prg)
+    # make observed-to-hidden table 
+    B = one_HMM_table(observed_states,hidden_states,prg)
 
     return T,B,hidden_states,observed_states
 
@@ -46,7 +46,7 @@ def generate_HMM_tables__basic(num_hidden,num_observed,prg):
 
 DEFAULT_HMM_OFFENDER_LCGV_RANGE = [1.,7+1/7+1/9+1/11] 
 
-class HMMOffenderLCGDelta: 
+class HMMOffendorLCGDelta: 
 
     def __init__(self,prg,pattern_type,lcgv_range):  
         assert pattern_type in HMM_OFFENDER_LCG_PATTERN_TYPES 
@@ -87,17 +87,53 @@ class HMMBasedAgent:
         self.fbward = ForwardBackward(T,B)
         self.prg = None 
         self.set_prg(prg)  
-        
         self.current_hidden_state = None 
         self.hidden_states = [] 
-        self.actions = [] 
+        self.actions = []
+        self.hidden_state_probabilities = dict()  
         return 
 
     def set_prg(self,prg): 
         assert type(prg) in {MethodType,FunctionType} 
         self.prg = prg 
 
-class HMMBasedOffender(HMMBasedAgent):
+    def hidden_state_to_next(self,hidden_state,pr,next_is_hidden:bool): 
+        assert type(next_is_hidden) == bool 
+
+        if next_is_hidden:
+            D = self.fbward.T 
+            L = self.fbward.hidden_states
+            pr_vec = [(D[hidden_state][x],x) for x in L] 
+        else:
+            D = self.fbward.B 
+            L = self.fbward.observed_states
+            pr_vec = [(D[x][hidden_state],x) for x in L] 
+
+        the_next_thing = probability_to_label(pr_vec,pr)[1] 
+        return the_next_thing  
+
+    # NOTE: the method of calculating probabilities of the hidden 
+    #       states is not the same as the original forward-backward 
+    #       algorithm. The indexes of the backward step are off, 
+    #       since the hidden state probabilities are updated one 
+    #       observation at a time. So the smoothed probabilities are 
+    #       probably not the same. 
+    def update_with_one_observation(self,others_action): 
+        self.fbward.add_one_observation(others_action) 
+
+        i = len(self.fbward.obs_seq) - 1 
+        self.fbward.forward_at(i,record_value=True) 
+        self.fbward.backward_at(i,record_value=True) 
+        self.fbward.smooth_at(i,record_value=True) 
+        
+        q = self.fbward.pr_smoothed[-1] 
+
+        self.hidden_state_probabilities.clear() 
+        for (i,h) in enumerate(self.fbward.hidden_states): 
+            self.hidden_state_probabilities[h] = q[i] 
+        return 
+
+class HMMBasedOffendor(HMMBasedAgent):
 
     def __init__(self,T,B,prg,initial_hidden_state,lcg_delta_pattern_type,lcgv_range):  
         super().__init__(T,B,prg) 
@@ -106,40 +142,69 @@ class HMMBasedOffender(HMMBasedAgent):
         self.current_hidden_state = initial_hidden_state
 
         self.lcg_loader = HMMOffenderLCGDelta(prg,pattern_type,lcgv_range)
-        self.lcg0 = next(self.lcg_loader) 
+        self.lcg0 = None
+        self.load_next_LCG_()  
 
         self.prng_outputs = [] 
         self.hidden_states.append(self.current_hidden_state) 
         return 
 
     def __next__(self): 
-
+        # PRNG moves 
         x = prg_decimal(self.lcg0,[0,1]) 
         self.prng_outputs.append(x) 
 
-        # choose next action 
         H = self.hidden_states[-1]
-        pr_vec = [(self.fbward.B[H][o],o) for o in self.fbward.observed_states] 
-        action = probability_to_label(pr_vec,x)
+        action,next_hidden_state = self.exec(H,x) 
+
+        # log action and current hidden state 
+        self.actions.append(action) 
+        self.current_hidden_state = next_hidden_state
+        self.hidden_states.append(next_hidden_state) 
+
+        return action,next_hidden_state
+
+    def exec(self,H,x): 
+        # choose next action 
+        action = self.hidden_state_to_next(H,x,next_is_hidden=False)
 
         # transition hidden state 
-        pr_vec2 = [(self.fbward.T[H][h],h) for h in self.fbward.hidden_states] 
-        self.current_hidden_state = probability_to_label(pr_vec2,x)
-        self.hidden_states.append(self.current_hidden_state) 
+        next_hidden_state = self.hidden_state_to_next(H,x,next_is_hidden=True)
+        return action,next_hidden_state
 
-        return     
-
-    def load_next_LCG_(self,mod_range): 
-        return -1 
+    def load_next_LCG_(self):
+        self.lcg0 = next(self.lcg_loader)
+        return
 
 class HMMBasedDefender(HMMBasedAgent): 
 
     def __init__(self,T,B,prg): 
-        super().__init__(T,B,prg)  
+        super().__init__(T,B,prg) 
+
+        self.offending_agent_prng_output = []  
         return
 
     def recv_hidden_state(self,h): 
         assert h in self.fbward.hidden_states
         self.current_hidden_state = h 
 
-    def guess_hidden_state(self): 
+    def predict_next_offense(self,known_hidden_state=None,known_pr=None): 
+        return -1 
+
+    def predict_next_offense_(self,hidden_state=None,pr=None): 
+        x = prg_decimal(self.lcg0,[0,1]) 
+
+        # case: initial move 
+        if type(hidden_state) == type(None): 
+            L = self.fbward.hidden_states
+
+            q = 1 / len(L)
+            pr_vec = [(q,l) for l in L] 
+            hidden_state = probability_to_label(pr_vec,x)[1]
+
+        action,next_hidden_state = self.exec(hidden_state,x) 
+        
+        self.hidden_states.append(next_hidden_state)
+        self.actions.append(action)
+
+        return action,next_hidden_state
