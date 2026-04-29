@@ -1,7 +1,11 @@
 from morebs2.hmm_fb import * 
 from morebs2.pr2label import * 
-from morebs2.numerical_generator import prg__single_to_decimal,modulo_in_range,prg__LCG,prg_decimal
+from morebs2.matrix_methods import cr 
+from morebs2.numerical_generator import prg__single_to_decimal,modulo_in_range,prg__LCG,\
+    prg_decimal,prg_seqsort_ties
+from morebs2.seq_repr import * 
 from types import MethodType, FunctionType
+from collections import deque 
 
 HMM_OFFENDER_LCG_PATTERN_TYPES = {"constant","multiple"} 
 
@@ -44,9 +48,52 @@ def generate_HMM_tables__basic(num_hidden,num_observed,prg):
 
     return T,B,hidden_states,observed_states
 
+class SimpleCyclicalFloatPredictor: 
+
+    def __init__(self,prg):
+        assert type(prg) in {MethodType,FunctionType}
+
+        self.prg = prg  
+        self.L = None 
+        
+        self.cycle = [] 
+        self.index = 0  
+
+    def __next__(self): 
+        
+        assert type(self.index) != type(None) 
+        assert len(self.cycle) > 0 
+
+        i = self.index %  len(self.cycle)
+        self.index = (self.index + 1) % len(self.cycle)
+        r = self.cycle[i] 
+        return r 
+        
+    def load_sequence(self,l):
+        assert type(l) == list
+        self.L = np.array(l,dtype=float)
+        self.index = 0 
+
+    """
+    chooses the most frequent sequence in `self.L` that is also 
+    of the greatest length. PRNG is used in the case of tie-breakers. 
+    """
+    def choose_sequence(self,L): 
+        self.load_sequence(L) 
+        m = MCSSearch(self.L,cast_type=cr,is_bfs=True) 
+        m.search()
+
+        q = m.mcs() 
+        q = [(q_,len(q_)) for q_ in q] 
+        q = prg_seqsort_ties(q,self.prg,lambda x:x[1]) 
+
+        self.cycle = q[-1][0] 
+        self.index = 0 
+
 #-----------------------------------------------------------
 
 DEFAULT_HMM_OFFENDER_LCGV_RANGE = [1.,7+1/7+1/9+1/11] 
+DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE = 150 
 
 class HMMOffendorLCGDelta: 
 
@@ -187,59 +234,60 @@ class HMMBasedOffendor(HMMBasedAgent):
 
 class HMMBasedDefender(HMMBasedAgent): 
 
-    def __init__(self,T,B,prg): 
+    def __init__(self,T,B,prg,pattern_recognizer_max_size=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE): 
+        assert type(pattern_recognizer_max_size) == int
+        assert pattern_recognizer_max_size > 1 
+
         super().__init__(T,B,prg) 
 
-        self.offending_agent_prng_output = []  
+        self.pr_max_size = pattern_recognizer_max_size
+
+        L = self.fbward.hidden_states
+        self.hidden_state_probabilities = {h:1/len(L) for h in L} 
+
+        self.fbward.load_new_obs_seq([])
+        self.offending_agent_prng_output = deque()  
+
+        self.cyclical_predictor = SimpleCyclicalFloatPredictor(prg)  
         return
 
-    def recv_hidden_state(self,h): 
-        assert h in self.fbward.hidden_states
-        self.current_hidden_state = h 
+    def recv_offendor_PRNG_output(self,decimal): 
+        assert 0. <= decimal <= 1. 
+        self.offending_agent_prng_output.append(decimal) 
 
-    def recv_offendor_action_info(self,action): 
-        assert action in self.fbward.observed_states 
-        self.actual_action.append(action) 
+        while len(self.offending_agent_prng_output) > self.pr_max_size: 
+            self.offending_agent_prng_output.popleft()
 
-    def predict_next_offense(self,known_hidden_state=None,known_pr=None): 
-        # case: t=0
+    def predict_offendor_cycle(self): 
+        if len(self.offending_agent_prng_output) >= self.pr_max_size: 
+            self.cyclical_predictor.choose_sequence(list(self.offending_agent_prng_output))
+        return 
+
+    def predict_next_offense(self,known_hidden_state=None,known_pr=None,\
+        allow_cyclical_prediction:bool=False):  
 
         hidden_state = known_hidden_state
-
         pr = known_pr 
+
+        # calculate a decimal if there is no known pr provided. 
         if type(pr) == type(None): 
-            pr = prg_decimal(self.prg,[0.,1]) 
+            if allow_cyclical_prediction: 
+                try: 
+                    pr = next(self.cyclical_predictor) 
+                except: 
+                    pass 
+            
+            if type(pr) == type(None): 
+                pr = prg_decimal(self.prg,[0.,1]) 
 
+        # choose a hidden state if none provided. 
         if type(hidden_state) == type(None):  
-            if type(self.current_hidden_state) != type(None): 
-                hidden_state = self.current_hidden_state
-            else: 
-                L = self.fbward.hidden_states
-
-                q = 1 / len(L)
-                pr_vec = [(q,l) for l in L] 
-                hidden_state = probability_to_label(pr_vec,pr)
-
-
-        action,next_hidden_state = self.exec(hidden_state,pr) 
-        self.log_motion(action,next_hidden_state)
-        return action,next_hidden_state 
-
-    def predict_next_offense_(self,hidden_state=None,pr=None): 
-        x = prg_decimal(self.lcg0,[0,1]) 
-
-        # case: initial move 
-        if type(hidden_state) == type(None): 
             L = self.fbward.hidden_states
+            pr_vec = [(self.hidden_state_probabilities[l],l) for \
+                l in L] 
+            hidden_state = probability_to_label(pr_vec,pr)
 
-            q = 1 / len(L)
-            pr_vec = [(q,l) for l in L] 
-            hidden_state = probability_to_label(pr_vec,x)
-
-        action,next_hidden_state = self.exec(hidden_state,x) 
-        
-        self.current_hidden_state = next_hidden_state
-        self.hidden_states.append(next_hidden_state)
-        self.actions.append(action)
-
+        # choose the next action and hidden state 
+        action,next_hidden_state = self.exec(hidden_state,pr) 
+        self.log_motion(action,next_hidden_state) 
         return action,next_hidden_state
