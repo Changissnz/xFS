@@ -228,7 +228,10 @@ class HMMBasedOffendor(HMMBasedAgent):
         self.prng_outputs = [] 
         self.hidden_states.append(self.current_hidden_state) 
 
+        self.success_vec = deque() 
         self.success_counter = Counter() 
+
+        self.failure_upper_threshold = min([2 / len(self.fbward.T), 0.5])  
         return 
 
     def __next__(self): 
@@ -250,11 +253,28 @@ class HMMBasedOffendor(HMMBasedAgent):
         assert type(is_successful) == bool 
         
         self.success_counter[is_successful] += 1 
+        self.success_vec.append(is_successful) 
 
-        q = self.success_counter[True] + self.success_counter[False] 
-        if q >= self.pattern_max_length: 
-            self.load_next_LCG_() 
-            self.success_counter.clear() 
+        self.update_LCG() 
+
+    def update_LCG(self):
+
+        while len(self.success_vec) > self.pattern_max_length: 
+            q = self.success_vec.popleft() 
+            self.success_counter[q] -= 1 
+        
+        c = self.success_counter[True] + self.success_counter[False] 
+        
+        # enough samples of pass/fail for possibly updating 
+        if c >= self.pattern_max_length: 
+            f = self.success_counter[False] / c 
+
+            # update b/c of 'high' failure rate 
+            if f >= self.failure_upper_threshold: 
+
+                self.load_next_LCG_() 
+                self.success_vec.clear() 
+                self.success_counter.clear() 
 
 """
 Defender operates with a simple pattern-based predictor. This predictor is an instance 
