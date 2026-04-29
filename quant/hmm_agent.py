@@ -116,6 +116,13 @@ class HMMOffendorLCGDelta:
             x = round(modulo_in_range(self.prg(),self.lcgv_range)) 
             X.append(x) 
 
+        c = 0 
+        while X[3] == 0 and c < 10: 
+            X[3] = round(modulo_in_range(self.prg(),self.lcgv_range))
+            c += 1 
+
+        assert X[3] != 0 
+
         P = prg__LCG(X[0],X[1],X[2],X[3])
 
         self.change_lcgv_range() 
@@ -203,23 +210,30 @@ class HMMBasedAgent:
 
 class HMMBasedOffendor(HMMBasedAgent):
 
-    def __init__(self,T,B,prg,initial_hidden_state,lcg_delta_pattern_type,lcgv_range):  
+    def __init__(self,T,B,prg,initial_hidden_state,lcg_delta_pattern_type,lcgv_range,\
+        pattern_max_length=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE):  
+
         super().__init__(T,B,prg) 
 
         assert initial_hidden_state in self.fbward.hidden_states
         self.current_hidden_state = initial_hidden_state
 
         self.lcg_loader = HMMOffendorLCGDelta(prg,lcg_delta_pattern_type,lcgv_range)
+        assert pattern_max_length > 5 and type(pattern_max_length) == int 
+        self.pattern_max_length = pattern_max_length
+
         self.lcg0 = None
         self.load_next_LCG_()  
 
         self.prng_outputs = [] 
         self.hidden_states.append(self.current_hidden_state) 
+
+        self.success_counter = Counter() 
         return 
 
     def __next__(self): 
         # PRNG moves 
-        x = prg_decimal(self.lcg0,[0,1]) 
+        x = prg_decimal(self.lcg0,[0.,1.]) 
         self.prng_outputs.append(x) 
 
         H = self.hidden_states[-1]
@@ -232,11 +246,29 @@ class HMMBasedOffendor(HMMBasedAgent):
         self.lcg0 = next(self.lcg_loader)
         return
 
+    def register_offensive_stat(self,is_successful:bool): 
+        assert type(is_successful) == bool 
+        
+        self.success_counter[is_successful] += 1 
+
+        q = self.success_counter[True] + self.success_counter[False] 
+        if q >= self.pattern_max_length: 
+            self.load_next_LCG_() 
+            self.success_counter.clear() 
+
+"""
+Defender operates with a simple pattern-based predictor. This predictor is an instance 
+of <SimpleCyclicalFloatPredictor> that takes the sequence of `offending_agent_prng_output` 
+as input. Predictor cyclically outputs float values from one of the most common subsequence 
+S from `offending_agent_prng_output` that also happens to be one of the greatest in length. 
+These float values help Defender predictor the `observed` state (Offendor action) of the 
+HMM. The predictor updates S every [`pattern_recognizer_max_size` * 2 /3] rounds. 
+"""
 class HMMBasedDefender(HMMBasedAgent): 
 
     def __init__(self,T,B,prg,pattern_recognizer_max_size=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE): 
         assert type(pattern_recognizer_max_size) == int
-        assert pattern_recognizer_max_size > 1 
+        assert pattern_recognizer_max_size >= 5 
 
         super().__init__(T,B,prg) 
 
@@ -248,7 +280,8 @@ class HMMBasedDefender(HMMBasedAgent):
         self.fbward.load_new_obs_seq([])
         self.offending_agent_prng_output = deque()  
 
-        self.cyclical_predictor = SimpleCyclicalFloatPredictor(prg)  
+        self.cyclical_predictor = SimpleCyclicalFloatPredictor(prg) 
+        self.num_rounds_since_pupdate = 0  
         return
 
     def recv_offendor_PRNG_output(self,decimal): 
@@ -264,7 +297,12 @@ class HMMBasedDefender(HMMBasedAgent):
         return 
 
     def predict_next_offense(self,known_hidden_state=None,known_pr=None,\
-        allow_cyclical_prediction:bool=False):  
+        allow_cyclical_prediction:bool=False):
+
+        # case: update most common PRNG cycle of offendor 
+        if self.num_rounds_since_pupdate > self.pr_max_size / 3 * 2: 
+            self.predict_offendor_cycle()
+            self.num_rounds_since_pupdate = 0 
 
         hidden_state = known_hidden_state
         pr = known_pr 
@@ -290,4 +328,6 @@ class HMMBasedDefender(HMMBasedAgent):
         # choose the next action and hidden state 
         action,next_hidden_state = self.exec(hidden_state,pr) 
         self.log_motion(action,next_hidden_state) 
+
+        self.num_rounds_since_pupdate += 1 
         return action,next_hidden_state

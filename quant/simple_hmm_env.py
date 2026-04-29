@@ -1,4 +1,5 @@
 from .hmm_agent import * 
+from morebs2.numerical_generator import merge_two_prgs
 
 SIMPLE_HMM_ENVIRONMENT_INFO_MODES = {"perfect-full","perfect-partial","predictive","stochastic"} 
 
@@ -29,7 +30,12 @@ class SimpleHMMEnv__TwoAgents:
 
         self.defender.update_with_one_observation(action)
         self.defender.recv_offendor_PRNG_output(d) 
-        self.diff += (action != action2) 
+
+        stat = action != action2
+        self.diff += stat 
+
+        self.offendor.register_offensive_stat(stat)
+        return action,action2 
 
     def defender_move(self):
         known_hidden_state = self.offendor.hidden_states[-2] 
@@ -38,8 +44,8 @@ class SimpleHMMEnv__TwoAgents:
             d = self.offendor.prng_outputs[-1] 
             return self.defender.predict_next_offense(known_hidden_state,d,allow_cyclical_prediction=True) 
         elif self.open_info_mode == "perfect-partial": 
-
-            if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
+            prg_ = merge_two_prgs(self.prg,self.offendor.prg,add) 
+            if prg_decimal(prg_,[0.,1.]) >= 0.5: 
                 d = self.offendor.prng_outputs[-1] 
             else: 
                 d = None 
