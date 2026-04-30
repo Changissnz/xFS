@@ -57,27 +57,12 @@ class SimpleHMMEnv__TwoAgentsClass(unittest.TestCase):
         assert she2.diff == 235,"got {}".format(she2.diff)
         assert she3.diff == 0,"got {}".format(she3.diff)
 
+    def test__SimpleHMMEnv__TwoAgents__next__case_2(self):
+        print("predictive/multiple/0.5")
+        she0 = SimpleHMMEnv__TwoAgents__sample_EXCALIBUR("predictive","multiple",0.5) 
+        she0.run_n_rounds(800)
 
-############# constant 4 
-# stochastic 
-'''
-i: 1950 diff: 1328
-''' 
-
-# predictive 
-'''
-i: 1950 diff: 590
-''' 
-
-# perfect-partial
-'''
-i: 1950 diff: 298
-'''
-
-# perfect-full
-'''
-i: 1950 diff: 0
-'''
+        assert she0.diff == 645 
 
 if __name__ == '__main__':
     unittest.main()
