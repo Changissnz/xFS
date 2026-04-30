@@ -88,7 +88,17 @@ class SimpleCyclicalFloatPredictor:
         q = prg_seqsort_ties(q,self.prg,lambda x:x[1]) 
 
         self.cycle = q[-1][0] 
+        ##print("CYCLE: ",self.cycle) 
         self.index = 0 
+
+    """
+    decimal := most recent PRNG output 
+    """
+    def calibrate_cycle_index(self,decimal): 
+        assert len(self.cycle) > 0 
+        i = np.argmin([abs(decimal - x) for x in self.cycle])  
+        self.index = int((i + 1) % len(self.cycle)) 
+        ##print("INDEX: ",self.index)
 
 #-----------------------------------------------------------
 
@@ -242,6 +252,7 @@ class HMMBasedOffendor(HMMBasedAgent):
         H = self.hidden_states[-1]
         action,next_hidden_state = self.exec(H,x) 
 
+        ##print("ACTUAL PR: ",x)
         self.log_motion(action,next_hidden_state)
         return action,next_hidden_state
 
@@ -314,6 +325,9 @@ class HMMBasedDefender(HMMBasedAgent):
     def predict_offendor_cycle(self): 
         if len(self.offending_agent_prng_output) >= self.pr_max_size: 
             self.cyclical_predictor.choose_sequence(list(self.offending_agent_prng_output))
+            d = self.offending_agent_prng_output[-1] 
+            ##print("calibrating: {}".format(self.offending_agent_prng_output))
+            self.cyclical_predictor.calibrate_cycle_index(d) 
         return 
 
     def predict_next_offense(self,known_hidden_state=None,known_pr=None,\
@@ -337,6 +351,8 @@ class HMMBasedDefender(HMMBasedAgent):
             
             if type(pr) == type(None): 
                 pr = prg_decimal(self.prg,[0.,1]) 
+
+        ##print("PRR: ",pr)
 
         # choose a hidden state if none provided. 
         if type(hidden_state) == type(None):  
