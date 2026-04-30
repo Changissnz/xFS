@@ -2,7 +2,7 @@ from morebs2.hmm_fb import *
 from morebs2.pr2label import * 
 from morebs2.matrix_methods import cr 
 from morebs2.numerical_generator import prg__single_to_decimal,modulo_in_range,prg__LCG,\
-    prg_decimal,prg_seqsort_ties
+    prg_decimal,prg_seqsort_ties,sign_preserving_modulo 
 from morebs2.seq_repr import * 
 from types import MethodType, FunctionType
 from collections import deque 
@@ -80,7 +80,8 @@ class SimpleCyclicalFloatPredictor:
     """
     def choose_sequence(self,L): 
         self.load_sequence(L) 
-        m = MCSSearch(self.L,cast_type=cr,is_bfs=True) 
+        X = list(np.round(self.L,5))
+        m = MCSSearch(X,cast_type=cr,is_bfs=True) 
         m.search()
 
         q = m.mcs() 
@@ -88,7 +89,6 @@ class SimpleCyclicalFloatPredictor:
         q = prg_seqsort_ties(q,self.prg,lambda x:x[1]) 
 
         self.cycle = q[-1][0] 
-        ##print("CYCLE: ",self.cycle) 
         self.index = 0 
 
     """
@@ -103,6 +103,8 @@ class SimpleCyclicalFloatPredictor:
 #-----------------------------------------------------------
 
 DEFAULT_HMM_OFFENDER_LCGV_RANGE = [1.,7+1/7+1/9+1/11] 
+DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX = 10 ** 5.5 
+
 DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE = 150 
 
 class HMMOffendorLCGDelta: 
@@ -145,7 +147,11 @@ class HMMOffendorLCGDelta:
         m = modulo_in_range(self.prg(),DEFAULT_HMM_OFFENDER_LCGV_RANGE) 
         m0 = self.lcgv_range[0] * m 
         m1 = self.lcgv_range[1] * m 
-        self.lcgv_range = [m0,m1] 
+
+        m0 = sign_preserving_modulo(m0,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX)
+        m1 = sign_preserving_modulo(m1,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX)
+
+        self.lcgv_range = sorted([m0,m1]) 
 
 class HMMBasedAgent: 
 
@@ -252,7 +258,6 @@ class HMMBasedOffendor(HMMBasedAgent):
         H = self.hidden_states[-1]
         action,next_hidden_state = self.exec(H,x) 
 
-        ##print("ACTUAL PR: ",x)
         self.log_motion(action,next_hidden_state)
         return action,next_hidden_state
 
@@ -352,7 +357,6 @@ class HMMBasedDefender(HMMBasedAgent):
             if type(pr) == type(None): 
                 pr = prg_decimal(self.prg,[0.,1]) 
 
-        ##print("PRR: ",pr)
 
         # choose a hidden state if none provided. 
         if type(hidden_state) == type(None):  

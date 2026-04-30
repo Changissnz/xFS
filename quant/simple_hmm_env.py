@@ -75,6 +75,13 @@ class SimpleHMMEnv__TwoAgents:
 
         self.hmm_log = HMMLog__TwoAgents() 
 
+    def run_n_rounds(self,n): 
+        for _ in range(n): 
+            next(self)
+
+    """
+    main method 
+    """
     def __next__(self):
 
         action,hidden_state = next(self.offendor)
