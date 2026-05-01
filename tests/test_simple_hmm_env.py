@@ -12,10 +12,7 @@ def SimpleHMMEnv__TwoAgents__sample_EXCALIBUR(info_mode,offendor_lcg_delta_patte
     lcg_e = prg__LCG(356.54,-1334.5,76.55,3199.5) 
 
     initial_offendor_hidden_state = 3 
-    ##offendor_lcg_delta_pattern_type = "constant" 
     offendor_lcgv_range = [-100,100]  
-
-    ##info_mode = "perfect-partial" #"predictive" # "stochastic" # "perfect-full" # 
 
     she = SimpleHMMEnv__TwoAgents.generate_instance(num_hidden,num_observed,\
         lcg_o,lcg_d,lcg_e,initial_offendor_hidden_state,\
@@ -54,7 +51,7 @@ class SimpleHMMEnv__TwoAgentsClass(unittest.TestCase):
 
         assert she0.diff == 369,"got {}".format(she0.diff)
         assert she1.diff == 323,"got {}".format(she1.diff)
-        assert she2.diff == 235,"got {}".format(she2.diff)
+        assert she2.diff == 114,"got {}".format(she2.diff)
         assert she3.diff == 0,"got {}".format(she3.diff)
 
     def test__SimpleHMMEnv__TwoAgents__next__case_2(self):
@@ -62,7 +59,7 @@ class SimpleHMMEnv__TwoAgentsClass(unittest.TestCase):
         she0 = SimpleHMMEnv__TwoAgents__sample_EXCALIBUR("predictive","multiple",0.5) 
         she0.run_n_rounds(800)
 
-        assert she0.diff == 645 
+        assert she0.diff == 675, "got {}".format(she0.diff)
 
 if __name__ == '__main__':
     unittest.main()

@@ -148,9 +148,9 @@ class HMMOffendorLCGDelta:
         m0 = self.lcgv_range[0] * m 
         m1 = self.lcgv_range[1] * m 
 
-        m0 = sign_preserving_modulo(m0,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX)
-        m1 = sign_preserving_modulo(m1,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX)
-
+        m0 = round(sign_preserving_modulo(m0,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX))
+        m1 = round(sign_preserving_modulo(m1,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX))
+        print("M0,M1: ",m0,m1) 
         self.lcgv_range = sorted([m0,m1]) 
 
 class HMMBasedAgent: 
@@ -205,10 +205,12 @@ class HMMBasedAgent:
 
     # NOTE: the method of calculating probabilities of the hidden 
     #       states is not the same as the original forward-backward 
-    #       algorithm. The indexes of the backward step are off, 
-    #       since the hidden state probabilities are updated one 
-    #       observation at a time. So the smoothed probabilities are 
-    #       probably not the same. 
+    #       algorithm, which takes an input the entire observation sequence 
+    #       at once. In this method, every additional observation is 
+    #       used to update the hidden state probabilities. 
+    # NOTE: method is used only for <HMMBasedDefender>. Defender uses 
+    #       updated hidden state probabilities for every round to 
+    #       obtain the percentile ranges for its PRNG decision. 
     def update_with_one_observation(self,others_action): 
         self.fbward.add_one_observation(others_action) 
 
@@ -270,7 +272,6 @@ class HMMBasedOffendor(HMMBasedAgent):
         
         self.success_counter[is_successful] += 1 
         self.success_vec.append(is_successful) 
-
         self.update_LCG() 
 
     def update_LCG(self):
@@ -345,15 +346,19 @@ class HMMBasedDefender(HMMBasedAgent):
 
         hidden_state = known_hidden_state
         pr = known_pr 
+        pr0 = None 
+
+        # increment the cycle predictor, regardless if known_pr given 
+        if allow_cyclical_prediction: 
+            try: 
+                pr0 = next(self.cyclical_predictor) 
+            except: 
+                pass 
+        
 
         # calculate a decimal if there is no known pr provided. 
         if type(pr) == type(None): 
-            if allow_cyclical_prediction: 
-                try: 
-                    pr = next(self.cyclical_predictor) 
-                except: 
-                    pass 
-            
+            pr = pr0     
             if type(pr) == type(None): 
                 pr = prg_decimal(self.prg,[0.,1]) 
 

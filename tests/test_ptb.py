@@ -104,7 +104,7 @@ class PTBotClass(unittest.TestCase):
     matrix dimension 8 instead of 4. 
 
     The lower poison potency (lower matrix dimension is higher potency) of this test 
-    case directly corresponds to an improvement in target mortality, demonstrated 
+    case directly corresponds to a decrease in target mortality, demonstrated 
     by ending target performance measures. 
 
     NOTE: Uses Python 3.14.2 numpy/random 

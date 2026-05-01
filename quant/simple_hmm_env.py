@@ -56,8 +56,8 @@ class HMMLog__TwoAgents:
 
 
 """
-Simple HMM environment, consisting of two agents, an offender and defender operating 
-on a network. 
+Simple HMM environment, consisting of two agents, an offendor and defender operating 
+in opposing states of the same HMM. 
 """
 class SimpleHMMEnv__TwoAgents: 
 
