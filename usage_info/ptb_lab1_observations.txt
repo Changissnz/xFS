@@ -145,7 +145,7 @@ num_poisons = 5
 
 Comment out lines 59-62. 
 
-Poison is inexpresive for this trial. Running this revised code produced these 
+Poison is inexpressive for this trial. Running this revised code produced these 
 results. 
 
 #----------------------------------------------------------------------------------
