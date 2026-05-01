@@ -47,7 +47,9 @@ There are three information modes in this bot, from the vantage point of the def
 NOTE: these information modes are assumed to be static, once the environment has been initialized. 
 
 Defender uses a cyclical predictor, complementary to the quality of cyclical output from offendor 
-LCG, in the cases where it is not given the offendor PRNG decimal output. 
+LCG, in the cases where it is not given the offendor PRNG decimal output. If cyclical predictor does 
+not have enough samples, the number specified in the next section (Agent update rates), to calculate 
+a cycle to base its prediction on, it resorts to decimal outputs from its own PRNG. 
 
 NOTE: Defender is given every offender PRNG decimal output AFTER the timestamp has ended. See 
       variable<HMMBasedDefender.offending_agent_prng_output> (a sequence) for more information. 
@@ -72,7 +74,7 @@ Defendor updates predicted cycle if P1 > 2 * P0 / 3.
 
         *Main agent attributes* 
 Both operate on cyclical processes, the offendor using an LCG (a PRNG that is cyclical), and the 
-defender predicts offendor LCG output based on the most common and longest subsequence of float 
+defender predicting offendor LCG output based on the most common and longest subsequence of float 
 values it stored on offendor LCG output.
 """
 class PIBot(SimpleHMMEnv__TwoAgents): 
