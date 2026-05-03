@@ -1,6 +1,7 @@
 from graph_models.bfs import * 
 from graph_models.dfs import * 
 from graph_models.node_priority_function import * 
+from morebs2.numerical_generator import prg_unique_sequence
 
 """
 A structure with method<node_to_output> that can be used for 
@@ -13,6 +14,7 @@ C[i] and increments i.
 class Node2CycleOutputter: 
 
     def __init__(self,node2cycle_map):
+        assert type(node2cycle_map) == dict 
         for v in node2cycle_map.values(): assert len(v) > 0 and type(v) == list 
 
         self.n2c_map = node2cycle_map
@@ -33,6 +35,19 @@ class Node2CycleOutputter:
 
         self.n2c_index_map[n] = i2 
         return c[i] 
+
+    @staticmethod 
+    def generate_instance(nodeset,prg,cycle_length_range):
+        assert is_valid_range(cycle_length_range,True,False) 
+        assert cycle_length_range > 1 
+        assert type(prg) in {MethodType,FunctionType}
+
+        nodeset = sorted(nodeset) 
+        D = dict() 
+        for n in nodeset: 
+            l = modulo_in_range(int(prg()),cycle_length_range)
+            D[n] = prg_unique_sequence(prg,l) 
+        return Node2CycleOutputter(D)
 
 """
 Static Graph Introspector, Type (C)ylical (N)ode (O)utput. 
@@ -173,9 +188,9 @@ class StaticGraphIntrospectorTypeCNO:
             return 
 
         for edge in edges: 
-            # delete cost from? 
             v0,v1 = edge[0],edge[1] 
 
+            # delete cost from? 
             if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
                 del self.costfrom_table[v0][v1] 
             
