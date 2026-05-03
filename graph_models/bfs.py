@@ -60,4 +60,5 @@ class BFSCache(XFSCache):
             self.fin_stat = True 
             return False 
         self.reference = self.reference_varcache.popleft()
+        print("REF: ",self.reference) 
         return True 

@@ -84,7 +84,7 @@ to determine the number of additional iterations to travel current cycle.
 
 NOTE: 
 Navigator can be used with both directed and undirected graphs, but some of the 
-decision-making processes suit undirected graph more. 
+decision-making processes suit undirected graphs more. 
 
 NOTE: 
 Code is designed for navigator with radial vision of 1 edge. 
