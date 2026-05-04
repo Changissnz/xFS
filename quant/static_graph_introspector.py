@@ -1,53 +1,8 @@
 from graph_models.bfs import * 
 from graph_models.dfs import * 
+from graph_models.node_to_cycle import * 
 from graph_models.node_priority_function import * 
-from morebs2.numerical_generator import prg_unique_sequence
-
-"""
-A structure with method<node_to_output> that can be used for 
-- variable<StaticGraphIntrospector.node2output_function>.
-
-Every node is associated with a cycle C and a current index i for 
-that cycle. When node is called with method<node_to_output>, outputs 
-C[i] and increments i. 
-"""
-class Node2CycleOutputter: 
-
-    def __init__(self,node2cycle_map):
-        assert type(node2cycle_map) == dict 
-        for v in node2cycle_map.values(): assert len(v) > 0 and type(v) == list 
-
-        self.n2c_map = node2cycle_map
-        self.n2c_index_map = {k:0 for k in self.n2c_map.keys()}
-        return
-
-    def check_for_keys(self,keys): 
-        return set(self.n2c_map.keys()) == set(keys)
-
-    def node_to_output(self,n): 
-        assert n in self.n2c_map 
-
-        c = self.n2c_map[n] 
-        l = len(c) 
-
-        i = self.n2c_index_map[n] 
-        i2 = (i + 1) % l 
-
-        self.n2c_index_map[n] = i2 
-        return c[i] 
-
-    @staticmethod 
-    def generate_instance(nodeset,prg,cycle_length_range):
-        assert is_valid_range(cycle_length_range,True,False) 
-        assert cycle_length_range > 1 
-        assert type(prg) in {MethodType,FunctionType}
-
-        nodeset = sorted(nodeset) 
-        D = dict() 
-        for n in nodeset: 
-            l = modulo_in_range(int(prg()),cycle_length_range)
-            D[n] = prg_unique_sequence(prg,l) 
-        return Node2CycleOutputter(D)
+from morebs2.numerical_generator import prg_decimal
 
 """
 Static Graph Introspector, Type (C)ylical (N)ode (O)utput. 
@@ -57,18 +12,27 @@ Traversal methodology is not identical to that of <BFSCache> (breadth-first sear
 or <DFSCache>, but revolving around BFS or DFS. There are some additional variables 
 that alter this structure's traversal pattern. 
 
-At every node or set of nodes N travelled, outputs a map 
+The boolean variables `edges_can_be_forgotten` and `ref_nodes_can_be_repeated` alter 
+<XFSCache> traversal. 
+
+    *`ref_nodes_can_be_repeated` == True*
+- variable<reference_varcache> : can re-add previous reference node back to cache for 
+    traveling again. 
+
+    *`edges_can_be_forgotten` == True*
+- variable<costfrom_table> : can delete (node from, node to) cost of travel. 
+- variable<ref_neighbors_travelled> : can delete neighbors of reference travelled. 
+
+
+At every node or set of nodes N travelled, outputs a map M, 
 
     M: n -> v; v a value from a cycle corresponding to node n in the 
     <Node2Cycle> instance, `node2output_function`. 
-
-
-
 """
 class StaticGraphIntrospectorTypeCNO:  
 
     def __init__(self,G,edge_cost_function,is_bfs:bool,node2cyclical_outputter,\
-        node_priority_function,edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,prg): 
+        node_priority_outputter,edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,prg): 
         assert type(G) == defaultdict
         assert type(edge_cost_function) in {MethodType,FunctionType}
         assert type(is_bfs) == bool 
@@ -77,6 +41,9 @@ class StaticGraphIntrospectorTypeCNO:
         assert type(edges_can_be_forgotten) == bool 
         assert type(ref_nodes_can_be_repeated) == bool 
         assert type(prg) in {MethodType,FunctionType} 
+
+        if is_bfs: assert node_priority_outputter.output_type == "sequence"
+        else: assert node_priority_outputter.output_type == "single" 
 
         self.G = G 
         self.edge_cost_function = edge_cost_function
@@ -101,7 +68,7 @@ class StaticGraphIntrospectorTypeCNO:
         self.introspector.min_paths.clear() 
 
         self.introspector.store_minpaths(ns=None,num_paths=num_paths_per_node,\
-            cost_func = self.edge_cost_function, prg = self.prg) 
+            cost_func = sum, prg = self.prg) 
 
         return self.introspector.min_paths 
 
@@ -115,10 +82,10 @@ class StaticGraphIntrospectorTypeCNO:
         x = None 
         if self.is_bfs: 
             x = BFSCache(self.starting_ref,self.G,edge_cost_function=self.edge_cost_function,\
-                nextnode_priority_function=self.np_outputter.__next__,no_duplicate_touch_nodes=False)
+                nextnode_priority_function=self.np_outputter.next_node,no_duplicate_touch_nodes=False)
         else: 
             x = DFSCache(self.starting_ref,self.G,edge_cost_function=self.edge_cost_function,\
-                search_head_type=1,nextnode_priority_function=self.np_outputter.__next__,\
+                search_head_type=1,nextnode_priority_function=self.np_outputter.next_node,\
                 no_duplicate_touch_nodes=False)
 
         self.introspector = x 
@@ -129,6 +96,7 @@ class StaticGraphIntrospectorTypeCNO:
 
     return:
     [0] dict, node -> cyclical value 
+    [1] reference node used to travel to next neighbors 
     [1] traversal cost for this timestamp 
     """
     def __next__(self): 
@@ -148,7 +116,7 @@ class StaticGraphIntrospectorTypeCNO:
 
         # forget any edges? 
         self.forget_travelled_edges(self.introspector.previous_edges)
-        return 
+        return M,ref,traversal_cost
 
     #-------------------------------- logging edges + repeat node travel + forget travelled edges 
 
@@ -159,7 +127,7 @@ class StaticGraphIntrospectorTypeCNO:
         traversal_cost = 0 
         for edge in edges: 
             x = edge[1] 
-            c = self.register_node_contact(n)
+            c = self.register_node_contact(x)
             d[x] = c 
             traversal_cost += self.introspector.fetch_edge_cost(edge[0],edge[1]) 
         return d,traversal_cost
@@ -192,12 +160,13 @@ class StaticGraphIntrospectorTypeCNO:
 
             # delete cost from? 
             if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
-                del self.costfrom_table[v0][v1] 
-            
+                del self.introspector.costfrom_table[v0][v1] 
+    
             # delete neighbors travelled? 
             if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
-                self.ref_neighbors_travelled[v0] = self.ref_neighbors_travelled[v0] - {v1} 
+                self.introspector.ref_neighbors_travelled[v0] = \
+                    self.introspector.ref_neighbors_travelled[v0] - {v1} 
 
             if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
-                self.ref_neighbors_travelled[v1] = self.ref_neighbors_travelled[v1] - {v0} 
-
+                self.introspector.ref_neighbors_travelled[v1] = \
+                    self.introspector.ref_neighbors_travelled[v1] - {v0} 
