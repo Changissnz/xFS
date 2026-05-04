@@ -2,8 +2,8 @@
 # graph traversal via BFS and DFS algorithms. 
 from collections import defaultdict
 from types import MethodType,FunctionType
-from morebs2.numerical_generator import prg_seqsort_ties
-from morebs2.matrix_methods import is_number 
+from morebs2.numerical_generator import prg_seqsort_ties,modulo_in_range
+from morebs2.matrix_methods import is_number,is_valid_range 
 
 """
 output_type := single|set, 
@@ -81,5 +81,17 @@ class NodePriorityFunctionStruct:
         return self.node_weights[n] 
 
     @staticmethod 
-    def generate_instance():
-        return -1 
+    def generate_instance(G,weight_range,is_dsg:bool,is_bfs:bool,is_ascending:bool,prg):
+        assert type(G) == defaultdict
+
+        priority_type = "frequency" if type(weight_range) == type(None) \
+            else "weight" 
+        output_type = "single" if not is_bfs else "sequence"
+
+        if priority_type == "frequency": 
+            node_weights = dict() 
+        else: 
+            nodeseq = sorted(G.keys()) 
+            node_weights = {n:modulo_in_range(prg(),weight_range) for n in nodeseq} 
+
+        return NodePriorityFunctionStruct(priority_type,output_type,node_weights,is_ascending,prg)

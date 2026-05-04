@@ -367,6 +367,9 @@ class GraphGen:
 
 #----------------------------------------------------------------------------------------- 
 
+"""
+generates weights for graph edges 
+"""
 class GraphWeightGen: 
 
     def __init__(self,G,prg,is_dsg:bool,weight_range): 

@@ -3,6 +3,7 @@ from graph_models.dfs import *
 from graph_models.node_to_cycle import * 
 from graph_models.node_priority_function import * 
 from morebs2.numerical_generator import prg_decimal
+from graph_models.graph_gen import * 
 
 """
 Static Graph Introspector, Type (C)ylical (N)ode (O)utput. 
@@ -170,3 +171,21 @@ class StaticGraphIntrospectorTypeCNO:
             if prg_decimal(self.prg,[0.,1.]) >= 0.5: 
                 self.introspector.ref_neighbors_travelled[v1] = \
                     self.introspector.ref_neighbors_travelled[v1] - {v0} 
+
+    @staticmethod
+    def generate_instance(G,node_weight_range,edge_weight_range,is_dsg,is_bfs,ascending_priority,cycle_length_range,\
+        edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,prg): 
+
+        if type(edge_weight_range) == type(None): 
+            edge_cost_function = DEFAULT_EDGE_COST_FUNCTION
+        else: 
+            gwg = GraphWeightGen(G,prg,is_dsg,edge_weight_range)
+            edge_cost_function = gwg.weight_
+
+        prg_ = prg__single_to_int(prg)
+        node2cyclical_outputter = Node2CycleOutputter.generate_instance(set(G.keys()),prg_,cycle_length_range)
+        node_priority_outputter = NodePriorityFunctionStruct.generate_instance(\
+            G,node_weight_range,is_dsg,is_bfs,ascending_priority,prg)
+
+        return StaticGraphIntrospectorTypeCNO(G,edge_cost_function,is_bfs,node2cyclical_outputter,\
+        node_priority_outputter,edges_can_be_forgotten,ref_nodes_can_be_repeated,prg)
