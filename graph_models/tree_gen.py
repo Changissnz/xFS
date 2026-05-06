@@ -7,17 +7,6 @@ from types import MethodType,FunctionType
 
 DEFAULT_TREE_BRANCHING_RANGE = [1,8] 
 
-# simple counter class for new node identifiers
-class SimpleCounter: 
-
-    def __init__(self,x): 
-        self.x = x 
-    
-    def __next__(self):
-        x2 = self.x 
-        self.x += 1 
-        return x2 
-
 # NOTE: does not check if G is actually a tree or not. 
 class SimpleTreeContainer: 
 

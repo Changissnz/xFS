@@ -42,6 +42,7 @@ def graph__sample_ASCHEME2():
         14:{7},\
         15:{5,6,14}}) 
 
+'''
 class SimpleCounter: 
 
     def __init__(self,x): 
@@ -51,6 +52,7 @@ class SimpleCounter:
         x2 = self.x 
         self.x += 1 
         return x2 
+'''
 
 def prng__sample_ASCHEME(): 
     lx = prg__LCG(55,3,19,2120) 

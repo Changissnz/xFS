@@ -42,6 +42,21 @@ def dict_to_plot(q):
     nx.draw(G, with_labels=True)
     plt.show()
 
+#-----------------------------------------------------------------------
+
+# simple counter class for new node identifiers
+class SimpleCounter: 
+
+    def __init__(self,x): 
+        self.x = x 
+    
+    def __next__(self):
+        x2 = self.x 
+        self.x += 1 
+        return x2 
+
+#-----------------------------------------------------------------------
+
 """
 simple undirected graph designed for small-scale use (<= 5000 nodes)
 """

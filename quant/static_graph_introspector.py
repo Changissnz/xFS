@@ -72,6 +72,14 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
         return M,ref,traversal_cost
 
+    def run_n_rounds(self,n=float('inf')): 
+        assert type(self.introspector) != type(None)
+
+        while n > 0 and not self.introspector.fin_stat: 
+            next(self) 
+            n -= 1 
+
+
     #-------------------------------- logging edges + repeat node travel + forget travelled edges 
 
     def log_one_traversal(self): 
