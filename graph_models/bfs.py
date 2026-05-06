@@ -17,9 +17,15 @@ class BFSCache(XFSCache):
         self.previous_edges.clear() 
         ##print("moving {}".format(len(self.reference_varcache))) 
 
+        # check that reference has not been delete. Used for cases of 
+        # mutable graphs. 
+        stat = self.check_for_expired_reference()
+        if stat: 
+            return False 
+
         # get all neighbors, untravelled 
         q = self.d[self.reference] - self.ref_neighbors_travelled[self.reference]
-        
+
         stat1 = len(q) == 0 
         stat2 = len(self.reference_varcache) == 0
 

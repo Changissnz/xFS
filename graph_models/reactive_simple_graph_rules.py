@@ -12,7 +12,8 @@ class PRNGGraphProductRule:
 
     def graph_delta(self,G,is_dsg:bool,node_ctr,prg): 
         if self.node_change: 
-            G = node_changes_to_graph(G,is_dsg,self.node_change,prg,node_ctr) 
+            prg_ = prg__single_to_int(prg)
+            G = node_changes_to_graph(G,is_dsg,self.node_change,prg_,node_ctr) 
 
         add_edge = self.edge_change > 0 
 
@@ -56,10 +57,10 @@ class PRNGReactiveGraphRule:
 
         node_change = modulo_in_range(int(prg()),nodechange_range) 
         edge_change = modulo_in_range(int(prg()),edgechange_range) 
-        period_change = modulo_in_range(int(prg()),period_range) 
+        period = modulo_in_range(int(prg()),period_range) 
 
         prule = PRNGGraphProductRule(node_change,edge_change)
-        return PRNGReactiveGraphRule(reactant,product_rule,is_node_rule:bool,period:int): 
+        return PRNGReactiveGraphRule(reactant,prule,is_node_rule,period)
 
 class RealtimeReactiveGraphRuleOperatorTypeS:  
 
@@ -69,10 +70,10 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         assert type(is_dsg) == bool 
 
         assert is_valid_range(nodechange_range,True,False) 
-        assert nodechange_range[0] > 0 
+        #assert nodechange_range[0] > 0 
 
         assert is_valid_range(edgechange_range,True,False) 
-        assert edgechange_range[0] > 0 
+        #assert edgechange_range[0] > 0 
 
         assert is_valid_range(period_range,True,False) 
         assert period_range[0] > 0 
@@ -82,7 +83,8 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         assert type(prg) in {MethodType,FunctionType}
 
         max_node = max(graph_nodeset) + 1 
-        self.ctr = SimpleCounter(max_node) 
+        self.ctr = SimpleCounter(max_node).__next__ 
+        self.is_dsg = is_dsg 
 
         self.nc_range = nodechange_range
         self.ec_range = edgechange_range

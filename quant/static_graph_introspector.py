@@ -117,7 +117,7 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
         edge_cost_function = GraphIntrospectorTypeCNO.generate_edge_weight_function(G,prg,is_dsg,edge_weight_range)
 
         prg_ = prg__single_to_int(prg)
-        node2cyclical_outputter = Node2CycleOutputter.generate_instance(set(G.keys()),prg_,cycle_length_range)
+        node2cyclical_outputter = Node2CycleOutputter.generate_instance(set(G.keys()),cycle_length_range,prg_)
         node_priority_outputter = NodePriorityFunctionStruct.generate_instance(\
             G,node_weight_range,is_dsg,is_bfs,ascending_priority,prg)
 

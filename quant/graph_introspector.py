@@ -20,7 +20,7 @@ class GraphIntrospectorTypeCNO:
         assert type(G) == defaultdict
         assert type(edge_cost_function) in {MethodType,FunctionType}
         assert type(is_bfs) == bool 
-        assert type(node2cyclical_outputter) == Node2CycleOutputter
+        assert issubclass(type(node2cyclical_outputter),Node2CycleOutputter)
         assert type(node_priority_outputter) == NodePriorityFunctionStruct 
         assert type(prg) in {MethodType,FunctionType} 
 

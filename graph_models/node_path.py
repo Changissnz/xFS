@@ -234,6 +234,22 @@ class XFSCache:
     def move_one(self):
         return 
 
+    """
+    return:
+    - finished? 
+    """
+    def check_for_expired_reference(self): 
+        if type(self.reference) == type(None):
+            return 
+
+        if self.reference not in self.d: 
+            if len(self.reference_varcache) == 0: 
+                self.fin_stat = True 
+                return True  
+
+            self.reference = self.reference_varcache.popleft()
+        return False 
+
     def costs_to_node(self,node):
         d = defaultdict(int)
 

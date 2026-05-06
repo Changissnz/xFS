@@ -22,7 +22,12 @@ class DFSCache(XFSCache):
     def move_one(self):
         self.previous_edges.clear() 
         ##print("moving {}".format(len(self.reference_varcache))) 
+        
         # move to a random available node from the reference
+        stat = self.check_for_expired_reference()
+        if stat: 
+            return False 
+
         q = self.ref_neighbors_travelled[self.reference]
         available = set(self.d[self.reference]) - self.ref_neighbors_travelled[self.reference]
 
