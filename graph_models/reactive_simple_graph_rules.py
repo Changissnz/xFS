@@ -1,5 +1,9 @@
 from .analog_schemes_aux import * 
 
+"""
+The specification of products (+/- # of nodes/edges), used by a 
+<PRNGReactiveGraphRule> instance. 
+"""
 class PRNGGraphProductRule: 
 
     def __init__(self,node_change:int,edge_change:int):
@@ -24,6 +28,14 @@ class PRNGGraphProductRule:
             q -= 1 
         return
 
+"""
+A rule for a graph, designed for simple graphs. 
+
+Rule activates when the periodic number of encounters a graph traversal process has with 
+the `reactant` (a node or edge) hits the `period`. 
+
+Activation produces change, specified by a <PRNGGraphProductRule>, on a parameter graph.
+"""
 class PRNGReactiveGraphRule: 
 
     def __init__(self,reactant,product_rule,is_node_rule:bool,period:int): 
@@ -62,6 +74,20 @@ class PRNGReactiveGraphRule:
         prule = PRNGGraphProductRule(node_change,edge_change)
         return PRNGReactiveGraphRule(reactant,prule,is_node_rule,period)
 
+"""
+Realtime Reactive Graph Rule Operator, Type (S)tochastic. 
+
+An operator that stores a set of node and edge rules for use during graph traversal. 
+When a node or edge has been encountered by the traversal process, operator either 
+fetches a rule R that is already stored in its memory, or generates a new rule, 
+hence the naming of `realtime`. 
+
+Using a PRNG, Rule R the parameter graph `G` by adding/subtracting the appropriate 
+number of nodes and edges at the appropriate periodic timestamp. After that periodic 
+timestamp has activated, the parameter `is_rule_constant` determines if a new rule 
+should be generated to replace R, or to maintain rule R for the possible next periodic 
+timestamp of activation. 
+"""
 class RealtimeReactiveGraphRuleOperatorTypeS:  
 
     def __init__(self,graph_nodeset,is_dsg:bool,nodechange_range,edgechange_range,period_range,maintain_connectivity:bool,\
@@ -70,13 +96,10 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         assert type(is_dsg) == bool 
 
         assert is_valid_range(nodechange_range,True,False) 
-        #assert nodechange_range[0] > 0 
-
         assert is_valid_range(edgechange_range,True,False) 
-        #assert edgechange_range[0] > 0 
-
         assert is_valid_range(period_range,True,False) 
         assert period_range[0] > 0 
+
         assert type(maintain_connectivity) == bool 
         assert type(is_rule_constant) == bool 
 
