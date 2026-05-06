@@ -101,13 +101,25 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
 
         # react the nodes first 
         nodes = [edge[1] for edge in edgeseq] 
+        node_deltas = [] 
         for n in nodes: 
-            self.react_one(G,n,True) 
-        
-        # now react the edges 
-        for ex in edgeseq: 
-            self.react_one(G,ex,False) 
+            stat = self.react_one(G,n,True) 
+            if stat:
+                node_deltas.append(n)
 
+        for n in node_deltas: 
+            self.new_rule(G,n,is_node=True) 
+
+        # now react the edges 
+        edge_deltas = [] 
+        for ex in edgeseq: 
+            stat = self.react_one(G,ex,False) 
+            if stat: 
+                edge_deltas.append(ex) 
+
+        # change deltas 
+        for ex in edge_deltas:
+            self.new_rule(G,ex,is_node=False)
         return
 
     def react_one(self,G,x,is_node:bool): 
@@ -115,12 +127,17 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         Q = self.node_rules if is_node else self.edge_rules 
 
         if x not in Q: 
-            R = PRNGReactiveGraphRule.generate_instance(\
-                x,is_node,self.nc_range,self.ec_range,self.p_range,self.prg)
-            Q[x] = R 
+            self.new_rule(G,x,is_node) 
 
         R = Q[x] 
         return R.register(G,self.is_dsg,self.ctr,self.prg) 
+
+    def new_rule(self,G,x,is_node:bool):
+        Q = self.node_rules if is_node else self.edge_rules 
+
+        R = PRNGReactiveGraphRule.generate_instance(\
+            x,is_node,self.nc_range,self.ec_range,self.p_range,self.prg)
+        Q[x] = R 
 
     def clean_up_rules(self,G):
 

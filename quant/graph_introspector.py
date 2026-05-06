@@ -8,8 +8,9 @@ from graph_models.graph_gen import *
 """
 Graph Introspector, Type (C)ylical (N)ode (O)utput. 
 
-Parent class of 
-
+Parent class of:
+- <StaticGraphIntrospectorTypeCNO> 
+- <ReactiveGraphIntrospectorTypeCNO> 
 """
 class GraphIntrospectorTypeCNO: 
 
@@ -71,3 +72,35 @@ class GraphIntrospectorTypeCNO:
         self.introspector = x 
         return
 
+    def run_n_rounds(self,n=float('inf')): 
+        assert type(self.introspector) != type(None)
+
+        while n > 0 and not self.introspector.fin_stat: 
+            next(self) 
+            n -= 1 
+
+    def log_one_traversal(self): 
+        edges = self.introspector.previous_edges
+
+        d = {}
+        traversal_cost = 0 
+        for edge in edges: 
+            x = edge[1] 
+            c = self.register_node_contact(x)
+            d[x] = c 
+            traversal_cost += self.introspector.fetch_edge_cost(edge[0],edge[1]) 
+        return d,traversal_cost
+
+    def register_node_contact(self,n): 
+        return self.n2c_outputter.node_to_output(n) 
+
+    @staticmethod 
+    def generate_edge_weight_function(G,prg,is_dsg:bool,edge_weight_range): 
+
+        if type(edge_weight_range) == type(None): 
+            edge_cost_function = DEFAULT_EDGE_COST_FUNCTION
+        else: 
+            gwg = GraphWeightGen(G,prg,is_dsg,edge_weight_range)
+            edge_cost_function = gwg.weight_
+
+        return edge_cost_function
