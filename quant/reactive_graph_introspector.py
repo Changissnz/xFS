@@ -27,13 +27,14 @@ NOTE: due to the mutable property of the graph of traversal, edge cost function 
 class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
     def __init__(self,G,edge_cost_function,is_bfs,node2cyclical_outputter,\
-        node_priority_function,rule_op,prg):  
+        node_priority_function,rule_op,prg,verbose=False):  
 
         super().__init__(G,edge_cost_function,is_bfs,node2cyclical_outputter,\
             node_priority_function,prg) 
 
         assert type(rule_op) == RealtimeReactiveGraphRuleOperatorTypeS
         self.rule_op = rule_op 
+        self.verbose = verbose 
         return
 
     """
@@ -67,14 +68,14 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
     def exec_reaction(self): 
         edges = self.introspector.previous_edges
-        self.rule_op.react(self.G,edges) 
+        self.rule_op.react(self.G,edges,self.verbose) 
         # ineff.
         self.rule_op.clean_up_rules(self.G) 
 
 
     @staticmethod
     def generate_instance(G,nodechange_range,edgechange_range,period_range,maintain_connectivity:bool,\
-        is_rule_constant:bool,   node_weight_range,is_dsg,is_bfs,ascending_priority,cycle_length_range,prg):  
+        is_rule_constant:bool,   node_weight_range,is_dsg,is_bfs,ascending_priority,cycle_length_range,prg,verbose=False):  
 
         edge_cost_function = DEFAULT_EDGE_COST_FUNCTION 
 
@@ -89,4 +90,4 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
             edgechange_range,period_range,maintain_connectivity,is_rule_constant,prg) 
 
         return ReactiveGraphIntrospectorTypeCNO(G,edge_cost_function,is_bfs,\
-            node2cyclical_outputter,node_priority_outputter,rule_op,prg)
+            node2cyclical_outputter,node_priority_outputter,rule_op,prg,verbose) 

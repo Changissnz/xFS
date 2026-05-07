@@ -14,19 +14,21 @@ class PRNGGraphProductRule:
         self.edge_change = edge_change
         return
 
-    def graph_delta(self,G,is_dsg:bool,node_ctr,prg): 
+    def graph_delta(self,G,is_dsg:bool,node_ctr,prg,verbose=False): 
+        node_deltas = None 
         if self.node_change: 
             prg_ = prg__single_to_int(prg)
-            G = node_changes_to_graph(G,is_dsg,self.node_change,prg_,node_ctr) 
+            G,node_deltas = node_changes_to_graph(G,is_dsg,self.node_change,prg_,node_ctr) 
 
         add_edge = self.edge_change > 0 
 
         q = abs(self.edge_change) 
-
+        edge_deltas = [] 
         while q > 0: 
-            one_edge_change(G,is_dsg,add_edge,prg) 
+            edelta = one_edge_change(G,is_dsg,add_edge,prg) 
+            edge_deltas.extend(edelta)
             q -= 1 
-        return
+        return node_deltas,edge_deltas
 
 """
 A rule for a graph, designed for simple graphs. 
@@ -51,17 +53,20 @@ class PRNGReactiveGraphRule:
         self.c = 0 
         return
 
-    def register(self,G,is_dsg:bool,node_ctr,prg): 
+    def register(self,G,is_dsg:bool,node_ctr,prg,verbose=False): 
 
         self.c += 1 
 
         # case: process rule 
         if self.c >= self.period: 
-            self.product_rule.graph_delta(G,is_dsg,node_ctr,prg) 
+            node_deltas,edge_deltas = self.product_rule.graph_delta(G,is_dsg,node_ctr,prg,verbose) 
             self.c = 0 
-            return True 
+            return True,node_deltas,edge_deltas 
 
-        return False  
+        return False,None,None 
+
+    def product_rule_values(self): 
+        return self.product_rule.node_change,self.product_rule.edge_change
 
     @staticmethod
     def generate_instance(reactant,is_node_rule:bool,\
@@ -121,16 +126,20 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         self.edge_rules = dict() 
         return
 
-    def react(self,G,edgeseq): 
+    def react(self,G,edgeseq,verbose): 
         assert type(edgeseq) == list 
 
         # react the nodes first 
         nodes = [edge[1] for edge in edgeseq] 
-        node_deltas = [] 
+        node_deltas = []
+
+        node_delta_map,edge_delta_map = dict(),dict()
+
         for n in nodes: 
-            stat = self.react_one(G,n,True) 
+            stat,nds,eds,num_nodes,num_edges = self.react_one(G,n,True,verbose) 
             if stat:
                 node_deltas.append(n)
+                node_delta_map[n] = (nds,eds,num_nodes > 0,num_edges > 0)  
 
         for n in node_deltas: 
             self.new_rule(G,n,is_node=True) 
@@ -138,16 +147,20 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
         # now react the edges 
         edge_deltas = [] 
         for ex in edgeseq: 
-            stat = self.react_one(G,ex,False) 
+            stat,nds,eds,num_nodes,num_edges = self.react_one(G,ex,False,verbose) 
             if stat: 
                 edge_deltas.append(ex) 
+                edge_delta_map[ex] = (nds,eds,num_nodes > 0,num_edges > 0)
 
         # change deltas 
         for ex in edge_deltas:
             self.new_rule(G,ex,is_node=False)
-        return
 
-    def react_one(self,G,x,is_node:bool): 
+        if self.maintain_connectivity:
+            G = graph_to_one_component(G,self.prg)
+        return 
+
+    def react_one(self,G,x,is_node:bool,verbose:bool): 
 
         Q = self.node_rules if is_node else self.edge_rules 
 
@@ -155,7 +168,14 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
             self.new_rule(G,x,is_node) 
 
         R = Q[x] 
-        return R.register(G,self.is_dsg,self.ctr,self.prg) 
+        stat,node_delta,edge_delta = R.register(G,self.is_dsg,self.ctr,self.prg) 
+        num_node,num_edge = R.product_rule_values() 
+
+        if stat and verbose:  
+            print("NN: ",node_delta,num_node)
+            print("EE: ",edge_delta,num_edge) 
+            print()
+        return stat,node_delta,edge_delta,num_node,num_edge 
 
     def new_rule(self,G,x,is_node:bool):
         Q = self.node_rules if is_node else self.edge_rules 

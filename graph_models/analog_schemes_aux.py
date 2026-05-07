@@ -93,10 +93,11 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
             neighbor = new_neighbor_candidates[i] 
 
             d[n] |= {neighbor} 
-
+            q = [(n,neighbor)]
             if not is_dsg:
                 d[neighbor] |= {n} 
-            return 
+                q.append((neighbor,n))
+            return q 
 
     for n in nodes: 
         neighbors = d[n] 
@@ -107,11 +108,12 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
         neighbor = neighbors[i] 
 
         d[n] -= {neighbor} 
-
+        q = [(n,neighbor)]
         if not is_dsg: 
-            d[neighbor] -= {n}  
-        return 
-    return 
+            d[neighbor] -= {n}
+            q.append((neighbor,n))
+        return q 
+    return None 
 
 """
 adds or deletes nodes for graph g. 
@@ -119,6 +121,8 @@ adds or deletes nodes for graph g.
 def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function): 
 
     old_nodes = sorted(g.keys()) 
+
+    node_deltas = set() 
     # case: pos node change  
     if num_nodes > 0: 
         new_nodes = [] 
@@ -136,7 +140,9 @@ def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function):
             g[n2] |= {n}
 
             if not is_dsg: 
-                g[n] |= {n2} 
+                g[n] |= {n2}
+
+        node_deltas |= set(new_nodes) 
     # case: negative node change 
     else: 
         to_delete = prg_choose_n(old_nodes,-num_nodes,prg,is_unique_picker=True)
@@ -144,7 +150,9 @@ def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function):
         mg.subgraph_nodeset_exclusion(to_delete)
         g = mg.dg  
 
-    return g 
+        node_deltas |= set(to_delete)
+
+    return g,node_deltas 
 
 # NOTE: new nodes will always be connected to at least 1 node in reference graph `g`.
 def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_ratio,prg,ctr_function,\
@@ -156,7 +164,7 @@ def graph_derivation(g:defaultdict,is_dsg:bool,node_change_ratio,edge_change_rat
     num_nodes = ceil(len(g) * abs(node_change_ratio)) 
     if node_change_ratio < 0: num_nodes = -num_nodes
 
-    g = node_changes_to_graph(g,is_dsg,num_nodes,prg_,ctr_function) 
+    g,_ = node_changes_to_graph(g,is_dsg,num_nodes,prg_,ctr_function) 
 
     mg = MicroGraph(g) 
     vscore,escore = mg.ve_score()
