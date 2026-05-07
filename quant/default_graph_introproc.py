@@ -24,11 +24,11 @@ class DefaultGraphIntrospectorProcess:
 
     """
     introspector_description := 
-        ("reactive",is_rule_constant:bool,make_nodes_weighted:bool,maintain_connectivity:bool) 
+        ("reactive",is_rule_constant:bool,maintain_connectivity:bool) 
             OR 
-        ("varmem",edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,nodes_are_weighted:float,edges_are_weighted:float) 
+        ("varmem",edges_can_be_forgotten:float,ref_nodes_can_be_repeated:float,nodes_are_weighted:bool,edges_are_weighted:bool) 
 
-    is_dsg := ?is directed graph? 
+    is_dsg := ?is directed simple graph? 
     is_bfs := ?is breadth-first search? 
     ascending_priority := ?order next nodes for travel by ascending order? 
     """
@@ -48,13 +48,13 @@ class DefaultGraphIntrospectorProcess:
             edge_connectivity = modulo_in_range(prg(),[0.007,0.045]) 
     
         G = GraphGen(is_dsg,is_realtime_gen=False,vertex_degree=vertex_degree,\
-            edge_connectivity=edge_connectivity)
+            edge_connectivity=edge_connectivity,prg=prg) 
         G.full_run() 
 
         G = G.d 
 
         if introspector_description[0] == "reactive": 
-            assert len(introspector_description) == 4 
+            assert len(introspector_description) == 3  
 
             n0 = modulo_in_range(int(prg()),[-DEFAULT_INTROSPECTOR_NODECHANGE_ABSMAX,0])
             n1 = modulo_in_range(int(prg()),[1,DEFAULT_INTROSPECTOR_NODECHANGE_ABSMAX+1]) 
@@ -64,13 +64,12 @@ class DefaultGraphIntrospectorProcess:
             e1 = modulo_in_range(int(prg()),[1,DEFAULT_INTROSPECTOR_EDGECHANGE_ABSMAX+1]) 
             edgechange_range = [e0,e1] 
 
-            period_range = modulo_in_range(int(prg()),DEFAULT_INTROSPECTOR_PERIOD_RANGE) 
-            maintain_connectivity = introspector_description[3] 
+            maintain_connectivity = introspector_description[2] 
             is_rule_constant = introspector_description[1]
             S = ReactiveGraphIntrospectorTypeCNO.generate_instance(\
-                G,nodechange_range,edgechange_range,period_range,maintain_connectivity,\
-                is_rule_constant=is_rule_constant,node_weight_range=None,is_dsg=is_dsg,\
-                is_bfs=is_bfs,ascending_priority=ascending_priority,\
+                G,nodechange_range,edgechange_range,DEFAULT_INTROSPECTOR_PERIOD_RANGE,\
+                maintain_connectivity,is_rule_constant=is_rule_constant,node_weight_range=None,\
+                is_dsg=is_dsg,is_bfs=is_bfs,ascending_priority=ascending_priority,\
                 cycle_length_range=DEFAULT_INTROSPECTOR_CYCLE_LENGTH_RANGE,prg=prg) 
         else: 
             assert len(introspector_description) == 5
