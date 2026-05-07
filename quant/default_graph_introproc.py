@@ -19,13 +19,14 @@ class DefaultGraphIntrospectorProcess:
 
     def __init__(self,introspector): 
         assert issubclass(introspector,GraphIntrospectorTypeCNO)  
+        self.introspector = introspector 
         return 
 
     """
     introspector_description := 
         ("reactive",is_rule_constant:bool,make_nodes_weighted:bool,maintain_connectivity:bool) 
             OR 
-        ("varmem",edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,nodes_are_weighted:bool,edges_are_weighted:bool) 
+        ("varmem",edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,nodes_are_weighted:float,edges_are_weighted:float) 
 
     is_dsg := ?is directed graph? 
     is_bfs := ?is breadth-first search? 
@@ -35,7 +36,6 @@ class DefaultGraphIntrospectorProcess:
     def generate_instance(introspector_description,is_dsg:bool,is_bfs:bool,ascending_priority:bool,prg):  
 
         assert introspector_description[0] in {"reactive","varmem"} 
-        assert len(introspector_description) == 4 
 
         vertex_degree = modulo_in_range(int(prg()),DEFAULT_INTROSPECTOR_INIT_NODESIZE_RANGE)
 
@@ -54,7 +54,7 @@ class DefaultGraphIntrospectorProcess:
         G = G.d 
 
         if introspector_description[0] == "reactive": 
-            assert set([type(x) for x in introspector_description[1:]]) == {bool} 
+            assert len(introspector_description) == 4 
 
             n0 = modulo_in_range(int(prg()),[-DEFAULT_INTROSPECTOR_NODECHANGE_ABSMAX,0])
             n1 = modulo_in_range(int(prg()),[1,DEFAULT_INTROSPECTOR_NODECHANGE_ABSMAX+1]) 
@@ -73,12 +73,14 @@ class DefaultGraphIntrospectorProcess:
                 is_bfs=is_bfs,ascending_priority=ascending_priority,\
                 cycle_length_range=DEFAULT_INTROSPECTOR_CYCLE_LENGTH_RANGE,prg=prg) 
         else: 
+            assert len(introspector_description) == 5
+
             if introspector_description[3]: 
                 node_weight_range = DEFAULT_INTROSPECTOR_NODE_WEIGHT_RANGE
             else: 
                 node_weight_range = None 
 
-            if introspector_description[3]: 
+            if introspector_description[4]: 
                 edge_weight_range = DEFAULT_INTROSPECTOR_EDGE_WEIGHT_RANGE
             else: 
                 edge_weight_range = None 

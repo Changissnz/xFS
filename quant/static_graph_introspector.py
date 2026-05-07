@@ -30,13 +30,13 @@ nodes travelled.
 class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):  
 
     def __init__(self,G,edge_cost_function,is_bfs:bool,node2cyclical_outputter,\
-        node_priority_outputter,edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,prg): 
+        node_priority_outputter,edges_can_be_forgotten:float,ref_nodes_can_be_repeated:float,prg): 
 
         super().__init__(G,edge_cost_function,is_bfs,node2cyclical_outputter,\
             node_priority_outputter,prg) 
 
-        assert type(edges_can_be_forgotten) == bool 
-        assert type(ref_nodes_can_be_repeated) == bool 
+        assert 0. <= edges_can_be_forgotten <= 1.  
+        assert 0. <= ref_nodes_can_be_repeated <= 1.
 
         self.edges_can_be_forgotten = edges_can_be_forgotten
         self.ref_nodes_can_be_repeated = ref_nodes_can_be_repeated
@@ -64,7 +64,6 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
         # determine whether to add ref back into cache
         self.add_ref_back_to_cache(ref) 
-
         # forget any edges? 
         self.forget_travelled_edges(self.introspector.previous_edges)
 
@@ -75,23 +74,26 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
     #-------------------------------- logging edges + repeat node travel + forget travelled edges 
 
     def add_ref_back_to_cache(self,ref_node): 
-        if not self.ref_nodes_can_be_repeated: 
+        d = prg_decimal(self.prg,[0.,1.])
+
+        if d > self.ref_nodes_can_be_repeated: 
             return 
 
-        d = prg_decimal(self.prg,[0.,1.])
-        if d >= 0.5: 
-            d2 = prg_decimal(self.prg,[0.,1]) 
+        d_ = prg_decimal(self.prg,[0.,1])
+        if d_ > 0.5: return 
 
-            # at back
-            if d2 >= 0.5: 
-                self.introspector.reference_varcache.append(ref_node) 
-            # at front 
-            else: 
-                self.introspector.reference_varcache.appendleft(ref_node) 
+        d2 = prg_decimal(self.prg,[0.,1.]) 
+        # front 
+        if d2 >= 0.5: 
+            self.introspector.reference_varcache.append(ref_node)
+        else: 
+            self.introspector.reference_varcache.appendleft(ref_node) 
         return 
 
     def forget_travelled_edges(self,edges): 
-        if not self.edges_can_be_forgotten: 
+
+        d = prg_decimal(self.prg,[0.,1.])
+        if d > self.edges_can_be_forgotten: 
             return 
 
         for edge in edges: 
@@ -112,7 +114,7 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
     @staticmethod
     def generate_instance(G,node_weight_range,edge_weight_range,is_dsg,is_bfs,ascending_priority,cycle_length_range,\
-        edges_can_be_forgotten:bool,ref_nodes_can_be_repeated:bool,prg): 
+        edges_can_be_forgotten:float,ref_nodes_can_be_repeated:float,prg): 
 
         edge_cost_function = GraphIntrospectorTypeCNO.generate_edge_weight_function(G,prg,is_dsg,edge_weight_range)
 
