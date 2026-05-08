@@ -54,7 +54,7 @@ class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
         assert type(self.introspector) != type(None)
 
         if self.introspector.fin_stat: 
-            return dict() 
+            return dict(),None,0 
 
         # traverse one and log 
         ref = self.introspector.reference 

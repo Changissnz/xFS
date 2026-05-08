@@ -23,6 +23,9 @@ operator.
 NOTE: due to the mutable property of the graph of traversal, edge cost function is 
       assigned to the default (unit 1 distance), so that computing requirements are 
       reduced. 
+
+NOTE: due to slow runtime for calculating components on directed graphs, advise to 
+    not employ this class on directed graphs. 
 """ 
 class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
@@ -49,7 +52,7 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
         assert type(self.introspector) != type(None)
 
         if self.introspector.fin_stat:
-            return dict() 
+            return dict(),None,0 
 
         # traverse one and log 
         ref = self.introspector.reference 

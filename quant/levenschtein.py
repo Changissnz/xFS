@@ -43,6 +43,12 @@ of the original from project<morebs2>.
 """
 def contiguous_cyclical_difference_(v0,v1,diff_type="bool"):
 
+    if len(v0) == 0: 
+        return len(v1) if diff_type == "bool" else sum(v1) 
+    
+    if len(v1) == 0: 
+        return len(v0) if diff_type == "bool" else sum(v0) 
+
     if len(v0) < len(v1): 
         v0,v1 = v1,v0 
     

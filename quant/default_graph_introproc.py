@@ -18,9 +18,63 @@ DEFAULT_INTROSPECTOR_EDGE_WEIGHT_RANGE = [1.,6.]
 class DefaultGraphIntrospectorProcess: 
 
     def __init__(self,introspector): 
-        assert issubclass(introspector,GraphIntrospectorTypeCNO)  
+        assert issubclass(type(introspector),GraphIntrospectorTypeCNO)  
         self.introspector = introspector 
         return 
+
+    def set_prg(self,prg): 
+        self.introspector.prg = prg  
+        return
+
+    def run_(self,ref_node,num_rounds): 
+        # case: node does not exist 
+        if ref_node not in self.introspector.G: 
+            return [] 
+
+        self.introspector.set_ref_node(ref_node) 
+        c = 0 
+
+        node_output_sequence = []  
+        while not self.introspector.introspector.fin_stat and c < num_rounds: 
+            M,ref,traversal_cost = next(self.introspector)
+
+            k = sorted(M.keys()) 
+            M_ = [] 
+            for k_ in k: 
+                M_.extend([k_,M[k_]]) 
+            node_output_sequence.append(M_) 
+            c += 1 
+        return node_output_sequence
+
+    """
+    sequence := list, all elements are one of 
+        (start reference node,number of traversals) 
+        XOR 
+        (*,number of traversals)
+
+        * := PRNG selection of reference node in graph. 
+
+    num_minpaths := int, max number of min. paths per node. 
+    """
+    def run(self,sequence,num_minpaths):
+        assert len(sequence) > 0 
+
+        node_output_sequence = [] 
+        for s in sequence: 
+            s0,s1 = None,None 
+            if type(s) != int: 
+                assert len(s) == 2 
+                s0,s1 = s[0],s[1] 
+            else: 
+                k = sorted(self.introspector.G.keys()) 
+                i = int(self.introspector.prg()) % len(k)
+                s0 = k[i] 
+                s1 = s 
+            nos = self.run_(s0,s1) 
+            node_output_sequence.append(nos) 
+
+        X = self.introspector.output_minpaths(num_minpaths) 
+        return node_output_sequence, X 
 
     """
     introspector_description := 
@@ -33,7 +87,7 @@ class DefaultGraphIntrospectorProcess:
     ascending_priority := ?order next nodes for travel by ascending order? 
     """
     @staticmethod 
-    def generate_instance(introspector_description,is_dsg:bool,is_bfs:bool,ascending_priority:bool,prg):  
+    def generate_instance(introspector_description,is_bfs:bool,ascending_priority:bool,prg):  
 
         assert introspector_description[0] in {"reactive","varmem"} 
 
@@ -46,13 +100,16 @@ class DefaultGraphIntrospectorProcess:
             edge_connectivity = modulo_in_range(prg(),[0.007,0.07])  
         else: 
             edge_connectivity = modulo_in_range(prg(),[0.007,0.045]) 
-    
-        G = GraphGen(is_dsg,is_realtime_gen=False,vertex_degree=vertex_degree,\
+
+        print("generating {},{}".format(vertex_degree,edge_connectivity)) 
+        G = GraphGen(is_dsg=False,is_realtime_gen=False,vertex_degree=vertex_degree,\
             edge_connectivity=edge_connectivity,prg=prg) 
-        G.full_run() 
+        G.full_run()
 
-        G = G.d 
-
+        print("TO ONE COMPONENT") 
+        G = graph_to_one_component(G.d,prg) 
+        print("generated graph of {} nodes".format(vertex_degree))
+        
         if introspector_description[0] == "reactive": 
             assert len(introspector_description) == 3  
 
@@ -69,7 +126,7 @@ class DefaultGraphIntrospectorProcess:
             S = ReactiveGraphIntrospectorTypeCNO.generate_instance(\
                 G,nodechange_range,edgechange_range,DEFAULT_INTROSPECTOR_PERIOD_RANGE,\
                 maintain_connectivity,is_rule_constant=is_rule_constant,node_weight_range=None,\
-                is_dsg=is_dsg,is_bfs=is_bfs,ascending_priority=ascending_priority,\
+                is_dsg=False,is_bfs=is_bfs,ascending_priority=ascending_priority,\
                 cycle_length_range=DEFAULT_INTROSPECTOR_CYCLE_LENGTH_RANGE,prg=prg) 
         else: 
             assert len(introspector_description) == 5
@@ -93,4 +150,5 @@ class DefaultGraphIntrospectorProcess:
                 edges_can_be_forgotten=edges_can_be_forgotten,\
                 ref_nodes_can_be_repeated=ref_nodes_can_be_repeated,\
                 prg=prg)
-        return S 
+        print("S: ",S)
+        return DefaultGraphIntrospectorProcess(S) 
