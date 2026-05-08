@@ -40,6 +40,12 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
         self.verbose = verbose 
         return
 
+    def set_prg(self,prg): 
+        assert type(prg) in {MethodType,FunctionType}
+        
+        super().set_prg(prg) 
+        self.rule_op.prg = prg 
+
     """
     main method #1 
 
