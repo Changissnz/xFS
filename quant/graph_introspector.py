@@ -21,7 +21,7 @@ class GraphIntrospectorTypeCNO:
         assert type(edge_cost_function) in {MethodType,FunctionType}
         assert type(is_bfs) == bool 
         assert issubclass(type(node2cyclical_outputter),Node2CycleOutputter)
-        assert type(node_priority_outputter) == NodePriorityFunctionStruct 
+        assert type(node_priority_outputter) in {MethodType,FunctionType,NodePriorityFunctionStruct}
         assert type(prg) in {MethodType,FunctionType} 
 
         if is_bfs: assert node_priority_outputter.output_type == "sequence"
@@ -37,9 +37,16 @@ class GraphIntrospectorTypeCNO:
         self.starting_ref = None 
         self.introspector = None 
         self.cumulative_traversal_cost = 0 
-        
         return
 
+    def set_prg(self,prg): 
+        assert type(prg) in {MethodType,FunctionType} 
+        self.prg = prg 
+
+        if self.is_bfs: 
+            self.np_outputter = DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__BFS(self.prg) 
+        else: 
+            self.np_outputter = DEFAULT_PRNG_TO_NEXTNODE_PRIORITY_FUNCTION__DFS(self.prg) 
 
     """
     main method #2
@@ -60,13 +67,18 @@ class GraphIntrospectorTypeCNO:
         assert r in self.G 
         self.starting_ref = r 
 
+        if type(self.np_outputter) == NodePriorityFunctionStruct: 
+            q = self.np_outputter.next_node
+        else: 
+            q = self.np_outputter
+
         x = None 
         if self.is_bfs: 
             x = BFSCache(self.starting_ref,self.G,edge_cost_function=self.edge_cost_function,\
-                nextnode_priority_function=self.np_outputter.next_node,no_duplicate_touch_nodes=False)
+                nextnode_priority_function=q,no_duplicate_touch_nodes=False)
         else: 
             x = DFSCache(self.starting_ref,self.G,edge_cost_function=self.edge_cost_function,\
-                search_head_type=1,nextnode_priority_function=self.np_outputter.next_node,\
+                search_head_type=1,nextnode_priority_function=q,\
                 no_duplicate_touch_nodes=False)
 
         self.introspector = x 

@@ -23,7 +23,7 @@ class DefaultGraphIntrospectorProcess:
         return 
 
     def set_prg(self,prg): 
-        self.introspector.prg = prg  
+        self.introspector.set_prg(prg)
         return
 
     def run_(self,ref_node,num_rounds): 
@@ -42,7 +42,7 @@ class DefaultGraphIntrospectorProcess:
             M_ = [] 
             for k_ in k: 
                 M_.extend([k_,M[k_]]) 
-            node_output_sequence.append(M_) 
+            node_output_sequence.extend(M_) 
             c += 1 
         return node_output_sequence
 

@@ -51,6 +51,5 @@ def contiguous_cyclical_difference_(v0,v1,diff_type="bool"):
 
     if len(v0) < len(v1): 
         v0,v1 = v1,v0 
-    
     return contiguous_cyclical_difference(v0,v1,diff_type) 
 
