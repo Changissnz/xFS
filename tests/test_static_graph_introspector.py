@@ -127,5 +127,43 @@ class StaticGraphIntrospectorTypeCNOClass(unittest.TestCase):
             assert len(p) == actual_path_numbers[q_]
 
 
+    def test__StaticGraphIntrospectorTypeCNO__next__case_3(self): 
+        # run <StaticGraphIntrospectorTypeCNO> 
+        is_bfs = True 
+        edges_can_be_forgotten = 0.5 
+        ref_nodes_can_be_repeated = 0.8 
+        prg = prg__LCG(76.4,-6666.5,4.34,4004.555) 
+        S = StaticGraphIntrospectorTypeCNO__sample_FIRST(is_bfs,edges_can_be_forgotten,ref_nodes_can_be_repeated,prg) 
+        S.set_ref_node(7) 
+
+        c = 0 
+        while not S.introspector.fin_stat: 
+            next(S) 
+            c += 1 
+
+        X = S.output_minpaths(2) 
+
+        # run normal BFS process 
+        G = StaticGraphIntrospectorTypeCNO__sample_graph_MID() 
+        B = BFSCache(7,G,\
+        edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
+        nextnode_priority_function=None,no_duplicate_touch_nodes=False)
+        B.exec() 
+
+        B.store_minpaths(num_paths=2) 
+        mpaths = B.min_paths 
+
+        # compare differences between existing shortest pairs 
+        cdiff = 0 
+        for k,v in mpaths.items(): 
+            q = len(X[k]) 
+            if not q: continue 
+
+            r = len(v[0]) 
+            r2 = len(X[k][0])
+            cdiff += (r != r2)
+
+        assert cdiff == 11 
+
 if __name__ == '__main__':
     unittest.main()

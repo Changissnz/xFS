@@ -145,10 +145,9 @@ class DefaultGraphIntrospectorProcess:
             ref_nodes_can_be_repeated = introspector_description[2] 
             S = StaticGraphIntrospectorTypeCNO.generate_instance(G,\
                 node_weight_range=node_weight_range,edge_weight_range=edge_weight_range,\
-                is_dsg=is_dsg,is_bfs=is_bfs,ascending_priority=ascending_priority,\
+                is_dsg=False,is_bfs=is_bfs,ascending_priority=ascending_priority,\
                 cycle_length_range=DEFAULT_INTROSPECTOR_CYCLE_LENGTH_RANGE,\
                 edges_can_be_forgotten=edges_can_be_forgotten,\
                 ref_nodes_can_be_repeated=ref_nodes_can_be_repeated,\
                 prg=prg)
-        print("S: ",S)
         return DefaultGraphIntrospectorProcess(S) 
