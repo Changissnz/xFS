@@ -11,6 +11,13 @@ Graph Introspector, Type (C)ylical (N)ode (O)utput.
 Parent class of:
 - <StaticGraphIntrospectorTypeCNO> 
 - <ReactiveGraphIntrospectorTypeCNO> 
+
+At every node or set of nodes N travelled, outputs a map M, 
+
+    M: n -> v; n in N, v a value from a cycle corresponding to node n in the 
+    <Node2Cycle> instance, `node2output_function`, 
+and the cumulative travel cost from the reference node to N, the neighbor set of 
+nodes travelled. See method<log_one_traversal>. 
 """
 class GraphIntrospectorTypeCNO: 
 

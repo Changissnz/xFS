@@ -19,13 +19,15 @@ The boolean variables `edges_can_be_forgotten` and `ref_nodes_can_be_repeated` a
 - variable<costfrom_table> : can delete (node from, node to) cost of travel. 
 - variable<ref_neighbors_travelled> : can delete neighbors of reference travelled. 
 
-
 At every node or set of nodes N travelled, outputs a map M, 
 
     M: n -> v; n in N, v a value from a cycle corresponding to node n in the 
     <Node2Cycle> instance, `node2output_function`, 
 and the cumulative travel cost from the reference node to N, the neighbor set of 
 nodes travelled. 
+
+See parent class<GraphIntrospectorTypeCNO> for details on important methods such as 
+method<log_one_traversal>. 
 """
 class StaticGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):  
 
