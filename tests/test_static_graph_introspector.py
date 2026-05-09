@@ -127,7 +127,7 @@ class StaticGraphIntrospectorTypeCNOClass(unittest.TestCase):
             assert len(p) == actual_path_numbers[q_]
 
 
-    def test__StaticGraphIntrospectorTypeCNO__next__case_3(self): 
+    def test__StaticGraphIntrospectorTypeCNO__next__case_4(self): 
         # run <StaticGraphIntrospectorTypeCNO> 
         is_bfs = True 
         edges_can_be_forgotten = 0.5 
