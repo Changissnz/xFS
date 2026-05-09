@@ -141,8 +141,9 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
                 node_deltas.append(n)
                 node_delta_map[n] = (nds,eds,num_nodes > 0,num_edges > 0)  
 
-        for n in node_deltas: 
-            self.new_rule(G,n,is_node=True) 
+        if not self.is_rule_constant: 
+            for n in node_deltas: 
+                self.new_rule(G,n,is_node=True) 
 
         # now react the edges 
         edge_deltas = [] 
@@ -153,8 +154,9 @@ class RealtimeReactiveGraphRuleOperatorTypeS:
                 edge_delta_map[ex] = (nds,eds,num_nodes > 0,num_edges > 0)
 
         # change deltas 
-        for ex in edge_deltas:
-            self.new_rule(G,ex,is_node=False)
+        if not self.is_rule_constant: 
+            for ex in edge_deltas:
+                self.new_rule(G,ex,is_node=False)
 
         if self.maintain_connectivity:
             G = graph_to_one_component(G,self.prg)

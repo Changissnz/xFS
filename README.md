@@ -85,9 +85,13 @@ Here is a list of graph problems in the project:
         target, over q rounds, with the primary goal of minimal cumulative euclidean distance 
         with the target and the secondary goal of maintaining symmetric balance with one another.  
     - file: `graph_problems/vtb.py`  
+- Introspective Bot (Alpha) 
+    - vantage point for learning: obtaining the same node cyclical output and shortest paths as a 
+        reference result in a simple undirected graph, traversed through a breadth-first or depth-first 
+        process. 
+    - file: `graph_problems/ib.py` 
 - Probabilistic Impact Bot (work in progress)  
 - Ends-Fixated Bot (work in progress) 
-- Introspective Bot (work in progress) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

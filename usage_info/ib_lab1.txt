@@ -1,0 +1,307 @@
+The difficulty of Introspection Bot rests on the stochastic variance introduced by the 
+introspection process, and this process revolves around either a breadth-first or depth-first 
+search process. For reactive introspection, a change in PRNGs results in changes to the node/edge 
+deltas of addition and subtraction during the traversal process. For variable memory ("varmem") 
+introspection, a change in PRNGs affects the node priority function, responsible for ranking 
+neighbors in order of travel from current node to next. 
+
+There are five trials in this lab to demonstrate all properties of Introspection Bot are working 
+properly. The first three are on a reactive introspection process, the last two on variable memory. 
+
+---------------------------------------------------------------------------------------------------------
+
+####################### BASE CODE 
+'''
+introspector_description = ? 
+is_bfs = ?   
+
+num_minpaths = 3 
+ascending_priority = True 
+
+sequence = [(2,20),(23,50)]
+prg = prg__LCG(55.4,-166.5,94.34,404.555) 
+
+S = IntrospectionBot.generate_instance(\
+    introspector_description,is_bfs,\
+    ascending_priority,sequence,num_minpaths,prg)
+
+prg = prg__LCG(525.4,-2166.5,694.34,4094.555) 
+prng_seq = prg_to_prg__LCG_sequence(prg,40,5+66/79) 
+prng_seq2 = prg_to_prg__LCG_sequence(prg,40,5-66/79) 
+
+prng_seq_ = [merge_two_prgs(p0,p1,sub) for (p0,p1) in zip(prng_seq,prng_seq2)]
+
+prng_seq.extend(prng_seq2)
+prng_seq.extend(prng_seq_)
+
+prg2 = prg__LCG(-655.47,-1000.34,765.8,-9197.334) 
+prng_seq3 = prg_to_prg__LCG_sequence(prg2,40,2-66/79) 
+prng_seq4 = prg_to_prg__LCG_sequence(prg2,40,3+66/79) 
+
+prng_seq.extend(prng_seq3)
+prng_seq.extend(prng_seq4) 
+
+prg3 = merge_two_prgs(prg2,prg2,sub) 
+prg4 = merge_two_prgs(prg2,prg2,add) 
+prng_seq5 = prg_to_prg__LCG_sequence(prg3,40,3+44/45) 
+prng_seq6 = prg_to_prg__LCG_sequence(prg4,40,9-97/103) 
+
+prng_seq.extend(prng_seq5)
+prng_seq.extend(prng_seq6) 
+
+SS = SimulationSolutionSearch(S,IB_env_run,prng_seq,\
+        IB_env_prng_assignment_function,IB_env_mode_shift_function,\
+        IB_env_solution_fetch_function,IB_env_cmp_solution,verbose=True) 
+
+
+while not SS.fin_stat: 
+    SS.process_one()
+
+print("----------------------------------------------")
+print("ENDING RESULTS") 
+print("best score: ", IB_env_solution_score(SS.best[1]))  
+
+scores = [] 
+for q in SS.results: 
+    score = IB_env_solution_score(q[1]) 
+    scores.append(score) 
+
+print("mean score: ", np.mean(scores)) 
+print("max score: ", np.max(scores)) 
+print("median score: ", np.median(scores)) 
+
+################################ RESULTS ################################
+
+
+###################### CASE 1 
+
+######### subcase 1.1 
+Replace lines 15-16 with 
+'''
+is_rule_constant = True 
+maintain_connectivity = True 
+introspector_description = ("reactive",is_rule_constant,maintain_connectivity)
+is_bfs = False 
+''' 
+
+## ENDING RESULTS 
+'''
+best score:  128
+mean score:  163.4
+max score:  192
+median score:  164.5
+'''
+
+######### subcase 1.2  
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS 
+'''
+best score:  288
+mean score:  338.37142857142857
+max score:  485
+median score:  333.0
+''' 
+
+
+
+####################### case 2 
+
+######### subcase 2.1 
+Replace lines 15-16 with 
+'''
+is_rule_constant = False  
+maintain_connectivity = True 
+introspector_description = ("reactive",is_rule_constant,maintain_connectivity)
+is_bfs = False 
+''' 
+
+## ENDING RESULTS
+'''
+best score:  134
+mean score:  166.50357142857143
+max score:  193
+median score:  168.0
+''' 
+
+######### subcase 2.2 
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS
+'''
+best score:  258
+mean score:  334.48571428571427
+max score:  523
+median score:  319.5
+'''
+
+####################### case 3 
+
+######### subcase 3.1 
+Replace lines 15-16 with 
+'''
+is_rule_constant = True 
+maintain_connectivity = False  
+introspector_description = ("reactive",is_rule_constant,maintain_connectivity)
+is_bfs = False 
+''' 
+
+## ENDING RESULTS 
+'''
+best score:  135
+mean score:  164.98214285714286
+max score:  201
+median score:  165.5
+'''
+
+######### subcase 3.2 
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS 
+'''
+best score:  238
+mean score:  303.08214285714286
+max score:  489
+median score:  288.5
+'''
+
+####################### case 4 
+
+######### subcase 4.1 
+Replace lines 15-16 with 
+'''
+edges_can_be_forgotten = 0.5 
+ref_nodes_can_be_repeated = 0.75 
+nodes_are_weighted = True 
+edges_are_weighted = False  
+introspector_description = ("varmem",edges_can_be_forgotten,ref_nodes_can_be_repeated,\
+    nodes_are_weighted,edges_are_weighted) 
+is_bfs = False 
+''' 
+
+## ENDING RESULTS
+'''
+best score:  127
+mean score:  148.21428571428572
+max score:  187
+median score:  144.0
+''' 
+
+######### subcase 4.2 
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS
+'''
+best score:  378
+mean score:  456.4035714285714
+max score:  562
+median score:  457.0
+''' 
+
+####################### case 5 
+
+######### subcase 5.1 
+Replace lines 15-16 with 
+'''
+edges_can_be_forgotten = 0.0  
+ref_nodes_can_be_repeated = 0.75 
+nodes_are_weighted = False  
+edges_are_weighted = False  
+introspector_description = ("varmem",edges_can_be_forgotten,ref_nodes_can_be_repeated,\
+    nodes_are_weighted,edges_are_weighted) 
+is_bfs = False 
+''' 
+
+## ENDING RESULTS
+'''
+best score:  134
+mean score:  156.90714285714284
+max score:  184
+median score:  158.0
+''' 
+
+######### subcase 5.2 
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS
+'''
+best score:  311
+mean score:  393.15714285714284
+max score:  440
+median score:  397.0
+''' 
+
+####################### case 6 
+
+######### subcase 6.1 
+Replace lines 15-16 with 
+'''
+edges_can_be_forgotten = 0.0  
+ref_nodes_can_be_repeated = 0.75 
+nodes_are_weighted = True   
+edges_are_weighted = False  
+introspector_description = ("varmem",edges_can_be_forgotten,ref_nodes_can_be_repeated,\
+    nodes_are_weighted,edges_are_weighted) 
+is_bfs = False 
+''' 
+
+## ENDING RESULTS
+'''
+best score:  134
+mean score:  167.95357142857142
+max score:  195
+median score:  169.0
+''' 
+
+######### subcase 6.2 
+Change 
+'''
+is_bfs = False 
+'''
+to 
+'''
+is_bfs = True  
+'''
+
+## ENDING RESULTS
+'''
+best score:  250
+mean score:  372.60357142857146
+max score:  435
+median score:  373.5
+''' 
