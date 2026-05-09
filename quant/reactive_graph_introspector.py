@@ -42,7 +42,7 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
     def set_prg(self,prg): 
         assert type(prg) in {MethodType,FunctionType}
-        
+
         super().set_prg(prg) 
         self.rule_op.prg = prg 
 
@@ -77,7 +77,8 @@ class ReactiveGraphIntrospectorTypeCNO(GraphIntrospectorTypeCNO):
 
     def exec_reaction(self): 
         edges = self.introspector.previous_edges
-        self.rule_op.react(self.G,edges,self.verbose) 
+        self.G = self.rule_op.react(self.G,edges,self.verbose) 
+        self.introspector.d = self.G 
         # ineff.
         self.rule_op.clean_up_rules(self.G) 
 
