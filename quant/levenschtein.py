@@ -3,6 +3,7 @@ simple implementation of a classic string metric
 """
 from collections import Counter 
 from morebs2.seq_repr import contiguous_cyclical_difference
+from graph_models.node_path import * 
 
 def levenschtein_distance(s1,s2): 
     if len(s1) == 0: 
@@ -53,3 +54,36 @@ def contiguous_cyclical_difference_(v0,v1,diff_type="bool"):
         v0,v1 = v1,v0 
     return contiguous_cyclical_difference(v0,v1,diff_type) 
 
+"""
+for 2 sequences S0,S1, each containing <NodePath> instances, 
+calculates the cumulative difference 
+
+     m 
+    SUM C(S0[i],S1[i]); C := contiguous_cyclical_difference_, 
+                        m := max(|S0|,|S1|). 
+    i=0 
+
+If sequence S* does not have an i'th index, set value to empty sequence [].
+"""
+def pairwise_shortest_paths_sequence_difference_(v0,v1): 
+
+    l = max([len(v0),len(v1)]) 
+    d = 0 
+    for i in range(l): 
+        p0,p1 = [],[] 
+        if i < len(v0): 
+            assert type(v0[i]) == NodePath, "got {}".format(v0[i])
+            p0 = v0[i].p 
+        if i < len(v1): 
+            assert type(v1[i]) == NodePath 
+            p1 = v1[i].p 
+        d += contiguous_cyclical_difference_(p0,p1,diff_type="bool")
+    return d 
+
+def pairwise_shortest_paths_sequence_difference(v0,v1):
+
+    d = 0 
+
+    for p0,p1 in zip(v0,v1):  
+        d += pairwise_shortest_paths_sequence_difference_(p0,p1) 
+    return d 
