@@ -36,7 +36,7 @@ def IB_env_solution_score(ibot:IntrospectionBot):
 
     return D0 + IB_node_cycle_output_difference(ibot)
 
-def IB_env_cmp_score__type_2(ibot1:IntrospectionBot):
+def IB_env_solution_score__type_2(ibot1:IntrospectionBot):
 
     I,R = IB_env_solution_fetch_function(ibot1) 
 
@@ -49,8 +49,7 @@ def IB_env_cmp_score__type_2(ibot1:IntrospectionBot):
     return D0 + IB_node_cycle_output_difference(ibot1)
 
 def IB_env_cmp_solution_(F): 
-    assert F in {IB_env_solution_score,\
-        IB_env_solution_score,IB_env_cmp_score__type_2}
+    assert F in {IB_env_solution_score,IB_env_solution_score__type_2}
 
     def f(ibot1:IntrospectionBot,ibot2:IntrospectionBot): 
 

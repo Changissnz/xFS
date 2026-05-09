@@ -49,6 +49,7 @@ prng_seq6 = prg_to_prg__LCG_sequence(prg4,40,9-97/103)
 prng_seq.extend(prng_seq5)
 prng_seq.extend(prng_seq6) 
 
+IB_env_cmp_solution = IB_env_cmp_solution_(IB_env_solution_score)
 SS = SimulationSolutionSearch(S,IB_env_run,prng_seq,\
         IB_env_prng_assignment_function,IB_env_mode_shift_function,\
         IB_env_solution_fetch_function,IB_env_cmp_solution,verbose=True) 
