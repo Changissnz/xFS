@@ -121,7 +121,6 @@ adds or deletes nodes for graph g.
 def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function): 
 
     old_nodes = sorted(g.keys()) 
-    ##print("XX: ",len(old_nodes))
     node_deltas = set() 
     # case: pos node change  
     if num_nodes > 0: 
