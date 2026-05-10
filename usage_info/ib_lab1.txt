@@ -5,7 +5,7 @@ deltas of addition and subtraction during the traversal process. For variable me
 introspection, a change in PRNGs affects the node priority function, responsible for ranking 
 neighbors in order of travel from current node to next. 
 
-There are five trials in this lab to demonstrate all properties of Introspection Bot are working 
+There are six trials in this lab to demonstrate all properties of Introspection Bot are working 
 properly. The first three are on a reactive introspection process, the last two on variable memory. 
 
 ---------------------------------------------------------------------------------------------------------

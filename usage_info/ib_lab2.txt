@@ -1,0 +1,120 @@
+This is another lab that demonstrates Introspection Bot on another sequence. 
+Whereas in Lab 1, sequence consisted of paired elements (start reference node, number of trials), 
+the sequence in this lab does not contain any reference nodes. The differences in scores show 
+the impact of different PRNG selections of start reference nodes. 
+
+The code for this lab is virtually identical. There are six trials. First change lines 25-26 to 
+'''
+sequence = [145,255,100]
+prg = prg__LCG(287.3,-66.1414,194.34,141404.555) 
+''' 
+
+The cases have equal parameters to those in Lab 1. 
+
+##################### case 1 
+
+######### subcase 1.1 (DFS) 
+
+ENDING RESULTS
+best score:  3341
+mean score:  5732.785714285715
+max score:  9996
+median score:  5717.5
+
+######### subcase 1.2 (BFS)  
+
+ENDING RESULTS
+best score:  2823
+mean score:  3542.660714285714
+max score:  4925
+median score:  3503.0
+
+####################### case 2 
+
+######### subcase 2.1 (DFS) 
+
+ENDING RESULTS
+best score:  1767
+mean score:  2490.425
+max score:  3842
+median score:  2492.5
+
+######### subcase 2.2 (BFS)  
+
+ENDING RESULTS
+best score:  4651
+mean score:  6289.325
+max score:  10241
+median score:  6182.5
+
+####################### case 3 
+
+######### subcase 3.1 (DFS) 
+
+ENDING RESULTS
+best score:  174
+mean score:  233.25714285714287
+max score:  1193
+median score:  196.0
+
+######### subcase 3.2 (BFS)  
+
+ENDING RESULTS
+best score:  60
+mean score:  131.74285714285713
+max score:  965
+median score:  94.0
+
+####################### case 4 
+
+######### subcase 4.1 (DFS) 
+
+ENDING RESULTS
+best score:  615
+mean score:  787.95
+max score:  1508
+median score:  733.0
+
+######### subcase 4.2 (BFS)  
+
+ENDING RESULTS
+best score:  455
+mean score:  571.6785714285714
+max score:  1045
+median score:  538.0
+
+####################### case 5 
+
+######### subcase 5.1 (DFS) 
+
+ENDING RESULTS
+best score:  807
+mean score:  1330.4035714285715
+max score:  1691
+median score:  1336.0
+
+######### subcase 5.2 (BFS)  
+
+ENDING RESULTS
+best score:  165
+mean score:  547.0714285714286
+max score:  854
+median score:  543.0
+
+####################### case 6 
+
+######### subcase 6.1 (DFS)
+
+ENDING RESULTS
+best score:  637
+mean score:  1205.8107142857143
+max score:  1673
+median score:  1202.5
+
+######### subcase 6.2 (BFS)  
+
+ENDING RESULTS
+best score:  198
+mean score:  587.9571428571429
+max score:  858
+median score:  600.0

@@ -113,7 +113,7 @@ def one_edge_change(d:defaultdict,is_dsg:bool,add_edge:bool,prg):
             d[neighbor] -= {n}
             q.append((neighbor,n))
         return q 
-    return None 
+    return []  
 
 """
 adds or deletes nodes for graph g. 
@@ -121,7 +121,7 @@ adds or deletes nodes for graph g.
 def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function): 
 
     old_nodes = sorted(g.keys()) 
-
+    ##print("XX: ",len(old_nodes))
     node_deltas = set() 
     # case: pos node change  
     if num_nodes > 0: 
@@ -132,25 +132,31 @@ def node_changes_to_graph(g:default_dict,is_dsg,num_nodes,prg,ctr_function):
             new_nodes.append(x) 
 
         # iterate through new nodes and make a single edge w/ the other nodes 
-        for n in new_nodes: 
-            i = int(prg()) % len(old_nodes) 
-            n2 = old_nodes[i] 
+        if len(old_nodes) > 0: 
+            for n in new_nodes: 
+                i = int(prg()) % len(old_nodes) 
+                n2 = old_nodes[i] 
 
-            # NOTE: constant direction of conn. 
-            g[n2] |= {n}
+                # NOTE: constant direction of conn. 
+                g[n2] |= {n}
 
-            if not is_dsg: 
-                g[n] |= {n2}
+                if not is_dsg: 
+                    g[n] |= {n2}
+        else: 
+            new_graph = defaultdict(set,{nn:set() for nn in new_nodes}) 
+            g = (MicroGraph(g) + MicroGraph(new_graph)).dg 
+            g = graph_to_one_component(g,prg)
 
         node_deltas |= set(new_nodes) 
     # case: negative node change 
     else: 
-        to_delete = prg_choose_n(old_nodes,-num_nodes,prg,is_unique_picker=True)
-        mg = MicroGraph(deepcopy(g))  
-        mg.subgraph_nodeset_exclusion(to_delete)
-        g = mg.dg  
-
-        node_deltas |= set(to_delete)
+        num_nodes = min([len(old_nodes),abs(num_nodes)]) 
+        if num_nodes > 0: 
+            to_delete = prg_choose_n(old_nodes,num_nodes,prg,is_unique_picker=True)
+            mg = MicroGraph(deepcopy(g))  
+            mg.subgraph_nodeset_exclusion(to_delete)
+            g = mg.dg  
+            node_deltas |= set(to_delete)
 
     return g,node_deltas 
 
