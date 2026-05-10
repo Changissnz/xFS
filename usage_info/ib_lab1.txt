@@ -12,6 +12,10 @@ properly. The first three are on a reactive introspection process, the last two 
 
 ####################### BASE CODE 
 '''
+from graph_problems.ib_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence,merge_two_prgs
+
 introspector_description = ? 
 is_bfs = ?   
 
@@ -70,14 +74,14 @@ for q in SS.results:
 print("mean score: ", np.mean(scores)) 
 print("max score: ", np.max(scores)) 
 print("median score: ", np.median(scores)) 
-
+'''
 ################################ RESULTS ################################
 
 
 ###################### CASE 1 
 
 ######### subcase 1.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 is_rule_constant = True 
 maintain_connectivity = True 
@@ -116,7 +120,7 @@ median score:  333.0
 ####################### case 2 
 
 ######### subcase 2.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 is_rule_constant = False  
 maintain_connectivity = True 
@@ -153,7 +157,7 @@ median score:  319.5
 ####################### case 3 
 
 ######### subcase 3.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 is_rule_constant = True 
 maintain_connectivity = False  
@@ -190,7 +194,7 @@ median score:  288.5
 ####################### case 4 
 
 ######### subcase 4.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 edges_can_be_forgotten = 0.5 
 ref_nodes_can_be_repeated = 0.75 
@@ -230,7 +234,7 @@ median score:  457.0
 ####################### case 5 
 
 ######### subcase 5.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 edges_can_be_forgotten = 0.0  
 ref_nodes_can_be_repeated = 0.75 
@@ -270,7 +274,7 @@ median score:  397.0
 ####################### case 6 
 
 ######### subcase 6.1 
-Replace lines 15-16 with 
+Replace lines 19-20 with 
 '''
 edges_can_be_forgotten = 0.0  
 ref_nodes_can_be_repeated = 0.75 
