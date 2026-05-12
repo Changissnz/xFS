@@ -86,7 +86,7 @@ Here is a list of graph problems in the project:
         with the target and the secondary goal of maintaining symmetric balance with one another.  
     - file: `graph_problems/vtb.py`  
 - Introspection Bot (Alpha) 
-    - vantage point for learning: obtaining the same node cyclical output and shortest paths as a 
+    - vantage point for learning: obtaining the same cyclical node output and shortest paths as a 
         reference result in a simple undirected graph, traversed through a breadth-first or depth-first 
         process. 
     - file: `graph_problems/ib.py` 
