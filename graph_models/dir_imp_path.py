@@ -1,4 +1,7 @@
-from graph_models.node_path import * 
+from .graph_gen import * 
+from .bfs import * 
+from types import MethodType,FunctionType
+from math import ceil 
 
 """
 A directed implication path is a graph consisting of a 
@@ -7,7 +10,7 @@ from head h to tail t.
 
 Nodes n_i of N = S - {t} can also have edges to other any other node n_j, 
 given the condition that if n_i is distance x from tail t on spine S, then 
-n_j is of distance x_ > x from t on S. 
+n_j is of distance x_ < x from t on S. 
 """
 
 # NOTE: not designed for graphs of many nodes. 
@@ -18,8 +21,8 @@ return:
 def verify_directed_implication_path(G):  
     
     graph_childkey_fillin(G) 
-    assert not is_undirected_graph(G) 
-    assert len(G) > 1 
+    if is_undirected_graph(G): return None,None,[],False 
+    if len(G) < 2: return None,None,[],False  
 
     # find the tail: out-degree (0) 
     t = None 
@@ -31,27 +34,25 @@ def verify_directed_implication_path(G):
     
     if c != 1: return None,None,[],False  
 
-
     # find the head 
     h = None 
     keys = set(G.keys()) 
     c = 0  
     for k_ in keys: 
-        h_ = None 
+        stat = False 
         for k,v in G.items(): 
             if k_ in v:
-                h_ = k   
+                stat = True   
                 break 
 
-        if type(h_) != type(None): 
-            h = h_ 
+        if not stat: 
+            h = k_ 
             c += 1  
 
     if c != 1: return None,t,[],False 
-
     # make sure no two nodes n0,n1 can have both edges (n0,n1) and (n1,n0) 
     for k,v in G.items(): 
-        for v_ in v: 
+        for v_ in v:
             if k in G[v_]: 
                 return None,t,[],False 
 
@@ -64,18 +65,23 @@ def verify_directed_implication_path(G):
 
     # get the longest path from head to tail, and make sure path includes all 
     # nodes of G. 
-    q = bc.min_paths[t][-1]
-    nodeset = set(q.p) 
+    q = bc.min_paths[t][-1].invert().p 
+    nodeset = set(q)  
 
     if nodeset != set(G.keys()): 
         return h,t,[],False 
-    return h,t,bc.min_paths[t],True 
+    for (i,q_) in enumerate(q) : 
+        x = set(q[:i]) 
+        if G[q_].intersection(x) != set(): 
+            return h,t,[],False 
+
+    return h,t,[p.invert() for p in bc.min_paths[t]],True 
 
 def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,start_node_idn:int=0): 
     assert type(num_nodes) == int and num_nodes > 1 
     assert 0. <= extra_edge_ratio <= 1. 
     assert type(prg) in {MethodType,FunctionType} 
-    assert type(start_node_idn) == 0 
+    assert type(start_node_idn) == int  
 
     # calculate number of extra edges 
     m = num_nodes - 2 
@@ -83,16 +89,15 @@ def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,star
     extra_edges = ceil(max_edges * extra_edge_ratio) 
 
     # calculate spine of graph 
-    G = generate_graph__path(num_vertices,start_node_idn,is_dsg=True) 
+    G = generate_graph__path(num_nodes,start_node_idn,is_dsg=True) 
     graph_childkey_fillin(G) 
     nodeseq = [i for i in range(start_node_idn,start_node_idn + num_nodes - 1)]  
-
     i = 0 
     while i < extra_edges: 
         j = int(prg()) % len(nodeseq) 
         source_node = nodeseq[j] 
 
-        possible_candidates = set(nodeseq[j+1:]) | {start_node_idn + num_nodes} 
+        possible_candidates = set(nodeseq[j+1:]) | {start_node_idn + num_nodes - 1} 
         possible_candidates = possible_candidates - G[source_node]
 
         # case: no more candidates
