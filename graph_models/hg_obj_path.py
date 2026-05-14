@@ -28,7 +28,8 @@ class NodeActivationFunctionTypeMT:
         for v in n2mt_map.values(): assert type(v) == float 
         assert node_idn in n2mt_map
         assert activation_type in PATH_TYPE_DI_NODE_ACTIVATION_TYPES 
-        if activation_type == "linexp": assert float(lin_exp_value) == float
+        if activation_type == "linexp": assert type(lin_exp_value) == float
+        else: assert type(lin_exp_value) == type(None)
         self.node_idn = node_idn 
         self.activation_node_idn = activation_node_idn 
         self.n2mt_map = n2mt_map 
@@ -162,8 +163,10 @@ class NodeActivationFunctionTypeMT:
                 if x[1] == p_idn:
                     i = j 
                     break 
-            assert type(i) != type(None) 
+
             dependencies = set() 
+            if type(i) == type(None): return dependencies
+
             while i < len(extra_edges): 
                 x = extra_edges[i] 
                 if x[1] == p_idn: 
@@ -198,11 +201,10 @@ class PathTypeDI(DirectedImplicationPath):
 
     def __init__(self,G,node_value_range_map,node_act_function_map): 
         super().__init__(G) 
-        assert type(relation) in {MethodType,FunctionType} 
         assert set(node_value_range_map.keys()) == set(G.keys())
         for v in node_value_range_map.values(): 
             assert is_valid_range(v,True,False) or is_valid_range(v,True,True) 
-        assert node_type in PATH_TYPE_DI_NODE_ACTIVATION_TYPES 
+            assert v[0] > 0 
         assert set(G.keys()) == set(node_act_function_map.keys())
 
         one_type_only = set() 
@@ -213,7 +215,7 @@ class PathTypeDI(DirectedImplicationPath):
         self.act_type = one_type_only.pop()
 
         for na in node_act_function_map.values(): 
-            assert na.is_valid_activation(self.spine(),node_value_map)
+            assert na.is_valid_activation(self.spine(),node_value_range_map)
 
         self.nv_map = node_value_range_map
         self.node_act_function_map = node_act_function_map 
