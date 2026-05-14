@@ -77,27 +77,31 @@ def verify_directed_implication_path(G):
 
     return h,t,[p.invert() for p in bc.min_paths[t]],True 
 
-def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,start_node_idn:int=0): 
-    assert type(num_nodes) == int and num_nodes > 1 
-    assert 0. <= extra_edge_ratio <= 1. 
-    assert type(prg) in {MethodType,FunctionType} 
-    assert type(start_node_idn) == int  
-
-    # calculate number of extra edges 
+def max_extra_edges_for_directed_implication_path(num_nodes):  
     m = num_nodes - 2 
     max_edges = sum([i for i in range(1,m+1)]) 
-    extra_edges = ceil(max_edges * extra_edge_ratio) 
+    return max_edges 
 
-    # calculate spine of graph 
-    G = generate_graph__path(num_nodes,start_node_idn,is_dsg=True) 
+"""
+return: 
+- defaultdict, graph that includes path p, along with extra edges. 
+"""
+def extra_edges_for_directed_path(p:NodePath,extra_edges,prg):  
+    assert len(p) > 1 
+    assert extra_edges > 0  
+
+    G = p.to_graph(is_dsg=True) 
     graph_childkey_fillin(G) 
-    nodeseq = [i for i in range(start_node_idn,start_node_idn + num_nodes - 1)]  
+
+    nodeseq = deepcopy(p.p[:-1])  
+
     i = 0 
+    extra_edges_ = [] 
     while i < extra_edges: 
         j = int(prg()) % len(nodeseq) 
         source_node = nodeseq[j] 
 
-        possible_candidates = set(nodeseq[j+1:]) | {start_node_idn + num_nodes - 1} 
+        possible_candidates = set(nodeseq[j+1:]) | {p.p[-1]}  
         possible_candidates = possible_candidates - G[source_node]
 
         # case: no more candidates
@@ -109,7 +113,25 @@ def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,star
         j2 = int(prg()) % len(possible_candidates) 
         target_node = possible_candidates[j2] 
         G[source_node] |= {target_node}
+        extra_edges_.append((source_node,target_node)) 
         i += 1 
+
+    return G,extra_edges_
+
+def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,start_node_idn:int=0): 
+    assert type(num_nodes) == int and num_nodes > 1 
+    assert 0. <= extra_edge_ratio <= 1. 
+    assert type(prg) in {MethodType,FunctionType} 
+    assert type(start_node_idn) == int  
+
+    # calculate number of extra edges 
+    max_edges = max_extra_edges_for_directed_implication_path(num_nodes) 
+    extra_edges = ceil(max_edges * extra_edge_ratio) 
+
+    p = [i for i in range(start_node_idn,start_node_idn+num_nodes)] 
+    x = [1] * (len(p) - 1)
+    N = NodePath.preload(p,x)
+    G,_ = extra_edges_for_directed_path(N,extra_edges,prg)
     return G 
 
 class DirectedImplicationPath: 
@@ -123,3 +145,22 @@ class DirectedImplicationPath:
         self.min_paths = min_paths 
         self.G = G 
         return
+
+    def spine(self): 
+        return self.min_paths[-1] 
+
+    """
+    outputs the appropriate number of `extra edges`, defined as any 
+    possible pair of nodes (n_i,n_j) s.t. for tail T, 
+        d(n_i,T) > d(n_j,T); d := pairwise edge distance. 
+    """
+    def possible_extra_edges(self,extra_edge_ratio,prg):  
+        max_edges = max_extra_edges_for_directed_implication_path(len(self.G))  
+        extra_edges = ceil(max_edges * extra_edge_ratio) 
+        _,extra_edges_ = extra_edges_for_directed_path(self.spine(),extra_edges,prg)
+        return extra_edges_ 
+
+class DIPathNavigator: 
+
+    def __init__(self,di,prg): 
+        return -1  
