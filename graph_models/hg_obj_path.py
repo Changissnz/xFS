@@ -67,7 +67,6 @@ class NodeActivationFunctionTypeMT:
             R = node_value_map[k] 
             if not R[0] <= v <= R[1]: 
                 return False 
-
         return True 
                 
 
@@ -224,11 +223,11 @@ class PathTypeDI(DirectedImplicationPath):
         # pending failures from [1] that activate when navigator reaches [0] 
         self.failure_record_map = defaultdict(list) 
 
-        def reset(self): 
-            self.navigator_path_record.clear() 
+    def reset(self): 
+        self.navigator_path_record.clear() 
 
-        def path_record_to_dict(self): 
-            return {x[0]:x[1] for x in self.navigator_path_record} 
+    def path_record_to_dict(self): 
+        return {x[0]:x[1] for x in self.navigator_path_record} 
 
     @staticmethod 
     def generate_instance(G,node_value_range_map,ratio_indirect_activation:float,\
@@ -261,7 +260,12 @@ class ObjectivePathTypeDI(PathTypeDI):
         - bool: ?success status?
         - bool: ?immediate effect? 
     """
-    def register_advance(self,node_idn,value:float):  
+    def register_advance(self,node_idn,value:float,verbose=False):  
+        if verbose: 
+            print("** navigator path record **")
+            print(self.navigator_path_record)
+            print() 
+
         # case: start, has to be head 
         if len(self.navigator_path_record) == 0: 
             assert node_idn == self.h 
@@ -272,7 +276,7 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # check that value fits required range for node 
         r = self.nv_map[node_idn] 
-        assert r[0] <= value <= r[1] 
+        assert r[0] <= value <= r[1], "got {},   {}".format(value,r) 
 
         # case: pending failures activate 
         backtracked_nodes,new_loc = self.process_pending_failure(node_idn) 
@@ -280,7 +284,7 @@ class ObjectivePathTypeDI(PathTypeDI):
             return 0,backtracked_nodes,new_loc,True 
 
         q = self.node_act_function_map[node_idn] 
-        d = self.path_record_to_dict() 
+        d = defaultdict(float,self.path_record_to_dict())
         d[node_idn] = value 
         v,stat = q.register(d) 
 
@@ -301,7 +305,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         if not stat and not stat2: 
             self.register_backtrack() 
 
-        return v,stat,stat2 
+        return 1,v,stat,stat2 
 
     def register_backtrack(self): 
         assert len(self.navigator_path_record) > 0 
@@ -316,13 +320,13 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # case: pending failure 
         if not immediate_fail: 
-            self.failure_record_map[q.activation_node_idn] |= node_idn 
+            self.failure_record_map[q.activation_node_idn].append(node_idn) 
         return immediate_fail
 
     def remove_activated_pending_failures(self,nodeset): 
         for k in self.failure_record_map.keys(): 
             v = self.failure_record_map[k] 
-            v = v - nodeset 
+            v = [v_ for v_ in v if v_ not in nodeset]
             self.failure_record_map[k] = v 
 
     def process_pending_failure(self,node_idn): 
