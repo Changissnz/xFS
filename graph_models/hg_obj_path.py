@@ -1,7 +1,7 @@
 from .dir_imp_path import * 
 from .hypergraph import * 
 
-PATH_TYPE_DI_NODE_ACTIVATION_TYPES = {"linexp","csum"} 
+PATH_TYPE_DI_NODE_ACTIVATION_TYPES = {"linexp","single"} 
 
 """
 Node Activation Function, Type (M)inimum (T)hreshold. 
@@ -9,14 +9,14 @@ Node Activation Function, Type (M)inimum (T)hreshold.
 Associated with a node in <DirectedImplicationPath>. 
 
 Two activation types: 
-- csum: cumulative sum 
+- single: node values are individually processed by function  
 - linexp: linear expression 
 
 To register an input vector V_d, represented as a dictionary D: 
     
 - linexp: 
     V_d * `n2mt_map` >= `lin_exp_value`. 
-- csum: 
+- single: 
     for every minimum node value v of node n in `n2mt_map`, 
     D[n] >= v. 
 
@@ -37,45 +37,6 @@ class NodeActivationFunctionTypeMT:
         self.lin_exp_value = lin_exp_value 
         return
 
-    @staticmethod 
-    def generate_instance(node_idn,prior_dependencies,node_value_range_map,activation_type,\
-        max_path:NodePath,add_activation_node:bool,prg):
-        
-        i = max_path.p.index(node_idn) 
-        subpath = set(max_path.p[:i]) 
-        assert prior_dependencies.issubset(subpath) 
-
-        # case: choose an activation node (node farther down `max_path` than `node_idn`)
-        activation_node_idn = node_idn 
-        if add_activation_node: 
-            subpath = sorted(max_path.p[i+1:]) 
-            if len(subpath) > 0: 
-                j = int(prg()) % len(subpath)
-                activation_node_idn = subpath[j] 
-
-        prior_dependencies = sorted(prior_dependencies) 
-        prior_dependencies.append(node_idn) 
-
-        # assign weights 
-        n2mt_map = dict()
-        min_c,max_c = 0,0 
-        for p in prior_dependencies: 
-            r = node_value_range_map[p]
-            q = modulo_in_range(prg(),r) 
-            n2mt_map[p] = q 
-
-            if activation_type == "linexp": 
-                min_c += (q * r[0]) 
-                max_c += (q * r[1]) 
-        
-        lin_exp_value = None 
-        if activation_type == "linexp": 
-            lin_exp_value = modulo_in_range(prg(),[min_c,max_c]) 
-
-        return NodeActivationFunctionTypeMT(node_idn,\
-            activation_node_idn,n2mt_map,activation_type,lin_exp_value=lin_exp_value)
-
-    # NOTE: applicable only for `csum`
     """
     max_path := NodePath 
     node_value_map := dict, node idn -> acceptable range of input 
@@ -115,7 +76,7 @@ class NodeActivationFunctionTypeMT:
 
         if self.act_type == "linexp": 
             return self.register__linexp(d) 
-        return self.register__csum(d) 
+        return self.register__single(d) 
 
     def register__linexp(self,d): 
 
@@ -124,7 +85,7 @@ class NodeActivationFunctionTypeMT:
             c = c + (v * d[k]) 
         return c - self.lin_exp_value, c >= self.lin_exp_value 
 
-    def register__csum(self,d): 
+    def register__single(self,d): 
 
         keys = sorted(self.n2mt_map.keys())  
 
@@ -136,6 +97,44 @@ class NodeActivationFunctionTypeMT:
                 return k,False 
 
         return d[self.node_idn] - self.n2mt_map[k],True 
+
+    @staticmethod 
+    def generate_instance(node_idn,prior_dependencies,node_value_range_map,activation_type,\
+        max_path:NodePath,add_activation_node:bool,prg):
+        
+        i = max_path.p.index(node_idn) 
+        subpath = set(max_path.p[:i]) 
+        assert prior_dependencies.issubset(subpath) 
+
+        # case: choose an activation node (node farther down `max_path` than `node_idn`)
+        activation_node_idn = node_idn 
+        if add_activation_node: 
+            subpath = sorted(max_path.p[i+1:]) 
+            if len(subpath) > 0: 
+                j = int(prg()) % len(subpath)
+                activation_node_idn = subpath[j] 
+
+        prior_dependencies = sorted(prior_dependencies) 
+        prior_dependencies.append(node_idn) 
+
+        # assign weights 
+        n2mt_map = dict()
+        min_c,max_c = 0,0 
+        for p in prior_dependencies: 
+            r = node_value_range_map[p]
+            q = modulo_in_range(prg(),r) 
+            n2mt_map[p] = q 
+
+            if activation_type == "linexp": 
+                min_c += (q * r[0]) 
+                max_c += (q * r[1]) 
+        
+        lin_exp_value = None 
+        if activation_type == "linexp": 
+            lin_exp_value = modulo_in_range(prg(),[min_c,max_c]) 
+
+        return NodeActivationFunctionTypeMT(node_idn,\
+            activation_node_idn,n2mt_map,activation_type,lin_exp_value=lin_exp_value)
 
     @staticmethod 
     def generate_n2f_map_for_DirectedImplicationPath(dip:DirectedImplicationPath,\
@@ -221,6 +220,10 @@ class PathTypeDI(DirectedImplicationPath):
         self.node_act_function_map = node_act_function_map 
         self.navigator_path_record = [] 
 
+        # [0] node -> [1] list::(previous travelled nodes of failure)
+        # pending failures from [1] that activate when navigator reaches [0] 
+        self.failure_record_map = defaultdict(list) 
+
         def reset(self): 
             self.navigator_path_record.clear() 
 
@@ -237,28 +240,121 @@ class PathTypeDI(DirectedImplicationPath):
             activation_type,prg) 
         return PathTypeDI(G,node_value_range_map,n2f_map) 
 
+"""
+
+"""
 class ObjectivePathTypeDI(PathTypeDI):
 
     def __init__(self,G,node_value_map,node_act_function_map): 
         super().__init__(G,node_value_map,node_act_function_map)
         return
 
-    def register(self,node_idn,value:float):  
+    """
+    return: (0|1,?,?,?)
+
+    - CASE 0: have to backtrack due to pending failures activating 
+        - set::(backtracked nodes)
+        - current location [after backtracking]
+        - True: immediate effect 
+    - CASE 1: other
+        - difference between score and min. threshold score 
+        - bool: ?success status?
+        - bool: ?immediate effect? 
+    """
+    def register_advance(self,node_idn,value:float):  
+        # case: start, has to be head 
         if len(self.navigator_path_record) == 0: 
             assert node_idn == self.h 
+        # case: check that this node is out-vertex of last node 
+        else: 
+            t = self.navigator_path_record[-1][0] 
+            assert node_idn in self.G[t]
 
-        if self.act_type == "csum": 
-            r = self.nv_map[node_idn] 
-            assert r[0] <= value <= r[1] 
+        # check that value fits required range for node 
+        r = self.nv_map[node_idn] 
+        assert r[0] <= value <= r[1] 
+
+        # case: pending failures activate 
+        backtracked_nodes,new_loc = self.process_pending_failure(node_idn) 
+        if len(backtracked_nodes) > 0: 
+            return 0,backtracked_nodes,new_loc,True 
 
         q = self.node_act_function_map[node_idn] 
         d = self.path_record_to_dict() 
         d[node_idn] = value 
         v,stat = q.register(d) 
 
-        if stat: 
-            self.navigator_path_record.append((node_idn,value)) 
-        return v,stat
+            # immediate action 
+        stat2 = True 
+
+        # case: pass
+
+        # case: register failure 
+        if not stat:
+            stat2 = self.register_failure(node_idn)
+
+        # log node and value if pass or pending failure 
+        if stat or not stat2: 
+            self.navigator_path_record.append((node_idn,value))
+        
+        # case: immediate failure, forced to backtrack 
+        if not stat and not stat2: 
+            self.register_backtrack() 
+
+        return v,stat,stat2 
+
+    def register_backtrack(self): 
+        assert len(self.navigator_path_record) > 0 
+        q = self.navigator_path_record.pop(-1) 
+        return q  
+
+    def register_failure(self,node_idn): 
+        # check if pending failure 
+        q = self.node_act_function_map[node_idn] 
+        
+        immediate_fail = q.activation_node_idn == node_idn
+
+        # case: pending failure 
+        if not immediate_fail: 
+            self.failure_record_map[q.activation_node_idn] |= node_idn 
+        return immediate_fail
+
+    def remove_activated_pending_failures(self,nodeset): 
+        for k in self.failure_record_map.keys(): 
+            v = self.failure_record_map[k] 
+            v = v - nodeset 
+            self.failure_record_map[k] = v 
+
+    def process_pending_failure(self,node_idn): 
+
+        q = self.failure_record_map[node_idn] 
+        if len(q) == 0: 
+            return set(),None 
+
+        del self.failure_record_map[node_idn] 
+        self.remove_activated_pending_failures(q) 
+
+        S = self.spine() 
+        indices = [] 
+        for q_ in q: 
+            index = S.p.index(q_) 
+            indices.append(index) 
+
+        min_index = min(indices) 
+        min_node_of_failure = S.p[min_index] 
+
+        # go through travel history, choose index where 
+        # min. node of failure occurs. 
+        nprecord = [x[0] for x in self.navigator_path_record] 
+        index2 = nprecord.index(min_node_of_failure) 
+        index2_ = index2 + 1 
+        
+        backtracked_nodes = set() 
+        while index2_ < len(self.navigator_path_record): 
+            q = self.navigator_path_record.pop(index2_) 
+            backtracked_nodes |= {q[0]}
+
+        return backtracked_nodes,min_node_of_failure 
 
     @staticmethod
     def generate_instance(G,node_value_range_map,ratio_indirect_activation:float,\

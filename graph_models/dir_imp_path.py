@@ -13,17 +13,7 @@ given the condition that if n_i is distance x from tail t on spine S, then
 n_j is of distance x_ < x from t on S. 
 """
 
-# NOTE: not designed for graphs of many nodes. 
-"""
-return: 
-- head,tail, all paths from head to tail, ?is directed implication path? 
-"""
-def verify_directed_implication_path(G):  
-    
-    graph_childkey_fillin(G) 
-    if is_undirected_graph(G): return None,None,[],False 
-    if len(G) < 2: return None,None,[],False  
-
+def tail_of_directed_implication_path(G): 
     # find the tail: out-degree (0) 
     t = None 
     c = 0 
@@ -31,10 +21,13 @@ def verify_directed_implication_path(G):
         if len(v) == 0: 
             c += 1 
             t = k 
-    
-    if c != 1: return None,None,[],False  
 
-    # find the head 
+    if c != 1: 
+        return None 
+    return t 
+
+def head_of_directed_implication_path(G): 
+
     h = None 
     keys = set(G.keys()) 
     c = 0  
@@ -49,7 +42,32 @@ def verify_directed_implication_path(G):
             h = k_ 
             c += 1  
 
-    if c != 1: return None,t,[],False 
+    if c != 1: 
+        return None 
+    return h 
+
+
+
+# NOTE: not designed for graphs of many nodes. 
+"""
+return: 
+- head,tail, all paths from head to tail, ?is directed implication path? 
+"""
+def verify_directed_implication_path(G):  
+    
+    graph_childkey_fillin(G) 
+    if is_undirected_graph(G): return None,None,[],False 
+    if len(G) < 2: return None,None,[],False  
+
+    # find tail 
+    t = tail_of_directed_implication_path(G)     
+    if type(t) == type(None): return None,None,[],False  
+
+    # find the head 
+    h = head_of_directed_implication_path(G) 
+    if type(h) == type(None): 
+        return None,t,[],False 
+
     # make sure no two nodes n0,n1 can have both edges (n0,n1) and (n1,n0) 
     for k,v in G.items(): 
         for v_ in v:
@@ -151,7 +169,7 @@ class DirectedImplicationPath:
 
     """
     outputs the appropriate number of `extra edges`, defined as any 
-    possible pair of nodes (n_i,n_j) s.t. for tail T, 
+    pair of nodes (n_i,n_j) s.t. for tail T, 
         d(n_i,T) > d(n_j,T); d := pairwise edge distance. 
     """
     def possible_extra_edges(self,extra_edge_ratio,prg):  
@@ -159,8 +177,3 @@ class DirectedImplicationPath:
         extra_edges = ceil(max_edges * extra_edge_ratio) 
         _,extra_edges_ = extra_edges_for_directed_path(self.spine(),extra_edges,prg)
         return extra_edges_ 
-
-class DIPathNavigator: 
-
-    def __init__(self,di,prg): 
-        return -1  
