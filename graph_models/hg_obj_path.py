@@ -37,6 +37,18 @@ class NodeActivationFunctionTypeMT:
         self.lin_exp_value = lin_exp_value 
         return
 
+    def __str__(self): 
+        x = "node idn: {}  type: {}\n".format(self.node_idn,self.act_type)
+        x += "\n"
+        q = sorted(self.n2mt_map.keys())
+        for q_ in q: 
+            x += "* {} : {}\n".format(q_,self.n2mt_map[q_])
+        x += "\n"
+
+        if self.act_type == "linexp": 
+            x += "linear sum: {}\n".format(self.lin_exp_value)
+        return x 
+
     """
     max_path := NodePath 
     node_value_map := dict, node idn -> acceptable range of input 
@@ -82,8 +94,8 @@ class NodeActivationFunctionTypeMT:
         c = 0 
         for k,v in self.n2mt_map.items(): 
             c = c + (v * d[k]) 
-        print("keys: {} / {}".format(sorted(d.keys()),sorted(self.n2mt_map.keys())))
-        print("S: {} / {}".format(c,self.lin_exp_value))
+        #print("keys: {} / {}".format(sorted(d.keys()),sorted(self.n2mt_map.keys())))
+        #print("S: {} / {}".format(c,self.lin_exp_value))
 
         return c - self.lin_exp_value, c >= self.lin_exp_value 
 
@@ -225,6 +237,12 @@ class PathTypeDI(DirectedImplicationPath):
         # [0] node -> [1] list::(previous travelled nodes of failure)
         # pending failures from [1] that activate when navigator reaches [0] 
         self.failure_record_map = defaultdict(list) 
+
+    def display_node_functions(self):
+        q = sorted(self.node_act_function_map.keys())
+        for q_ in q: 
+            print(self.node_act_function_map[q_]) 
+            print("-------------------------------")
 
     def reset(self): 
         self.navigator_path_record.clear() 
