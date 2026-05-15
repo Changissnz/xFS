@@ -82,6 +82,9 @@ class NodeActivationFunctionTypeMT:
         c = 0 
         for k,v in self.n2mt_map.items(): 
             c = c + (v * d[k]) 
+        print("keys: {} / {}".format(sorted(d.keys()),sorted(self.n2mt_map.keys())))
+        print("S: {} / {}".format(c,self.lin_exp_value))
+
         return c - self.lin_exp_value, c >= self.lin_exp_value 
 
     def register__single(self,d): 
@@ -309,7 +312,9 @@ class ObjectivePathTypeDI(PathTypeDI):
 
     def register_backtrack(self): 
         assert len(self.navigator_path_record) > 0 
-        q = self.navigator_path_record.pop(-1) 
+        q = self.navigator_path_record.pop(-1)
+
+        self.remove_activated_pending_failures({q[0]})
         return q  
 
     def register_failure(self,node_idn): 
@@ -350,6 +355,11 @@ class ObjectivePathTypeDI(PathTypeDI):
         # go through travel history, choose index where 
         # min. node of failure occurs. 
         nprecord = [x[0] for x in self.navigator_path_record] 
+
+        #print("NPR: ",nprecord) 
+        #print("Q: ",q) 
+        #print("MIN NODE: ",min_node_of_failure)
+        
         index2 = nprecord.index(min_node_of_failure) 
         index2_ = index2 + 1 
         

@@ -35,6 +35,13 @@ class DIPathNavigator:
         self.fin_stat = False 
         return
 
+    def max_current_node_support(self):
+        d = dict() 
+        for k,v in self.node_to_expense_map.items(): 
+            if len(v) == 0: continue 
+            d[k] = max(v) 
+        return d 
+
     """
     return: 
     - [0] ?move forward? 
@@ -80,6 +87,7 @@ class DIPathNavigator:
         v = modulo_in_range(self.prg(),R2) 
         self.node_to_expense_map[n].append(v) 
         self.node_to_expense_map[n] = self.node_to_expense_map[n][:DEFAULT_DIPNAV_LOG_LENGTH]
+        self.total_expense += v 
 
         return True,(n,v)
 
@@ -154,7 +162,7 @@ class DIPathNavigatorHandler:
             is_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
 
             if self.verbose: 
-                print("advancing? ",is_advance)
+                print("advancing? ",bool(is_advance))
                 if is_advance: 
                     print("difference with threshold: {}".format(x2))
                     print("success: {}".format(stat1))
