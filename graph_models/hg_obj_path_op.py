@@ -66,17 +66,22 @@ class DIPNMaxMinDB:
             vs = Vector2FloatSolverTypeRX(values,index_ranges,v1,self.prg) 
             vs.solve()
 
-            weights = vs.W 
+            weights = vs.W #np.ceil(vs.W * 10 ** 5) / 10 ** 5 
+            #weights = np.round(weights,5) 
+            #print("")
             for (node_idn,w) in zip(keys,weights): 
                 self.maxmin_node_value_assignment(node_idn,w) 
 
     def maxmin_node_value_assignment(self,node_idn,value:float): 
         assert is_number(value) 
+        value = ceil(value * 10 ** 5) / 10 ** 5
+        value = round(value,5) 
         if node_idn not in self.maxmin_node_values: 
             self.maxmin_node_values[node_idn] = value 
             return 
 
         v2_ = max([self.maxmin_node_values[node_idn],value])
+        
         self.maxmin_node_values[node_idn] = v2_ 
 
 """
@@ -117,6 +122,8 @@ class DIPathNavigator:
         self.fin_stat = False 
         self.dip_type = None 
         self.maxmin_db = DIPNMaxMinDB(self.nv_map,self.prg) 
+
+        self.entire_path = [] 
         return
 
     def set_type_for_PathDI(self,t): 
@@ -167,6 +174,7 @@ class DIPathNavigator:
                     self.loc = None 
                 else: 
                     self.loc = self.active_path[-1][0] 
+                    self.entire_path.append(self.loc) 
 
                 return False,x
 
@@ -303,17 +311,22 @@ class DIPathNavigatorHandler:
                     else: 
                         self.dipn.update_loc(node_idn)
                         self.dipn.active_path.append((node_idn,value)) 
+                        self.dipn.entire_path.append(node_idn)
+
                         self.ptdi.navigator_path_record.append((node_idn,value))
                 # case: success 
                 else: 
                     self.dipn.active_path.append((node_idn,value))
-                    self.dipn.update_loc(node_idn)                
+                    self.dipn.update_loc(node_idn)
+                    self.dipn.entire_path.append(node_idn)
+                    ##self.entire_path.append(node_idn)   
                 return 
 
             # backtrack 
             else:
                 self.dipn.backtrack_from_nodeset(x2) 
                 self.dipn.update_loc(stat1)
+                self.entire_path.append(stat1) 
 
         else: 
             self.ptdi.register_backtrack()

@@ -106,8 +106,10 @@ class NodeActivationFunctionTypeMT:
         for k in keys: 
             v = self.n2mt_map[k] 
             if k not in d: 
+                ##print("NO1")
                 return k,False
             if d[k] < v: 
+                ##print("X {} X2 {}".format(d[k],v)) 
                 return k,False 
 
         return d[self.node_idn] - self.n2mt_map[k],True 
@@ -410,6 +412,9 @@ class InadvertentPathTypeDI(PathTypeDI):
         super().__init__(G,node_value_map,node_act_function_map)
         self.prg = prg 
         return
+
+    def add_support(self,s): 
+        return -1 
 
     def auto_register(self,node_idn,value:float):  
         return -1 
