@@ -106,10 +106,12 @@ return:
 """
 def extra_edges_for_directed_path(p:NodePath,extra_edges,prg):  
     assert len(p) > 1 
-    assert extra_edges > 0  
+    assert extra_edges >= 0  
 
     G = p.to_graph(is_dsg=True) 
     graph_childkey_fillin(G) 
+    if extra_edges == 0: 
+        return G,[] 
 
     nodeseq = deepcopy(p.p[:-1])  
 

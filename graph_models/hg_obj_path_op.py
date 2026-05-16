@@ -1,10 +1,90 @@
 from .hg_obj_path import * 
+from morebs2.v2f_solver import * 
+from morebs2.numerical_generator import is_number 
 
 DEFAULT_DIPNAV_LOG_LENGTH = 5 
+DEFAULT_DIPNAV_LINEXP_SOLVER_COEFF_RANGE = [0.05,2.] 
 
+"""
+Used for navigating a Directed Implication Path (see class<PathTypeDI>), in 
+the case of `open_info`. 
+
+Stores on-contact node information about its activation threshold values, of type 
+`linexp` XOR `single`. 
+
+Every time memory structure is updated with activation threshold information from 
+a node, it updates the known min. threshold values for all involved nodes. This 
+knowledge allows navigator to expend less in allocating support for the minimum 
+threshold node value requirements. 
+"""
+class DIPNMaxMinDB:  
+
+    """
+    nv_map := dict, node idn -> range [r_min,r_max) of possible values for assignment 
+    """
+    def __init__(self,nv_map:dict,prg):
+        assert type(nv_map) == dict 
+        assert type(prg) in {FunctionType,MethodType}
+
+        self.nv_map = nv_map 
+        self.prg = prg 
+
+        self.nt_info = dict() 
+        self.maxmin_node_values = dict() 
+
+        self.dipn_type = None 
+
+    def __setitem__(self, node_idn, value):
+        assert type(value) == tuple 
+        assert len(value) == 2 
+        assert type(value[0]) in {defaultdict,dict} 
+        dtype = "single" if type(value[1]) == type(None) else "linexp" 
+        if type(self.dipn_type) == type(None): 
+            self.dipn_type = dtype 
+        else: 
+            assert self.dipn_type == dtype 
+
+        self.nt_info[node_idn] = value 
+        self.maxmin_recal(node_idn) 
+
+    def __getitem__(self, key):
+        if key not in self.maxmin_node_values: return None 
+        return self.maxmin_node_values[key]
+
+    def maxmin_recal(self,node_idn): 
+        v0,v1 = self.nt_info[node_idn] 
+
+        # type: single 
+        if type(v1) == type(None): 
+            for k,v in v0.items(): 
+                self.maxmin_node_value_assignment(node_idn,v)
+        # type: linexp 
+        else: 
+            keys = sorted(v0.keys()) 
+            values = np.array([v0[k] for k in keys])
+            index_ranges = np.array([self.nv_map[k] for k in keys])
+            vs = Vector2FloatSolverTypeRX(values,index_ranges,v1,self.prg) 
+            vs.solve()
+
+            weights = vs.W 
+            for (node_idn,w) in zip(keys,weights): 
+                self.maxmin_node_value_assignment(node_idn,w) 
+
+    def maxmin_node_value_assignment(self,node_idn,value:float): 
+        assert is_number(value) 
+        if node_idn not in self.maxmin_node_values: 
+            self.maxmin_node_values[node_idn] = value 
+            return 
+
+        v2_ = max([self.maxmin_node_values[node_idn],value])
+        self.maxmin_node_values[node_idn] = v2_ 
+
+"""
+Navigator for <PathTypeDI>. 
+"""
 class DIPathNavigator: 
 
-    def __init__(self,G,node_value_range_map,prg):
+    def __init__(self,G,node_value_range_map,prg,backtrack_pr=0.5):
         assert type(G) == defaultdict
         assert set(G.keys()) == set(node_value_range_map.keys())
 
@@ -24,6 +104,8 @@ class DIPathNavigator:
 
         self.nv_map = node_value_range_map
         self.prg = prg 
+        self.bt_pr = None 
+        self.set_backtrack_pr(backtrack_pr)
         self.loc = None
 
         # each element is (node,value)
@@ -33,19 +115,38 @@ class DIPathNavigator:
         self.total_expense = 0 
 
         self.fin_stat = False 
+        self.dip_type = None 
+        self.maxmin_db = DIPNMaxMinDB(self.nv_map,self.prg) 
         return
+
+    def set_type_for_PathDI(self,t): 
+        assert t in PATH_TYPE_DI_NODE_ACTIVATION_TYPES
+        self.dip_type = t 
+
+    def set_backtrack_pr(self,pr):
+        assert 0. <= pr <= 1. 
+        self.bt_pr = pr
+        return
+
+    def recv_node_info(self,node_idn,M,s): 
+        self.maxmin_db[node_idn] = (M,s) 
+        #self.node_threshold_info[node_idn] = (M,s) 
 
     def max_current_node_support(self):
         d = dict() 
         for k,v in self.node_to_expense_map.items(): 
             if len(v) == 0: continue 
-            d[k] = max(v) 
+            
+            q = self.maxmin_db[k]
+            if type(q) == type(None): 
+                q = float('inf')
+            d[k] = min([max(v),q]) 
         return d 
 
     """
     return: 
     - [0] ?move forward? 
-    - [1] forward: 
+    - [1] forward:  
             (next node,support value)
           backward:
             node backtracked from 
@@ -60,7 +161,7 @@ class DIPathNavigator:
             d = prg_decimal(self.prg,[0.,1.]) 
 
             # case: choose to backtrack 
-            if d < 0.5 and len(self.active_path) > 0:
+            if d < self.bt_pr and len(self.active_path) > 0:
                 x = self.active_path.pop(-1)
                 if len(self.active_path) == 0: 
                     self.loc = None 
@@ -74,17 +175,7 @@ class DIPathNavigator:
             i = int(self.prg()) % len(next_candidates) 
             n = next_candidates[i] 
         
-        R = self.nv_map[n]
-        expense_seq = self.node_to_expense_map[n] 
-        if len(expense_seq) == 0: 
-            R2 = R 
-        else: 
-            max_expense = max(expense_seq)#+ 10 ** -9 
-            min_range = max([max_expense,R[0]]) 
-
-            R2 = sorted([min_range,R[1]]) 
-
-        v = modulo_in_range(self.prg(),R2) 
+        v = self.choose_support_value(n)
         self.node_to_expense_map[n].append(v) 
         self.node_to_expense_map[n] = self.node_to_expense_map[n][:DEFAULT_DIPNAV_LOG_LENGTH]
         self.total_expense += v 
@@ -97,6 +188,26 @@ class DIPathNavigator:
 
         if self.loc == self.tail: 
             self.fin_stat = True 
+
+    def choose_support_value(self,node_idn):
+        # case: min threshold value available 
+        #       through open info. mode. 
+        x = self.maxmin_db[node_idn] 
+        if type(x) != type(None): 
+            return x 
+
+        R = self.nv_map[node_idn]
+        expense_seq = self.node_to_expense_map[node_idn] 
+        if len(expense_seq) == 0: 
+            R2 = R 
+        else: 
+            max_expense = max(expense_seq)#+ 10 ** -9 
+            min_range = max([max_expense,R[0]]) 
+
+            R2 = sorted([min_range,R[1]]) 
+
+        v = modulo_in_range(self.prg(),R2) 
+        return v 
 
     """
     used in cases of rejection from <PathTypeDI>. 
@@ -112,6 +223,9 @@ class DIPathNavigator:
         self.active_path = self.active_path[:i+1] 
         self.loc = node_idn 
 
+    """
+    backtracks from nodeset to the node of minimum index in active path 
+    """
     def backtrack_from_nodeset(self,nodeset): 
         x = [a[0] for a in self.active_path] 
         indices = [x.index(n) for n in nodeset] 
@@ -133,6 +247,7 @@ class DIPathNavigatorHandler:
 
         self.ptdi = ptdi 
         self.dipn = dipn 
+        self.dipn.set_type_for_PathDI(self.ptdi.act_type) 
         self.info_mode = info_mode 
         self.verbose = verbose 
         return 
@@ -158,7 +273,12 @@ class DIPathNavigatorHandler:
         # process according to advance or backtrack 
         if is_forward: 
             node_idn = x[0] 
-            value = x[1] 
+            value = x[1]
+
+            # feed navigator on-contact threshold info for node, if `open_info`
+            if self.info_mode: 
+                self.feed_info_to_navigator(node_idn) 
+
             is_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
 
             if self.verbose: 
@@ -198,3 +318,12 @@ class DIPathNavigatorHandler:
         else: 
             self.ptdi.register_backtrack()
         return 
+
+    """
+    used for info. mode #1. 
+    """
+    def feed_info_to_navigator(self,next_node): 
+
+        M,s = self.ptdi.info_for_node(next_node) 
+        self.dipn.recv_node_info(next_node,M,s) 
+        return

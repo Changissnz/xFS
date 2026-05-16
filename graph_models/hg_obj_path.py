@@ -250,6 +250,12 @@ class PathTypeDI(DirectedImplicationPath):
     def path_record_to_dict(self): 
         return {x[0]:x[1] for x in self.navigator_path_record} 
 
+    def info_for_node(self,n):
+        assert n in self.node_act_function_map 
+        q = self.node_act_function_map[n]  
+        x = q.n2mt_map
+        return x,q.lin_exp_value
+
     @staticmethod 
     def generate_instance(G,node_value_range_map,ratio_indirect_activation:float,\
         prior_dependency_ratio:float,activation_type:str,prg):  
