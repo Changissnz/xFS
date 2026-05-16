@@ -66,9 +66,7 @@ class DIPNMaxMinDB:
             vs = Vector2FloatSolverTypeRX(values,index_ranges,v1,self.prg) 
             vs.solve()
 
-            weights = vs.W #np.ceil(vs.W * 10 ** 5) / 10 ** 5 
-            #weights = np.round(weights,5) 
-            #print("")
+            weights = vs.W
             for (node_idn,w) in zip(keys,weights): 
                 self.maxmin_node_value_assignment(node_idn,w) 
 
@@ -160,7 +158,6 @@ class DIPathNavigator:
     """
     def __next__(self): 
         if self.fin_stat: return 
-
         # case: at head 
         if type(self.loc) == type(None): 
             n = self.head 
@@ -187,7 +184,6 @@ class DIPathNavigator:
         self.node_to_expense_map[n].append(v) 
         self.node_to_expense_map[n] = self.node_to_expense_map[n][:DEFAULT_DIPNAV_LOG_LENGTH]
         self.total_expense += v 
-
         return True,(n,v)
 
     def update_loc(self,loc): 
@@ -319,15 +315,13 @@ class DIPathNavigatorHandler:
                     self.dipn.active_path.append((node_idn,value))
                     self.dipn.update_loc(node_idn)
                     self.dipn.entire_path.append(node_idn)
-                    ##self.entire_path.append(node_idn)   
                 return 
 
             # backtrack 
             else:
                 self.dipn.backtrack_from_nodeset(x2) 
                 self.dipn.update_loc(stat1)
-                self.entire_path.append(stat1) 
-
+                self.dipn.entire_path.append(stat1) 
         else: 
             self.ptdi.register_backtrack()
         return 

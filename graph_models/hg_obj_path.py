@@ -38,7 +38,9 @@ class NodeActivationFunctionTypeMT:
         return
 
     def __str__(self): 
-        x = "node idn: {}  type: {}\n".format(self.node_idn,self.act_type)
+        x = "node idn: {}  type: {}  act. node idn: {}\n".format(self.node_idn,\
+            self.act_type,self.activation_node_idn)
+
         x += "\n"
         q = sorted(self.n2mt_map.keys())
         for q_ in q: 
@@ -81,7 +83,6 @@ class NodeActivationFunctionTypeMT:
                 return False 
         return True 
                 
-
     def register(self,d):
         assert type(d) == defaultdict 
 
@@ -96,7 +97,6 @@ class NodeActivationFunctionTypeMT:
             c = c + (v * d[k]) 
         #print("keys: {} / {}".format(sorted(d.keys()),sorted(self.n2mt_map.keys())))
         #print("S: {} / {}".format(c,self.lin_exp_value))
-
         return c - self.lin_exp_value, c >= self.lin_exp_value 
 
     def register__single(self,d): 
@@ -324,6 +324,7 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # case: register failure 
         if not stat:
+            print("[!] registering failure")
             stat2 = self.register_failure(node_idn)
 
         # log node and value if pass or pending failure 
@@ -340,7 +341,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         assert len(self.navigator_path_record) > 0 
         q = self.navigator_path_record.pop(-1)
 
-        self.remove_activated_pending_failures({q[0]})
+        ##self.remove_activated_pending_failures({q[0]})
         return q  
 
     def register_failure(self,node_idn): 
@@ -348,26 +349,28 @@ class ObjectivePathTypeDI(PathTypeDI):
         q = self.node_act_function_map[node_idn] 
         
         immediate_fail = q.activation_node_idn == node_idn
-
         # case: pending failure 
         if not immediate_fail: 
             self.failure_record_map[q.activation_node_idn].append(node_idn) 
+            ##print("AFTER {}: {}".format(node_idn,self.failure_record_map)) 
+
         return immediate_fail
 
+    '''
     def remove_activated_pending_failures(self,nodeset): 
-        for k in self.failure_record_map.keys(): 
-            v = self.failure_record_map[k] 
-            v = [v_ for v_ in v if v_ not in nodeset]
-            self.failure_record_map[k] = v 
+        for k in nodeset: 
+            if k in self.failure_record_map: 
+                del self.failure_record_map[k] 
+    ''' 
 
     def process_pending_failure(self,node_idn): 
 
         q = self.failure_record_map[node_idn] 
         if len(q) == 0: 
             return set(),None 
-
+        print("YESSST")
         del self.failure_record_map[node_idn] 
-        self.remove_activated_pending_failures(q) 
+        ##self.remove_activated_pending_failures(q) 
 
         S = self.spine() 
         indices = [] 
@@ -381,11 +384,6 @@ class ObjectivePathTypeDI(PathTypeDI):
         # go through travel history, choose index where 
         # min. node of failure occurs. 
         nprecord = [x[0] for x in self.navigator_path_record] 
-
-        #print("NPR: ",nprecord) 
-        #print("Q: ",q) 
-        #print("MIN NODE: ",min_node_of_failure)
-        
         index2 = nprecord.index(min_node_of_failure) 
         index2_ = index2 + 1 
         
