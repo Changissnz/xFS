@@ -206,7 +206,7 @@ class NodeActivationFunctionTypeMT:
         return n2f_map 
 
 """
-Objective Path, Type (D)irected (I)mplication. 
+Path Type (D)irected (I)mplication. 
 
 G := defaultdict, base graph for <DirectedImplicationPath> 
 node_value_range_map := dict, node idn -> acceptable range for input 
