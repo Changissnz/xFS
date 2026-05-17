@@ -31,6 +31,7 @@ class DIPNMaxMinDB:
 
         self.nt_info = dict() 
         self.maxmin_node_values = dict() 
+        self.untouched_nodes = [] 
 
         self.dipn_type = None 
 
@@ -45,6 +46,7 @@ class DIPNMaxMinDB:
             assert self.dipn_type == dtype 
 
         self.nt_info[node_idn] = value 
+        self.update_untouched_nodes(node_idn,value[0])
         self.maxmin_recal(node_idn) 
 
     def __getitem__(self, key):
@@ -57,7 +59,7 @@ class DIPNMaxMinDB:
         # type: single 
         if type(v1) == type(None): 
             for k,v in v0.items(): 
-                self.maxmin_node_value_assignment(node_idn,v)
+                self.maxmin_node_value_assignment(k,v)
         # type: linexp 
         else: 
             keys = sorted(v0.keys()) 
@@ -82,12 +84,21 @@ class DIPNMaxMinDB:
         
         self.maxmin_node_values[node_idn] = v2_ 
 
+    """
+    adds required nodes from n2v_map, besides from `node_idn`, to 
+    `untouched_nodes` cache. 
+    """
+    def update_untouched_nodes(self,node_idn,n2v_map): 
+        s = sorted(set(n2v_map.keys()) - {node_idn})  
+        self.untouched_nodes.extend(s) 
+        return
+
 """
 Navigator for <PathTypeDI>. 
 """
 class DIPathNavigator: 
 
-    def __init__(self,G,node_value_range_map,prg,backtrack_pr=0.5):
+    def __init__(self,G,node_value_range_map,prg,backtrack_pr=0.5,complete_backtrack_pr=0.):
         assert type(G) == defaultdict
         assert set(G.keys()) == set(node_value_range_map.keys())
 
@@ -108,7 +119,9 @@ class DIPathNavigator:
         self.nv_map = node_value_range_map
         self.prg = prg 
         self.bt_pr = None 
-        self.set_backtrack_pr(backtrack_pr)
+        self.complete_bt_pr = None 
+        self.complete_bt_mode = False  
+        self.set_backtrack_pr(backtrack_pr,complete_backtrack_pr)
         self.loc = None
 
         # each element is (node,value)
@@ -128,14 +141,15 @@ class DIPathNavigator:
         assert t in PATH_TYPE_DI_NODE_ACTIVATION_TYPES
         self.dip_type = t 
 
-    def set_backtrack_pr(self,pr):
+    def set_backtrack_pr(self,pr,cpr=0.):
         assert 0. <= pr <= 1. 
+        assert 0. <= cpr <= 1. 
         self.bt_pr = pr
+        self.complete_bt_pr = cpr 
         return
 
     def recv_node_info(self,node_idn,M,s): 
         self.maxmin_db[node_idn] = (M,s) 
-        #self.node_threshold_info[node_idn] = (M,s) 
 
     def max_current_node_support(self):
         d = dict() 
@@ -161,24 +175,27 @@ class DIPathNavigator:
         # case: at head 
         if type(self.loc) == type(None): 
             n = self.head 
+            self.complete_bt_mode = False 
         else: 
+            if self.complete_bt_mode: 
+                x = self.default_backtrack() 
+                return False,x 
+
             d = prg_decimal(self.prg,[0.,1.]) 
 
             # case: choose to backtrack 
             if d < self.bt_pr and len(self.active_path) > 0:
-                x = self.active_path.pop(-1)
-                if len(self.active_path) == 0: 
-                    self.loc = None 
-                else: 
-                    self.loc = self.active_path[-1][0] 
-                    self.entire_path.append(self.loc) 
+                
+                d2 = prg_decimal(self.prg,[0.,1.]) 
+                # set complete backtracking to True 
+                if d2 < self.complete_bt_pr: 
+                    self.complete_bt_mode = True 
 
+                x = self.default_backtrack() 
                 return False,x
 
             # case: move on 
-            next_candidates = sorted(self.G[self.loc]) 
-            i = int(self.prg()) % len(next_candidates) 
-            n = next_candidates[i] 
+            n = self.choose_next_node() 
         
         v = self.choose_support_value(n)
         self.node_to_expense_map[n].append(v) 
@@ -192,6 +209,19 @@ class DIPathNavigator:
 
         if self.loc == self.tail: 
             self.fin_stat = True 
+
+    def choose_next_node(self): 
+        q = self.maxmin_db.untouched_nodes 
+        
+        neighbors = self.G[self.loc]
+        neighbors_ = sorted(neighbors.intersection(set(q))) 
+
+        if len(neighbors_) == 0: 
+            neighbors_ = sorted(neighbors) 
+
+        i = int(self.prg()) % len(neighbors_) 
+        n = neighbors_[i] 
+        return n 
 
     def choose_support_value(self,node_idn):
         # case: min threshold value available 
@@ -212,6 +242,17 @@ class DIPathNavigator:
 
         v = modulo_in_range(self.prg(),R2) 
         return v 
+
+    def default_backtrack(self): 
+        assert len(self.active_path) > 0 
+
+        x = self.active_path.pop(-1)
+        if len(self.active_path) == 0: 
+            self.loc = None 
+        else: 
+            self.loc = self.active_path[-1][0] 
+            self.entire_path.append(self.loc) 
+        return x 
 
     """
     used in cases of rejection from <PathTypeDI>. 
@@ -280,8 +321,8 @@ class DIPathNavigatorHandler:
             value = x[1]
 
             # feed navigator on-contact threshold info for node, if `open_info`
-            if self.info_mode: 
-                self.feed_info_to_navigator(node_idn) 
+            #if self.info_mode: 
+            self.feed_info_to_navigator(node_idn) 
 
             is_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
 
@@ -332,5 +373,9 @@ class DIPathNavigatorHandler:
     def feed_info_to_navigator(self,next_node): 
 
         M,s = self.ptdi.info_for_node(next_node) 
-        self.dipn.recv_node_info(next_node,M,s) 
+        
+        if self.info_mode: 
+            self.dipn.recv_node_info(next_node,M,s) 
+        else: 
+            self.dipn.update_untouched_nodes(next_node,M)
         return
