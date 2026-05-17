@@ -283,6 +283,9 @@ class DIPathNavigator:
         assert type(prg) in {MethodType,FunctionType}
         return DIPathNavigator(ptdi.G,ptdi.nv_map,prg) 
 
+"""
+Processes <DIPathNavigator> decisions on a Path Type (D)irected (I)mplication.
+"""
 class DIPathNavigatorHandler: 
 
     def __init__(self,ptdi:PathTypeDI,dipn:DIPathNavigator,info_mode:int,verbose):  
@@ -324,11 +327,11 @@ class DIPathNavigatorHandler:
             #if self.info_mode: 
             self.feed_info_to_navigator(node_idn) 
 
-            is_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
+            does_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
 
             if self.verbose: 
-                print("advancing? ",bool(is_advance))
-                if is_advance: 
+                print("advancing? ",bool(does_advance))
+                if does_advance: 
                     print("difference with threshold: {}".format(x2))
                     print("success: {}".format(stat1))
                     print("immediate effect: {}".format(stat2)) 
@@ -337,7 +340,7 @@ class DIPathNavigatorHandler:
                     print("location after backtracking: {}".format(stat1))
 
             # 
-            if is_advance: 
+            if does_advance: 
                 
                 # case: failure 
                 if not stat1: 

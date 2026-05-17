@@ -399,28 +399,3 @@ class ObjectivePathTypeDI(PathTypeDI):
             ratio_indirect_activation,prior_dependency_ratio,\
             activation_type,prg)
         return ObjectivePathTypeDI(ptdi.G,ptdi.nv_map,ptdi.node_act_function_map)
-
-class InadvertentPathTypeDI(PathTypeDI): 
-
-    def __init__(self,G,node_value_map,node_act_function_map,prg): 
-        assert type(prg) in {MethodType,FunctionType}
-        super().__init__(G,node_value_map,node_act_function_map)
-        self.prg = prg 
-
-        self.support = 0 
-        return
-
-    def add_support(self,s): 
-        return -1 
-
-    def auto_register(self,node_idn,value:float):  
-        return -1 
-
-    @staticmethod
-    def generate_instance(G,node_value_range_map,ratio_indirect_activation:float,\
-        prior_dependency_ratio:float,activation_type:str,prg):  
-
-        ptdi = PathTypeDI.generate_instance(G,node_value_range_map,\
-            ratio_indirect_activation,prior_dependency_ratio,\
-            activation_type,prg)
-        return InadvertentPathTypeDI(ptdi.G,ptdi.nv_map,ptdi.node_act_function_map)

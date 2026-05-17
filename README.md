@@ -9,6 +9,10 @@ hardware and those projects' code implementation have pressured me to cease thei
 further development.
 
 ```
+NOTE: Hiatus for indefinite time. 
+```
+
+```
 NOTE: Project has entered progressive mode on 3/3/2026. Further developments will not 
 go according to previous rate of development. 
 ```
