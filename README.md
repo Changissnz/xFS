@@ -10,7 +10,7 @@ both hardware and those projects' code implementation have pressured me to cease
 further development.
 
 ```
-NOTE: Hiatus for indefinite time. 
+NOTE: 5/18/2026, Hiatus for indefinite time. 
 ```
 
 ```
