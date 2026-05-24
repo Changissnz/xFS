@@ -29,6 +29,7 @@ class DIPNMaxMinDB:
         self.nv_map = nv_map 
         self.prg = prg 
 
+        # node -> ()
         self.nt_info = dict() 
         self.maxmin_node_values = dict() 
         self.untouched_nodes = [] 
@@ -171,6 +172,7 @@ class DIPathNavigator:
             node backtracked from 
     """
     def __next__(self): 
+
         if self.fin_stat: return 
         # case: at head 
         if type(self.loc) == type(None): 
@@ -245,7 +247,6 @@ class DIPathNavigator:
 
     def default_backtrack(self): 
         assert len(self.active_path) > 0 
-
         x = self.active_path.pop(-1)
         if len(self.active_path) == 0: 
             self.loc = None 
@@ -274,6 +275,9 @@ class DIPathNavigator:
     def backtrack_from_nodeset(self,nodeset): 
         x = [a[0] for a in self.active_path] 
         indices = [x.index(n) for n in nodeset] 
+        if len(indices) == 0: 
+            return 
+
         index = min(indices)
         self.active_path = self.active_path[:index] 
 
@@ -300,8 +304,19 @@ class DIPathNavigatorHandler:
         self.verbose = verbose 
         return 
 
+    """
+    return: (0|1,?,?,?)
+
+    - CASE 0: have to backtrack due to pending failures activating 
+        - set::(backtracked nodes)
+        - current location [after backtracking]
+        - True: immediate effect 
+    - CASE 1: other
+        - difference between score and min. threshold score 
+        - bool: ?success status?
+        - bool: ?immediate effect? 
+    """
     def __next__(self): 
-        
         if self.dipn.fin_stat: return 
 
         if self.verbose: 
@@ -310,7 +325,6 @@ class DIPathNavigatorHandler:
 
         # have navigator make next node decision 
         is_forward,x = next(self.dipn)
-
         if self.verbose: 
             print("moving forward? ",is_forward) 
             if is_forward: 
@@ -380,5 +394,5 @@ class DIPathNavigatorHandler:
         if self.info_mode: 
             self.dipn.recv_node_info(next_node,M,s) 
         else: 
-            self.dipn.update_untouched_nodes(next_node,M)
+            self.dipn.maxmin_db.update_untouched_nodes(next_node,M)
         return

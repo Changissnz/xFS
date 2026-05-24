@@ -16,7 +16,7 @@ def NodePath_sequence_to_1d_sequence(nseq):
 A category-centric structure used by class<PRClassExpectedEffectTypeHL>. 
 
 Represents arbitrary category C with `label_set` as the property space. 
-Graph `G` is a lattice graph. 
+Graph `G` is a lattice graph of dimension |`label_set`| x |`label_set`|. 
 NOTE: `G` is not checked by program for being a lattice graph. 
 
 Every label l_i is associated with a node pair (h_i,t_i), the corresponding 

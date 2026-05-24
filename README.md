@@ -10,6 +10,10 @@ both hardware and those projects' code implementation have pressured me to cease
 further development.
 
 ```
+NOTE: End hiatus. And fuck the jury when there's a judge. R.I.P done ran that club ;] ;] ;] 
+```
+
+```
 NOTE: 5/18/2026, Hiatus for indefinite time. 
 ```
 

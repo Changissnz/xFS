@@ -32,6 +32,7 @@ class NodeActivationFunctionTypeMT:
         else: assert type(lin_exp_value) == type(None)
         self.node_idn = node_idn 
         self.activation_node_idn = activation_node_idn 
+        # node -> min threshold (float) 
         self.n2mt_map = n2mt_map 
         self.act_type = activation_type 
         self.lin_exp_value = lin_exp_value 
@@ -85,7 +86,7 @@ class NodeActivationFunctionTypeMT:
                 
     def register(self,d):
         assert type(d) == defaultdict 
-
+        ##print("NODE IDN {} ACTIVATION {}".format(self.node_idn,self.activation_node_idn))
         if self.act_type == "linexp": 
             return self.register__linexp(d) 
         return self.register__single(d) 
@@ -158,6 +159,7 @@ class NodeActivationFunctionTypeMT:
         # get number of nodes with indirect activation (post-contact activation)
         max_indirect_activation = len(dip.G) - 2 
         num_indirect_activation = ceil(max_indirect_activation * ratio_indirect_activation) 
+        ##print("INDIRECT ACTIVATION {} / {}".format(num_indirect_activation,len(dip.G))) 
         indirect_activated_nodes = [] 
         if num_indirect_activation > 0: 
             X = sorted(dip.spine().p[:-2]) 
@@ -267,7 +269,7 @@ class PathTypeDI(DirectedImplicationPath):
         return PathTypeDI(G,node_value_range_map,n2f_map) 
 
 """
-
+Subclass of <PathTypeDI>. 
 """
 class ObjectivePathTypeDI(PathTypeDI):
 
@@ -299,7 +301,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         # case: check that this node is out-vertex of last node 
         else: 
             t = self.navigator_path_record[-1][0] 
-            assert node_idn in self.G[t]
+            assert node_idn in self.G[t], "ERROR IN={} OUT={} \nGRAPH\n{}".format(t,node_idn,self.G) 
 
         # check that value fits required range for node 
         r = self.nv_map[node_idn] 
@@ -307,7 +309,7 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # case: pending failures activate 
         backtracked_nodes,new_loc = self.process_pending_failure(node_idn) 
-        if len(backtracked_nodes) > 0: 
+        if type(new_loc) != type(None):  
             return 0,backtracked_nodes,new_loc,True 
 
         q = self.node_act_function_map[node_idn] 
@@ -322,7 +324,7 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # case: register failure 
         if not stat:
-            print("[!] registering failure")
+            ##print("[!] registering failure")
             stat2 = self.register_failure(node_idn)
 
         # log node and value if pass or pending failure 
@@ -338,8 +340,6 @@ class ObjectivePathTypeDI(PathTypeDI):
     def register_backtrack(self): 
         assert len(self.navigator_path_record) > 0 
         q = self.navigator_path_record.pop(-1)
-
-        ##self.remove_activated_pending_failures({q[0]})
         return q  
 
     def register_failure(self,node_idn): 
@@ -361,8 +361,7 @@ class ObjectivePathTypeDI(PathTypeDI):
                 del self.failure_record_map[k] 
     ''' 
 
-    def process_pending_failure(self,node_idn): 
-
+    def process_pending_failure(self,node_idn):         
         q = self.failure_record_map[node_idn] 
         if len(q) == 0: 
             return set(),None 
@@ -381,6 +380,8 @@ class ObjectivePathTypeDI(PathTypeDI):
         # go through travel history, choose index where 
         # min. node of failure occurs. 
         nprecord = [x[0] for x in self.navigator_path_record] 
+        if min_node_of_failure not in nprecord: 
+            return set(),None 
         index2 = nprecord.index(min_node_of_failure) 
         index2_ = index2 + 1 
         

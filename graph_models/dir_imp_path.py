@@ -154,6 +154,10 @@ def generate_directed_implication_path(num_nodes,extra_edge_ratio:float,prg,star
     G,_ = extra_edges_for_directed_path(N,extra_edges,prg)
     return G 
 
+"""
+Representation of directed implication path. See top of file for description 
+of this graph category. 
+"""
 class DirectedImplicationPath: 
 
     def __init__(self,G):  
