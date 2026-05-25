@@ -67,7 +67,6 @@ class DIPathNavigatorClass(unittest.TestCase):
     check for correct pending failure 
     """
     def test__DIPathNavigator__next__case_2(self): 
-        print("FAKE TEST: populist outrage")
 
         num_nodes = 50  
         extra_edge_ratio = 0.0# 0.05 
