@@ -132,7 +132,7 @@ class DIPathNavigatorClass(unittest.TestCase):
         assert i == 801, "got {}".format(i)  
 
     """
-    check for correct pending failure 
+    check for correct number of iterations until completion 
     """
     def test__DIPathNavigator__next__case_4(self): 
         num_nodes = 14 #20  
@@ -169,6 +169,138 @@ class DIPathNavigatorClass(unittest.TestCase):
             i += 1 
 
         assert dipn.loc == 6 
+
+    """
+    an example of the differences in traversal finish on a path of 3 nodes, b/t 
+    different info modes and connectivity. 
+    """
+    def test__DIPathNavigator__next__case_5(self): 
+
+        num_nodes = 3  
+        extra_edge_ratio = 0.0# 0.05 
+        ratio_indirect_activation = 0.0  
+        prior_dependency_ratio = 0.5 
+
+        # closed info 
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            info_mode=0)
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat:
+            next(dipnh) 
+            i += 1 
+        assert i == 5, "got {}".format(i) 
+
+        # open info 
+        prg=prg__LCG(34.55,-112.33,5433,91766.66)
+        prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            info_mode=1,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat:
+            next(dipnh) 
+            i += 1 
+        assert i == 12, "got {}".format(i) 
+        
+        # extra edge b/t nodes 0 and 2 
+            
+            # closed info 
+        extra_edge_ratio = 0.5
+        
+        prg = prg__LCG(34.55,-112.33,5433,91766.66)
+        prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            info_mode=0,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat:
+            next(dipnh) 
+            i += 1 
+        assert i == 45, "got {}".format(i)  
+
+            # open info 
+        prg = prg__LCG(34.55,-112.33,5433,91766.66)
+        prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            info_mode=1,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat:
+            next(dipnh) 
+            i += 1 
+        assert i == 10, "got {}".format(i) 
+        return
+
+    """
+    an example of the differences in traversal finish on a path of 3 nodes, b/t 
+    different info modes and connectivity. 
+    """
+    def test__DIPathNavigator__next__case_6(self): 
+        
+        num_nodes = 3  
+        extra_edge_ratio = 0.0# 0.05 
+        ratio_indirect_activation = 0.0  
+        prior_dependency_ratio = 0.5 
+
+        # closed info 
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            activation_type="linexp",info_mode=0)
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat and i < 1000:
+            next(dipnh) 
+            i += 1 
+        assert i == 5, "got {}".format(i) 
+        
+        # open info (different PRNGs) 
+        prg=prg__LCG(12.55,-112.33,5433,9766.66)
+        prg2 = prg__LCG(53.41,3+4/3,-55.5,14610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            activation_type="linexp",info_mode=1,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat and i < 1000:
+            next(dipnh) 
+            i += 1 
+        assert i == 83, "got {}".format(i) 
+        
+        # extra edge b/t nodes 0 and 2 
+            
+            # closed info 
+        extra_edge_ratio = 0.5
+        
+        prg = prg__LCG(34.55,-112.33,5433,91766.66)
+        prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            activation_type="linexp",info_mode=0,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat and i < 1000:
+            next(dipnh) 
+            i += 1 
+        assert i == 17, "got {}".format(i)  
+
+            # open info 
+        prg = prg__LCG(34.55,-112.33,5433,91766.66)
+        prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            activation_type="linexp",info_mode=1,prg=prg,prg2=prg2) 
+        dipn = dipnh.dipn 
+
+        i = 0 
+        while not dipn.fin_stat:
+            next(dipnh) 
+            i += 1 
+        assert i == 326, "got {}".format(i) 
+        return
 
 
 if __name__ == '__main__':
