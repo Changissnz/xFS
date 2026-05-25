@@ -237,8 +237,7 @@ class DIPathNavigatorClass(unittest.TestCase):
         return
 
     """
-    an example of the differences in traversal finish on a path of 3 nodes, b/t 
-    different info modes and connectivity. 
+    same as case 5, except activation type is `linexp`, not `single`.
     """
     def test__DIPathNavigator__next__case_6(self): 
         
