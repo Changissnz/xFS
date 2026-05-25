@@ -3,6 +3,8 @@ from .bfs import *
 from types import MethodType,FunctionType
 from math import ceil 
 
+DEFAULT_DIRIMP_PATH_MAX_NUMPATHS_PER_NODEPAIR = 20 
+
 """
 A directed implication path is a graph consisting of a 
 a spine S, a directed path, connecting all nodes of the graph 
@@ -79,7 +81,8 @@ def verify_directed_implication_path(G):
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION,\
         nextnode_priority_function=None,no_duplicate_touch_nodes=False) 
     bc.exec() 
-    bc.store_minpaths(ns=None,num_paths=float('inf'),cost_func=sum,prg=None) 
+    bc.store_minpaths(ns=None,num_paths=DEFAULT_DIRIMP_PATH_MAX_NUMPATHS_PER_NODEPAIR,\
+        cost_func=sum,prg=None) 
 
     # get the longest path from head to tail, and make sure path includes all 
     # nodes of G. 

@@ -296,7 +296,8 @@ class DIPathNavigatorHandler:
         assert issubclass(type(ptdi),PathTypeDI) 
         assert type(dipn) == DIPathNavigator
         assert ptdi.nv_map == dipn.nv_map 
-
+        assert info_mode in {0,1} 
+        
         self.ptdi = ptdi 
         self.dipn = dipn 
         self.dipn.set_type_for_PathDI(self.ptdi.act_type) 

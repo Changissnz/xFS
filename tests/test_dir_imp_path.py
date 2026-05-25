@@ -38,11 +38,12 @@ class DirImpPathFunctions(unittest.TestCase):
         assert M[1] == 9 
         assert M[3] == True 
 
-
+        # not directed from start to finish
         Q1 = generate_graph__path(9,0,False) 
         M1 = verify_directed_implication_path(Q1) 
         assert not M1[3] 
 
+        # edges from source to target cannot go backwards. 
         Q2 = generate_graph__path(7,0,True) 
         Q2[3] |= {1} 
         Q2[4] |= {6} 

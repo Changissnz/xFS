@@ -219,7 +219,7 @@ class PathTypeDI(DirectedImplicationPath):
         super().__init__(G) 
         assert set(node_value_range_map.keys()) == set(G.keys())
         for v in node_value_range_map.values(): 
-            assert is_valid_range(v,True,False) or is_valid_range(v,True,True) 
+            assert is_valid_range(v,True,False) or is_valid_range(v,False,False) 
             assert v[0] > 0 
         assert set(G.keys()) == set(node_act_function_map.keys())
 
