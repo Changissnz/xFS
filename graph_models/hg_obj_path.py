@@ -159,18 +159,11 @@ class NodeActivationFunctionTypeMT:
         # get number of nodes with indirect activation (post-contact activation)
         max_indirect_activation = len(dip.G) - 2 
         num_indirect_activation = ceil(max_indirect_activation * ratio_indirect_activation) 
-        ##print("INDIRECT ACTIVATION {} / {}".format(num_indirect_activation,len(dip.G))) 
+        print("INDIRECT ACTIVATION {} / {}".format(num_indirect_activation,len(dip.G))) 
         indirect_activated_nodes = [] 
         if num_indirect_activation > 0: 
             X = sorted(dip.spine().p[:-2]) 
             indirect_activated_nodes = prg_choose_n(X,num_indirect_activation,prg__single_to_int(prg),is_unique_picker=True)
-
-        # get dependency sets for each node's `n2mt_map`
-        if prior_dependency_ratio == 0.: 
-            extra_edges = [] 
-        else: 
-            extra_edges = dip.possible_extra_edges(prior_dependency_ratio,prg)
-        extra_edges = sorted(extra_edges,key=lambda x:x[1]) 
 
         def dependencies_of_parent_node(p_idn): 
             i = None 
@@ -190,8 +183,16 @@ class NodeActivationFunctionTypeMT:
                 else: 
                     break 
             return dependencies 
-
+    
+        # get dependency sets for each node's `n2mt_map`
         S = dip.spine()
+        extra_edges = [] 
+        for (i,p) in enumerate(S.p): 
+            for j in range(i): 
+                extra_edges.append((S.p[j],p)) 
+        q = ceil(prior_dependency_ratio * len(extra_edges)) 
+        extra_edges = prg_choose_n(extra_edges,q,prg__single_to_int(prg),is_unique_picker=True)
+        extra_edges = sorted(extra_edges,key = lambda x: x[1]) 
 
         # generate function for node, in order 
         nodes = sorted(dip.G.keys()) 

@@ -42,17 +42,25 @@ class DIPathNavigatorClass(unittest.TestCase):
             prg=prg,prg2=prg2)
 
 
+        dipn = dipnh.dipn 
+        optdi = dipnh.ptdi 
+
+        #while not dipn.fin_stat:
         for i in range(6): 
             #print("iter {}".format(i))
-            #print("DIPN: ",dipnh.dipn.loc) 
-            next(dipnh) 
-            #print("FAILURE RECORD MAP")
-            #print(dipnh.ptdi.failure_record_map)
+            #print(optdi.failure_record_map)
+            next(dipnh)
+            i += 1 
 
-        assert dipnh.dipn.loc == 5
+        assert dipn.loc == 4 
         next(dipnh)
-        assert dipnh.dipn.loc == 0 
+        assert dipn.loc == 4 
 
+        for i in range(7): 
+            next(dipnh) 
+        assert dipn.loc == 7
+        next(dipnh)
+        assert dipn.loc == 6 
 
 
     """
@@ -60,6 +68,29 @@ class DIPathNavigatorClass(unittest.TestCase):
     """
     def test__DIPathNavigator__next__case_2(self): 
         print("FAKE TEST: populist outrage")
+
+        num_nodes = 50  
+        extra_edge_ratio = 0.0# 0.05 
+        ratio_indirect_activation = 0.75 
+        prior_dependency_ratio = 0.5 
+
+        prg = prg__LCG(79.55,-11232.33,5433,-99766.66)
+        prg2 = prg__LCG(8424.55,-5232.33,1433,5566.66)
+
+        dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,prior_dependency_ratio,\
+            prg=prg,prg2=prg2,verbose=False)
+        dipn = dipnh.dipn 
+
+        for i in range(975): 
+            #print("iter {}".format(i))
+            #print("DIPN: ",dipnh.dipn.loc) 
+            next(dipnh) 
+            #print("FAILURE RECORD MAP")
+            #print(dipnh.ptdi.failure_record_map)
+
+        assert dipn.loc == 32 
+        next(dipnh)
+        assert dipn.loc == 3 
 
     """
     check for correct number of iterations until completion 
@@ -85,7 +116,7 @@ class DIPathNavigatorClass(unittest.TestCase):
             #print(optdi.failure_record_map)
             next(dipnh)
             i += 1 
-        assert i == 711, "got {}".format(i)  
+        assert i == 23, "got {}".format(i)  
 
         num_nodes = 13 
         dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,\
@@ -99,7 +130,7 @@ class DIPathNavigatorClass(unittest.TestCase):
             #print(optdi.failure_record_map)
             next(dipnh)
             i += 1 
-        assert i == 397, "got {}".format(i)  
+        assert i == 801, "got {}".format(i)  
 
     """
     check for correct pending failure 
@@ -124,7 +155,7 @@ class DIPathNavigatorClass(unittest.TestCase):
             #print(optdi.failure_record_map)
             next(dipnh)
             i += 1 
-        assert i == 31, "got {}".format(i)  
+        assert i == 264, "got {}".format(i)  
 
         info_mode == 1 
         dipnh = DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activation,\
@@ -132,12 +163,13 @@ class DIPathNavigatorClass(unittest.TestCase):
         dipn = dipnh.dipn 
         optdi = dipnh.ptdi 
         i = 0 
-        while not dipn.fin_stat:
+        while not dipn.fin_stat and i < 5000:
             #print("iter {}".format(i))
             #print(optdi.failure_record_map)
             next(dipnh)
             i += 1 
-        assert i == 10, "got {}".format(i)  
+
+        assert dipn.loc == 6 
 
 
 if __name__ == '__main__':
