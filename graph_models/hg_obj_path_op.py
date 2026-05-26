@@ -29,7 +29,7 @@ class DIPNMaxMinDB:
         self.nv_map = nv_map 
         self.prg = prg 
 
-        # node -> ()
+        # node -> (M: dependent node -> value, float f (if `linexp`)|None) 
         self.nt_info = dict() 
         self.maxmin_node_values = dict() 
         self.untouched_nodes = [] 

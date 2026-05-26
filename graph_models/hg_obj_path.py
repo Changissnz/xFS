@@ -355,19 +355,11 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         return immediate_fail
 
-    '''
-    def remove_activated_pending_failures(self,nodeset): 
-        for k in nodeset: 
-            if k in self.failure_record_map: 
-                del self.failure_record_map[k] 
-    ''' 
-
     def process_pending_failure(self,node_idn):         
         q = self.failure_record_map[node_idn] 
         if len(q) == 0: 
             return set(),None 
         del self.failure_record_map[node_idn] 
-        ##self.remove_activated_pending_failures(q) 
 
         S = self.spine() 
         indices = [] 
