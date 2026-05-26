@@ -240,7 +240,7 @@ class DIPathNavigator:
         if len(expense_seq) == 0: 
             R2 = R 
         else: 
-            max_expense = max(expense_seq)#+ 10 ** -9 
+            max_expense = max(expense_seq) 
             min_range = max([max_expense,R[0]]) 
 
             R2 = sorted([min_range,R[1]]) 

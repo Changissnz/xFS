@@ -64,6 +64,7 @@ failed support values it provides to n_q. For every subsequent attempt to pass n
 navigator chooses a float greater than its latest maximum failed support value it 
 previously provided. If navigator has never encountered n_q, it simply chooses a PRNG 
 value in the node-value range specified during instantiation. 
+NOTE: simplified description. See code for specifics. 
 
 Navigator, throughout its course of travel, has a map 
     M: node n that it traveled on -> navigator's support value for n. 
