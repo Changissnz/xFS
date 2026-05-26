@@ -149,6 +149,9 @@ class DIPathNavigator:
         self.complete_bt_pr = cpr 
         return
 
+    def fetch_backtrack_pr(self): 
+        return (self.bt_pr,self.complete_bt_pr) 
+
     def recv_node_info(self,node_idn,M,s): 
         self.maxmin_db[node_idn] = (M,s) 
 
@@ -303,7 +306,13 @@ class DIPathNavigatorHandler:
         self.dipn.set_type_for_PathDI(self.ptdi.act_type) 
         self.info_mode = info_mode 
         self.verbose = verbose 
+
+        self.c = 0 
         return 
+
+    def set_prg(self,prg):
+        assert type(prg) in {MethodType,FunctionType} 
+        self.dipn.prg = prg 
 
     """
     return: (0|1,?,?,?)
@@ -383,6 +392,8 @@ class DIPathNavigatorHandler:
                 self.dipn.entire_path.append(stat1) 
         else: 
             self.ptdi.register_backtrack()
+
+        self.c += 1 
         return 
 
     """

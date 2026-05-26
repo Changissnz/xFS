@@ -1,0 +1,223 @@
+LEMMA: A navigator will not be able to completely traverse an Objective Path Type 
+       Directed Implication if this condition holds, throughout its travel: 
+    - Navigator's decision-making PRNG fails at node n, and it does not backtrack
+        to all the depended nodes of n to solve its activation function. 
+    
+LEMMA: The characteristic way by which a navigator satisfies the condition specified 
+       in the previous lemma is if the navigator's PRNG is a cyclical decider that 
+       does not include the entire space of possible decision sequences. There are 
+       two primary features a cyclical decider exemplifies itself: 
+       -  navigator never takes an out-neighbor subset of node n when it is on it. If 
+       navigator has to provide support to any nodes of that out-neighbor subset, there 
+       is a non-zero probability navigator can never pass node n. 
+       - Another example is when navigator never backtracks back to node n_b when it 
+       fails to pass through node n. 
+
+#-------------------------------------------------------------------------------------------------------
+from graph_problems.efb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import * 
+import time 
+
+node_value_range = [1.,35.] 
+extra_edge_ratio = 0.25 
+ratio_indirect_activation = 0.4 
+prior_dependency_ratio = 0.32 
+activation_type = ? 
+info_mode = 1 
+
+prg = prg__LCG(56.6,-177.5,345.88,6310.54) 
+
+efbot = EndsFixatedBot.generate_instance(node_value_range,extra_edge_ratio,ratio_indirect_activation,\
+        prior_dependency_ratio,activation_type,info_mode,prg)
+
+opers = [add,mul]
+
+prg0 = prg__LCG(-67.56,144.5,-766.5,-7876.55) 
+prg1 = prg__LCG(134.56,-44.5,766.5,99876.22) 
+prg2 = prg__LCG(3457.56,1144.5,6.5,10000.11) 
+
+prng_seq0 = prg_to_prg__LCG_sequence(deepcopy(prg0),5,3+44/47) 
+prng_seq0 = [merge_two_prgs(deepcopy(prg0),P0,opers[i % 2]) for (i,P0) in enumerate(prng_seq0)]
+
+prng_seq1 = prg_to_prg__LCG_sequence(deepcopy(prg1),5,2+44/47-1/17)  
+prng_seq1 = [merge_two_prgs(deepcopy(prg1),P1,opers[i % 2]) for (i,P1) in enumerate(prng_seq1)] 
+
+prng_seq2 = prg_to_prg__LCG_sequence(deepcopy(prg2),5,4-33/35)
+prng_seq2 = [merge_two_prgs(deepcopy(prg2),P2,opers[i % 2]) for (i,P2) in enumerate(prng_seq2)] 
+prng_seq = prng_seq0 + prng_seq1 + prng_seq2
+
+EFB_env_run = EFB_env_run_(2000)
+EFB_env_mode_shift_function = EFB_env_mode_shift_function_([(0.5,0.),(0.2,0.2),(0.1,0.5),(0.3,0.3),(0.15,0.15)]) 
+EFB_env_cmp_solution = EFB_env_cmp_solution_(2)
+
+S = SimulationSolutionSearch(efbot,EFB_env_run,prng_seq,\
+        EFB_env_prng_assignment_function,EFB_env_mode_shift_function,\
+        EFB_env_solution_fetch_function,EFB_env_cmp_solution,verbose=True) 
+
+i = 0 
+t = time.time()
+while not S.fin_stat:     
+    S.process_one()
+    t2 = time.time()
+    print("{} duration: {}".format(i,t2-t))
+    t = time.time()
+    i += 1 
+
+print("scores")
+Q = [round(q[2][1],5) for q in S.results]
+print(Q)
+print("---------------------------------------")
+
+print("OVERALL")
+print("- min: ",round(np.min(Q),5)) 
+print("- max: ",round(np.max(Q),5)) 
+print("- mean: ",round(np.mean(Q),5)) 
+
+print("BY BACKTRACKING PR") 
+D = defaultdict(list) 
+
+for R in S.results: 
+    bpr = R[1].dipn.fetch_backtrack_pr()
+    D[bpr].append(R[2][1]) 
+
+D2 = {k:(np.min(v),np.max(v),np.mean(v)) for k,v in D.items()} 
+for k,v in D2.items(): 
+    print("\t\t** PR: ",k)
+    print("- min: ",round(np.min(v[0]),5)) 
+    print("- max: ",round(np.max(v[1]),5)) 
+    print("- mean: ",round(np.mean(v[2]),5)) 
+    print() 
+
+
+######################## RESULTS ##############################
+
+###### TRIAL 1: 
+
+change line 26 to 
+
+activation_type = "single" 
+
+    ###### END RESULTS 
+
+scores
+[250.73108, 142.7025, 79.02558, 345.40451, 75.19971, 142.92114, 400.63002, 
+376.94299, 92.34255, 83.57851, 148.7807, 62.71592, 102.42091, 195.68547, 
+68.33127, 73.11909, 108.98396, 67.16522, 1159.67924, 606.70933, 151.72121, 
+104.55099, 337.46458, 214.58233, 128.21126, 112.05229, 106.54643, 92.29767, 
+65.70501, 105.47446, 94.58128, 207.55931, 77.61037, 72.31548, 124.00843, 
+75.53411, 141.40592, 303.33963, 90.74975, 216.88336, 262.5224, 98.30853, 
+85.53831, 233.1297, 128.56793, 126.80451, 120.73571, 179.2947, 117.04793, 
+243.5512, 59.9522, 170.27947, 232.96472, 62.15861, 334.10683, 75.13644, 
+120.5098, 276.82456, 117.03099, 105.84133, 246.45043, 148.17656, 123.11988, 
+85.65438, 63.18498, 83.98751, 602.2598, 701.85481, 66.47202, 105.32112, 
+374.21809, 72.14801, 212.70185, 127.30877, 63.7662, 70.64236, 132.08279, 
+72.30319, 238.93119, 164.59874, 135.09918, 140.47055, 94.65877, 157.94431, 
+157.22457, 162.84573, 278.73959, 597.14818, 102.22495, 65.72719]
+successes
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+---------------------------------------
+OVERALL
+- min:  59.9522
+- max:  1159.67924
+- mean:  180.03595
+BY BACKTRACKING PR
+                ** PR:  (0.5, 0.0)
+- min:  75.13644
+- max:  1159.67924
+- mean:  269.11714
+
+                ** PR:  (0.2, 0.2)
+- min:  59.9522
+- max:  278.73959
+- mean:  109.5036
+
+                ** PR:  (0.1, 0.5)
+- min:  70.64236
+- max:  597.14818
+- mean:  170.75298
+
+                ** PR:  (0.3, 0.3)
+- min:  63.18498
+- max:  374.21809
+- mean:  157.31772
+
+                ** PR:  (0.15, 0.15)
+- min:  62.15861
+- max:  214.58233
+- mean:  104.4071
+
+    ######### REMARK 
+
+In this trial, all PRNGs were able to completely travel the objective path. 
+
+###### TRIAL 2: 
+
+change line 26 to 
+
+activation_type = "linexp" 
+
+    ###### END RESULTS 
+
+                Running simulation 89
+best 57.3419158818424 now 73.30558391577688
+                *** solution is improvement: False***
+                Next PRNG
+=/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\==/++\=
+89 duration: 0.0017511844635009766
+90 duration: 2.1457672119140625e-06
+scores
+[76427.51492, 76749.77059, 323622.7317, 133.50132, 76.56625, 118.98381, 598.47564, 
+57477.55172, 82795.86967, 74.30908, 68693.55065, 96946.07688, 69321.3805, 69015.61826, 
+183352.11169, 505805.28051, 110368.52279, 136.84778, 58013.95679, 57973.64785, 74.2336, 
+125201.5015, 68434.84071, 98542.53688, 95627.43819, 93109.50098, 503926.40147, 1940353.70043, 
+228485.22516, 907329.31685, 72172.87234, 73468.96825, 219142.42075, 772598.91334, 123093.19419, 
+69.04078, 58209.74309, 57587.91885, 593.85941, 70.2111, 67128.57429, 97321.13692, 73894.43625, 
+72796.8945, 249223.69464, 917936.71253, 67.57935, 67.94936, 57327.53801, 58334.02845, 81791.30252, 
+127573.18466, 69661.72479, 99312.73504, 71545.55581, 74.0853, 251623.07731, 928668.39546, 
+130335.36492, 422900.6406, 93342.18212, 95902.19472, 132.26856, 1900110.10358, 231613.77462, 
+68.69763, 800.68599, 1258.96391, 72.14801, 57.34192, 67789.16679, 95953.28373, 91806.74294, 
+91675.32082, 474509.63772, 183.19759, 224650.54857, 127.70902, 58082.90244, 58049.99371, 
+150.51059, 325.91717, 68115.5589, 96906.307, 191.00677, 214.90362, 459253.37539, 1832735.30641, 
+220325.92081, 73.30558]
+successes
+[0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 
+0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1]
+---------------------------------------
+OVERALL
+- min:  57.34192
+- max:  1940353.70043
+- mean:  191309.52993
+BY BACKTRACKING PR
+                ** PR:  (0.5, 0.0)
+- min:  74.0853
+- max:  95902.19472
+- mean:  58035.05978
+
+                ** PR:  (0.2, 0.2)
+- min:  72.14801
+- max:  503926.40147
+- mean:  188684.24287
+
+                ** PR:  (0.1, 0.5)
+- min:  57.34192
+- max:  1940353.70043
+- mean:  603455.17177
+
+                ** PR:  (0.3, 0.3)
+- min:  67.57935
+- max:  231613.77462
+- mean:  111922.67419
+
+                ** PR:  (0.15, 0.15)
+- min:  67.94936
+- max:  907329.31685
+- mean:  127724.97119
+
+    ######### REMARK 
+
+In this trial, complete travel of the objective path was in only 26 out of the 90 cases. 

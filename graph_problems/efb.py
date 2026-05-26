@@ -1,6 +1,6 @@
 from graph_models.hg_obj_path_op import * 
 
-DEFAULT_ENDS_FIXATED_BOT_NODESIZE_RANGE = [3,35] 
+DEFAULT_ENDS_FIXATED_BOT_NODESIZE_RANGE = [3,17] 
 
 """
 Ends-Fixated Bot. 
