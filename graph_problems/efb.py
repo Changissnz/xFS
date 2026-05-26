@@ -21,6 +21,8 @@ start s to end t.
 The objective path is comprised of nodes, each associated with a float value 
 used for "activation", allowance of navigator to pass through the node. 
 
+NOTE: all node-associated values are positive real numbers. 
+
 There are two kinds of activations: 
 - single value 
 - linear expression 
