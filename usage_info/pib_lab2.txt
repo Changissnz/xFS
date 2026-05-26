@@ -1,0 +1,89 @@
+This lab uses different PRNGs to instantiate a Probabilistic Impact Bot instance. 
+
+############################ BASE CODE ############################## 
+
+from graph_problems.pib_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+import time 
+
+lcg_o = prg__LCG(34.1,54.3,-31.2,300.15) 
+lcg_d = prg__LCG(-76.54,34.5,-76.55,-1199.5) 
+lcg_e = prg__LCG(356.54,-1334.5,76.55,3199.5) 
+
+lcg_O = merge_two_prgs(deepcopy(lcg_o),deepcopy(lcg_d),zero_div_) 
+lcg_O = merge_two_prgs(deepcopy(lcg_O),deepcopy(lcg_d),mul) 
+
+lcg_D = merge_two_prgs(deepcopy(lcg_O),deepcopy(lcg_o),sub) 
+lcg_E = merge_two_prgs(deepcopy(lcg_O),deepcopy(lcg_D),add)  
+
+offendor_lcg_delta_pattern_type = ? 
+offendor_lcgv_range = [-1000,1000] 
+
+open_info_mode = "predictive" 
+
+P = PIBot.default_generate_instance(lcg_O,lcg_D,lcg_E,offendor_lcg_delta_pattern_type,\
+        offendor_lcgv_range,open_info_mode)
+P.verbose = True 
+
+prng_seq = prg_to_prg__LCG_sequence(lcg_e,30,4.21) 
+prng_seq2 = prg_to_prg__LCG_sequence(lcg_d,30,-2.56) 
+prng_seq = [merge_two_prgs(p0,p1,sub) for (p0,p1) in zip(prng_seq,prng_seq2)] 
+
+PIB_env_run = PIB_env_run_(2000)
+
+S = SimulationSolutionSearch(P,PIB_env_run,prng_seq,\
+        PIB_env_prng_assignment_function,PIB_env_mode_shift_function,\
+        PIB_env_solution_fetch_function,PIB_env_cmp_solution,verbose=True) 
+
+i = 0 
+t = time.time()
+while not S.fin_stat:     
+    S.process_one()
+    t2 = time.time()
+    print("{} duration: {}".format(i,t2-t))
+    t = time.time()
+    i += 1 
+
+print("scores")
+Q = [q[2] for q in S.results]
+print(Q)
+print("- min: ",np.min(Q)) 
+print("- max: ",np.max(Q)) 
+print("- mean: ",np.mean(Q)) 
+
+#######################################################################################
+
+##### TRIAL 1 
+
+change line 20 to 
+
+offendor_lcg_delta_pattern_type = "multiple" 
+
+#### ENDING OUTPUT 
+
+scores
+[1790, 1750, 1507, 1717, 1632, 1774, 1576, 1805, 1624, 1768, 1764, 1761, 1612, 1720, 1589, 
+1713, 1753, 1785, 1780, 1634, 1424, 1621, 1649, 1618, 1614, 1337, 1778, 1559, 1663, 1490]
+
+- min:  1337
+- max:  1805
+- mean:  1660.2333333333333
+
+------------------------------------------------
+
+#### TRIAL 2 
+
+change line 20 to 
+
+offendor_lcg_delta_pattern_type = "constant"
+
+#### ENDING OUTPUT 
+
+scores
+[1612, 1682, 1394, 1851, 1311, 1845, 1608, 1635, 1563, 1513, 1728, 1511, 1672, 1536, 1668, 
+1609, 1388, 1483, 1533, 1266, 992, 1538, 1385, 1639, 1535, 1722, 1788, 1512, 1493, 1538]
+
+- min:  992
+- max:  1851
+- mean:  1551.6666666666667

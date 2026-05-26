@@ -129,8 +129,7 @@ class PIBot(SimpleHMMEnv__TwoAgents):
         defender_pattern_recognizer_max_size=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE,\
         open_info_mode="predictive"):   
 
-        assert open_info_mode != "perfect-full"
-
+        assert open_info_mode != "perfect-full"        
         she = SimpleHMMEnv__TwoAgents.generate_instance(num_hidden,num_observed,offendor_prg,defender_prg,\
             env_prg,initial_offendor_hidden_state,offendor_lcg_delta_pattern_type,\
             offendor_lcgv_range,offendor_pattern_max_length,defender_pattern_recognizer_max_size,\

@@ -3,8 +3,7 @@ technical details in it to accomodate for PRNG decision making. Preliminary
 findings suggest high-performing PRNGs exist in a way that is relatable to the 
 Gaussian function. Vantage point is that of defender. 
 
-Lab contains one trial, with 30 PRNGs. Most of the PRNGs are similar in performance, 
-except for one outlier. 
+Lab contains four trials, each with the same 30 PRNGs used for solution search. 
 
 ############################ BASE CODE ############################## 
 
@@ -22,10 +21,10 @@ lcg_O = merge_two_prgs(deepcopy(lcg_o),deepcopy(lcg_d),sub)
 lcg_D = merge_two_prgs(deepcopy(lcg_d),deepcopy(lcg_o),sub) 
 lcg_E = merge_two_prgs(deepcopy(lcg_O),deepcopy(lcg_D),add)  
 
-offendor_lcg_delta_pattern_type = "constant" 
+offendor_lcg_delta_pattern_type = ? 
 offendor_lcgv_range = [-1000,1000] 
 
-open_info_mode = "predictive" 
+open_info_mode = ?  
 
 P = PIBot.default_generate_instance(lcg_O,lcg_D,lcg_E,offendor_lcg_delta_pattern_type,\
         offendor_lcgv_range,open_info_mode)
@@ -58,9 +57,111 @@ print("- max: ",np.max(Q))
 print("- mean: ",np.mean(Q)) 
 
 ######################################## END RESULTS 
+ 
+##### TRIAL 1 
+
+change line 26 to 
+
+offendor_lcg_delta_pattern_type = "constant" 
+
+AND 
+
+change line 29 to 
+
+open_info_mode = "predictive" 
+
+#### ENDING OUTPUT 
 
 scores
-[1298, 1291, 1303, 1296, 1301, 1293, 1292, 1295, 1299, 1293, 1306, 1301, 1296, 1304, 1297, 1219, 1301, 1303, 1296, 1302, 1297, 1298, 1291, 1305, 1292, 1304, 1300, 1302, 1300, 1309]
+[1298, 1291, 1303, 1296, 1301, 1293, 1292, 1295, 1299, 1293, 1306, 1301, 1296, 1304, 1297, 
+1219, 1301, 1303, 1296, 1302, 1297, 1298, 1291, 1305, 1292, 1304, 1300, 1302, 1300, 1309]
+
 - min:  1219
 - max:  1309
 - mean:  1296.1333333333334
+
+#### REMARK 
+
+Most of the PRNGs are similar in performance, except for one outlier. 
+
+-----------------------------------------------------
+
+##### TRIAL 2 
+
+change line 26 to 
+
+offendor_lcg_delta_pattern_type = "multiple" 
+
+AND 
+
+change line 29 to 
+
+open_info_mode = "predictive" 
+
+
+#### ENDING OUTPUT 
+
+scores 
+[1298, 1291, 1303, 1296, 1301, 1293, 1292, 1295, 1299, 1293, 1306, 1301, 1296, 1304, 1297, 
+1285, 1301, 1303, 1296, 1302, 1297, 1298, 1291, 1305, 1292, 1304, 1300, 1302, 1300, 1309]
+
+- min:  1285
+- max:  1309
+- mean:  1298.3333333333333
+
+#### REMARK 
+
+All of the PRNGs stay in a relatively small range. 
+
+-----------------------------------------------------
+
+##### TRIAL 3 
+
+change line 26 to 
+
+offendor_lcg_delta_pattern_type = "constant" 
+
+AND 
+
+change line 29 to 
+
+open_info_mode = "perfect-partial"
+
+#### ENDING OUTPUT 
+
+scores
+[633, 559, 656, 670, 709, 684, 688, 670, 644, 570, 668, 698, 551, 634, 649, 
+558, 645, 707, 638, 627, 664, 660, 693, 665, 678, 662, 689, 631, 684, 690]
+
+- min:  551
+- max:  709
+- mean:  652.4666666666667
+
+-----------------------------------------------------
+
+##### TRIAL 4 
+
+change line 26 to 
+
+offendor_lcg_delta_pattern_type = "multiple" 
+
+AND 
+
+change line 29 to 
+
+open_info_mode = "perfect-partial"
+
+#### ENDING OUTPUT 
+
+scores
+[656, 679, 716, 648, 654, 672, 679, 702, 670, 722, 683, 672, 698, 703, 670, 
+677, 686, 700, 683, 632, 709, 692, 669, 685, 670, 679, 728, 679, 715, 673]
+
+- min:  632
+- max:  728
+- mean:  683.3666666666667
+
+#### REMARK 
+
+Pattern type of Offendor LCG being 'multiple' instead of 'constant' yields 
+higher error from PRNGs. 
