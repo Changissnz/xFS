@@ -49,7 +49,7 @@ Function F contains the values v_* and, in the case of linear expressions, L.
 
 The navigator operates by exactly one of open or closed info. In the case of open info., 
 navigator is given the map M_q
-    M_q: dependent node of n_q -> (weight (if `linexp`) | minimum threshold value 
+    M_q: depended node of n_q -> (weight (if `linexp`) | minimum threshold value 
 AND 
     float (if `linexp`) | None)
 upon making contact with node n_q. This information allows for navigator to calculate 
@@ -73,7 +73,11 @@ it moves to node n_q that is one of the nodes of n_c's out-neighbors.
 
 Upon contacting n_q, navigator must provide support value s_q to n_q. The activation function F_q 
 of n_q determines if navigator, by this support value s_q, and its node-support sequence S, 
-passes. If navigator fails, one of two things occurs, 
+passes. S does not have to contain support values for all depended nodes of F_q. If n_x is a 
+depended node in F_q and S does not have a support value for it, support it gives is 0 for 
+function F_q to process. 
+
+If navigator fails, one of two things occurs, 
 - immediate effect of failure: navigator does not proceed to n_q. Navigator is pushed back 
     to the node where it came from. 
 - pending effect of failure: navigator proceeds to n_q. If navigator tries to pass through another 
