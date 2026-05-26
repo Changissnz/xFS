@@ -1,0 +1,66 @@
+Probabilistic Impact Bot is built off of the Hidden Markov Model. Bot has 
+technical details in it to accomodate for PRNG decision making. Preliminary 
+findings suggest high-performing PRNGs exist in a way that is relatable to the 
+Gaussian function. Vantage point is that of defender. 
+
+Lab contains one trial, with 30 PRNGs. Most of the PRNGs are similar in performance, 
+except for one outlier. 
+
+############################ BASE CODE ############################## 
+
+from graph_problems.pib_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
+import time 
+
+lcg_o = prg__LCG(34.1,54.3,-31.2,300.15) 
+lcg_d = prg__LCG(-76.54,34.5,-76.55,-1199.5) 
+lcg_e = prg__LCG(356.54,-1334.5,76.55,3199.5) 
+
+lcg_O = merge_two_prgs(deepcopy(lcg_o),deepcopy(lcg_d),add) 
+lcg_O = merge_two_prgs(deepcopy(lcg_o),deepcopy(lcg_d),sub) 
+lcg_D = merge_two_prgs(deepcopy(lcg_d),deepcopy(lcg_o),sub) 
+lcg_E = merge_two_prgs(deepcopy(lcg_O),deepcopy(lcg_D),add)  
+
+offendor_lcg_delta_pattern_type = "constant" 
+offendor_lcgv_range = [-1000,1000] 
+
+open_info_mode = "predictive" 
+
+P = PIBot.default_generate_instance(lcg_O,lcg_D,lcg_E,offendor_lcg_delta_pattern_type,\
+        offendor_lcgv_range,open_info_mode)
+P.verbose = True 
+
+prng_seq = prg_to_prg__LCG_sequence(lcg_e,30,4.21) 
+prng_seq2 = prg_to_prg__LCG_sequence(lcg_d,30,-2.56) 
+prng_seq = [merge_two_prgs(p0,p1,sub) for (p0,p1) in zip(prng_seq,prng_seq2)] 
+
+PIB_env_run = PIB_env_run_(2000)
+
+S = SimulationSolutionSearch(P,PIB_env_run,prng_seq,\
+        PIB_env_prng_assignment_function,PIB_env_mode_shift_function,\
+        PIB_env_solution_fetch_function,PIB_env_cmp_solution,verbose=True) 
+
+i = 0 
+t = time.time()
+while not S.fin_stat:     
+    S.process_one()
+    t2 = time.time()
+    print("{} duration: {}".format(i,t2-t))
+    t = time.time()
+    i += 1 
+
+print("scores")
+Q = [q[2] for q in S.results]
+print(Q)
+print("- min: ",np.min(Q)) 
+print("- max: ",np.max(Q)) 
+print("- mean: ",np.mean(Q)) 
+
+######################################## END RESULTS 
+
+scores
+[1298, 1291, 1303, 1296, 1301, 1293, 1292, 1295, 1299, 1293, 1306, 1301, 1296, 1304, 1297, 1219, 1301, 1303, 1296, 1302, 1297, 1298, 1291, 1305, 1292, 1304, 1300, 1302, 1300, 1309]
+- min:  1219
+- max:  1309
+- mean:  1296.1333333333334
