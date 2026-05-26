@@ -106,6 +106,7 @@ Here is a list of graph problems in the project:
 - Probabilistic Impact Bot (Alpha)
     - vantage point for learning: defend against each of an offendor's moves by correctly predicting the 
         move; based on the Hidden Markov Model. 
+    - file: `graph_problems/pib.py` 
 - Ends-Fixated Bot (work in progress) 
 
 #### NOTE: 
