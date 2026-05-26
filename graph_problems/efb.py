@@ -111,7 +111,7 @@ with PRNG R:
 - R outputs decimal d0. 
 - If d0 < P_b, navigator backtracks. 
     - R outputs decimal d1. 
-    - If d1 < P_f, navigator will backtracks for the next q timestamps to outside the 
+    - If d1 < P_f, navigator backtracks for the next q timestamps to outside the 
         path (before start node s).  
 """
 class EndsFixatedBot(DIPathNavigatorHandler): 
