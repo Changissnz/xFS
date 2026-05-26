@@ -5,7 +5,7 @@ LEMMA: A navigator will not be able to completely traverse an Objective Path Typ
     
 LEMMA: The characteristic way by which a navigator satisfies the condition specified 
        in the previous lemma is if the navigator's PRNG is a cyclical decider that 
-       does not include the entire space of possible decision sequences. There are 
+       does not include the relevant subspace of possible decision sequences. There are 
        two primary features a cyclical decider exemplifies itself: 
        -  navigator never takes an out-neighbor subset of node n when it is on it. If 
        navigator has to provide support to any nodes of that out-neighbor subset, there 
