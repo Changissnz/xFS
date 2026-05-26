@@ -29,7 +29,7 @@ There are two kinds of activations:
 
 Both kinds present themselves as minimum-value threshold functions. 
 
-Given a node n_i, its activation function F is for a nodeset N, s.t. 
+Given a node n_i, its activation function F is for a depended nodeset N, s.t. 
 n_i in N: 
 
 - single: 
@@ -40,7 +40,8 @@ n_i in N:
 U := positive support value from navigator for node n_j*. 
 
 Every node n_i of objective path is also associated with an activation node n_a. Node n_a 
-could be node n_i or another node n_j closer in spine-distance to end node t. 
+could be node n_i or another node n_j closer in spine-distance to end node t. For depended 
+set N for n_i, all nodes of N - {n_i} are are greater spine-distance than n_i to end node t. 
 
 NOTE: See file<graph_models.dir_imp_path> for a definition on what the spine for a 
       directed implication path is. 
@@ -74,7 +75,7 @@ n_q that is closer in spine-distance than n_c to end node t. If it does choose t
 it moves to node n_q that is one of the nodes of n_c's out-neighbors. 
 
 Upon contacting n_q, navigator must provide support value s_q to n_q. The activation function F_q 
-of n_q determines if navigator, by this support value s_q, and its node-support sequence S, 
+of n_q determines if navigator, by this support value s_q and its node-support sequence S, 
 passes. S does not have to contain support values for all depended nodes of F_q. If n_x is a 
 depended node in F_q and S does not have a support value for it, support it gives is 0 for 
 function F_q to process. 
