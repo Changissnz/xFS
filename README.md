@@ -103,7 +103,9 @@ Here is a list of graph problems in the project:
         reference result in a simple undirected graph, traversed through a breadth-first or depth-first 
         process. 
     - file: `graph_problems/ib.py` 
-- Probabilistic Impact Bot (work in progress)  
+- Probabilistic Impact Bot (Alpha)
+    - vantage point for learning: defend against each of an offendor's moves by correctly predicting the 
+        move; based on the Hidden Markov Model. 
 - Ends-Fixated Bot (work in progress) 
 
 #### NOTE: 
