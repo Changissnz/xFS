@@ -104,10 +104,14 @@ Here is a list of graph problems in the project:
         process. 
     - file: `graph_problems/ib.py` 
 - Probabilistic Impact Bot (Alpha)
-    - vantage point for learning: defend against each of an offendor's moves by correctly predicting the 
+    - vantage point for learning: defending against each of an offendor's moves by correctly predicting the 
         move; based on the Hidden Markov Model. 
     - file: `graph_problems/pib.py` 
-- Ends-Fixated Bot (work in progress) 
+- Ends-Fixated Bot (Alpha)
+    - vantage point for learning: navigating a directed graph from start node to end node, such that each 
+        node is associated with an activation function navigator must pass, via providing appropriate 
+        support values (real numbers) to the nodes of relevance. 
+    - file: `graph_problems/efb.py` 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
