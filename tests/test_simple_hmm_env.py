@@ -49,9 +49,9 @@ class SimpleHMMEnv__TwoAgentsClass(unittest.TestCase):
 
         assert she0.diff > she1.diff > she2.diff > she3.diff 
 
-        assert she0.diff == 369,"got {}".format(she0.diff)
-        assert she1.diff == 323,"got {}".format(she1.diff)
-        assert she2.diff == 114,"got {}".format(she2.diff)
+        assert she0.diff == 496,"got {}".format(she0.diff)
+        assert she1.diff == 324,"got {}".format(she1.diff)
+        assert she2.diff == 141,"got {}".format(she2.diff)
         assert she3.diff == 0,"got {}".format(she3.diff)
 
     def test__SimpleHMMEnv__TwoAgents__next__case_2(self):
@@ -59,7 +59,7 @@ class SimpleHMMEnv__TwoAgentsClass(unittest.TestCase):
         she0 = SimpleHMMEnv__TwoAgents__sample_EXCALIBUR("predictive","multiple",0.5) 
         she0.run_n_rounds(800)
 
-        assert she0.diff == 675, "got {}".format(she0.diff)
+        assert she0.diff == 699, "got {}".format(she0.diff)
 
 if __name__ == '__main__':
     unittest.main()

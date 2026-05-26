@@ -105,11 +105,12 @@ P_b := maximum threshold value for navigator to travel backwards.
 P_f := maximum threshold value for navigator to travel completely backwards to outside the path, 
        before start node s, once navigator travels backwards once. 
 
-The decision pipeline for moving backward, with PRNG R: 
+The decision pipeline for moving backward (returning to a previous node of location), 
+with PRNG R: 
 - R outputs decimal d0. 
-- If d0 < P_b, navigator travels backwards. 
+- If d0 < P_b, navigator backtracks. 
     - R outputs decimal d1. 
-    - If d1 < P_f, navigator will travel backward for the next q timestamps to outside the 
+    - If d1 < P_f, navigator will backtracks for the next q timestamps to outside the 
         path (before start node s).  
 """
 class EndsFixatedBot(DIPathNavigatorHandler): 

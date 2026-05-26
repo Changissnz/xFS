@@ -1,4 +1,9 @@
 from quant.simple_hmm_env import * 
+from math import ceil 
+
+DEFAULT_PROBABILISTIC_BOT_HIDDEN_STATE_SIZE_RANGE = [3,30] 
+DEFAULT_PROBABILISTIC_BOT_OBSERVED_STATE_SIZE_RANGE = DEFAULT_PROBABILISTIC_BOT_HIDDEN_STATE_SIZE_RANGE
+DEFAULT_PROBABILISTIC_BOT_OFFENDOR_RECOGNIZER_MAXSIZE_RATIO_RANGE = [0.5,4.0] 
 
 """
 Probabilistic Impact Bot. 
@@ -83,6 +88,39 @@ class PIBot(SimpleHMMEnv__TwoAgents):
         super().__init__(offendor,defender,env_prg,open_info_mode) 
         return
 
+    def set_prg(self,prg,name): 
+        assert name in {"offendor","defender","environment"} 
+
+        if name == "offendor": 
+            self.offendor.set_prg(prg)
+            return 
+        
+        if name == "defender":
+            self.defender.set_prg(prg) 
+            return 
+
+        self.environment.prg = prg  
+
+    @staticmethod
+    def default_generate_instance(offendor_prg,defender_prg,env_prg,offendor_lcg_delta_pattern_type,\
+        offendor_lcgv_range,open_info_mode): 
+
+        num_hidden = modulo_in_range(int(env_prg()),DEFAULT_PROBABILISTIC_BOT_HIDDEN_STATE_SIZE_RANGE)
+        num_observed = modulo_in_range(int(env_prg()),DEFAULT_PROBABILISTIC_BOT_OBSERVED_STATE_SIZE_RANGE)
+
+        initial_offendor_hidden_state = int(env_prg()) % num_hidden 
+
+        offendor_pattern_max_length_ratio = modulo_in_range(env_prg(),\
+            DEFAULT_PROBABILISTIC_BOT_OFFENDOR_RECOGNIZER_MAXSIZE_RATIO_RANGE)
+
+        offendor_pattern_max_length = ceil(offendor_pattern_max_length_ratio * DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE)
+        defender_pattern_recognizer_max_size = DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE
+
+        return PIBot.generate_instance(num_hidden,num_observed,offendor_prg,defender_prg,\
+            env_prg,initial_offendor_hidden_state,offendor_lcg_delta_pattern_type,\
+            offendor_lcgv_range,offendor_pattern_max_length,defender_pattern_recognizer_max_size,\
+            open_info_mode)
+
     @staticmethod
     def generate_instance(num_hidden,num_observed,offendor_prg,defender_prg,\
         env_prg,initial_offendor_hidden_state,offendor_lcg_delta_pattern_type,\
@@ -90,6 +128,8 @@ class PIBot(SimpleHMMEnv__TwoAgents):
         offendor_pattern_max_length=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE,\
         defender_pattern_recognizer_max_size=DEFAULT_HMM_DEFENDER_PATTERN_RECOGNIZER_MAX_SIZE,\
         open_info_mode="predictive"):   
+
+        assert open_info_mode != "perfect-full"
 
         she = SimpleHMMEnv__TwoAgents.generate_instance(num_hidden,num_observed,offendor_prg,defender_prg,\
             env_prg,initial_offendor_hidden_state,offendor_lcg_delta_pattern_type,\

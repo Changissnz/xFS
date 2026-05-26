@@ -72,7 +72,7 @@ class SimpleHMMEnv__TwoAgents:
         self.prg = env_prg
         self.open_info_mode = open_info_mode
         self.diff = 0 
-
+        self.c = 0 
         self.hmm_log = HMMLog__TwoAgents() 
 
     def run_n_rounds(self,n): 
@@ -98,6 +98,8 @@ class SimpleHMMEnv__TwoAgents:
         self.offendor.register_offensive_stat(stat)
 
         self.hmm_log.update(action,hidden_state,action2,hidden_state2) 
+
+        self.c += 1 
         return action,action2 
 
     def defender_move(self):

@@ -150,7 +150,6 @@ class HMMOffendorLCGDelta:
 
         m0 = round(sign_preserving_modulo(m0,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX))
         m1 = round(sign_preserving_modulo(m1,DEFAULT_HMM_OFFENDER_LCGV_ABSOLUTE_VALUE_MAX))
-        print("M0,M1: ",m0,m1) 
         self.lcgv_range = sorted([m0,m1]) 
 
 class HMMBasedAgent: 
@@ -167,9 +166,11 @@ class HMMBasedAgent:
 
     def exec(self,H,x): 
         # choose next action 
+        ##print("[0]")
         action = self.hidden_state_to_next(H,x,next_is_hidden=False)
 
         # transition hidden state 
+        ##print("[1]")
         next_hidden_state = self.hidden_state_to_next(H,x,next_is_hidden=True)
         return action,next_hidden_state
 
@@ -177,7 +178,7 @@ class HMMBasedAgent:
     log action and current hidden state 
     ''' 
     def log_motion(self,action,hidden_state): 
-        assert action in self.fbward.B
+        assert action in self.fbward.B, "got {} / {}".format(action,set(self.fbward.B.keys())) 
         assert hidden_state in self.fbward.hidden_states
 
         self.actions.append(action) 
@@ -198,9 +199,14 @@ class HMMBasedAgent:
         else:
             D = self.fbward.B 
             L = sorted(self.fbward.B.keys()) 
-            pr_vec = [(D[x][hidden_state],x) for x in L] 
+            pr_vec = [[D[x][hidden_state],x] for x in L] 
+            S = sum([q[0] for q in pr_vec]) 
+            pr_vec = [(zero_div(p[0],S,1/len(L)),p[1]) for p in pr_vec] 
 
+        #print("PRVEC: ",pr_vec,pr) 
+        #print("SUMVEC: ",sum([p[0] for p in pr_vec]))
         the_next_thing = probability_to_label(pr_vec,pr)
+        #print("NEXT THING: ",the_next_thing)
         return the_next_thing  
 
     # NOTE: the method of calculating probabilities of the hidden 
@@ -259,7 +265,6 @@ class HMMBasedOffendor(HMMBasedAgent):
 
         H = self.hidden_states[-1]
         action,next_hidden_state = self.exec(H,x) 
-
         self.log_motion(action,next_hidden_state)
         return action,next_hidden_state
 
@@ -332,7 +337,6 @@ class HMMBasedDefender(HMMBasedAgent):
         if len(self.offending_agent_prng_output) >= self.pr_max_size: 
             self.cyclical_predictor.choose_sequence(list(self.offending_agent_prng_output))
             d = self.offending_agent_prng_output[-1] 
-            ##print("calibrating: {}".format(self.offending_agent_prng_output))
             self.cyclical_predictor.calibrate_cycle_index(d) 
         return 
 
