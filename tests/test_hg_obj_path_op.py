@@ -220,7 +220,7 @@ class DIPathNavigatorClass(unittest.TestCase):
         while not dipn.fin_stat:
             next(dipnh) 
             i += 1 
-        assert i == 45, "got {}".format(i)  
+        assert i == 15, "got {}".format(i)  
 
             # open info 
         prg = prg__LCG(34.55,-112.33,5433,91766.66)

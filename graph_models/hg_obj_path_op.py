@@ -203,7 +203,7 @@ class DIPathNavigator:
             n = self.choose_next_node() 
         
         v = self.choose_support_value(n)
-        self.node_to_expense_map[n].append(v) 
+        self.node_to_expense_map[n].insert(0,v)
         self.node_to_expense_map[n] = self.node_to_expense_map[n][:DEFAULT_DIPNAV_LOG_LENGTH]
         self.total_expense += v 
         return True,(n,v)

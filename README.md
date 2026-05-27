@@ -10,11 +10,7 @@ both hardware and those projects' code implementation have pressured me to cease
 further development.
 
 ```
-NOTE: planned completion for project < 30 days. 
-```
-
-```
-NOTE: End hiatus. And fuck the jury when there's a judge. R.I.P done ran that club ;] ;] ;] 
+NOTE: 5/24/2026, planned completion for project < 30 days. 
 ```
 
 ```
