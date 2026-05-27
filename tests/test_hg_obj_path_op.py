@@ -28,7 +28,6 @@ def InadvertentDIPathNavigator__sample_SIMP(info_mode):
     ratio_indirect_activation = 0.3 
     prior_dependency_ratio = 0.3     
     activation_type = "single"
-    info_mode = 0#1
 
     G = generate_directed_implication_path(num_nodes,extra_edge_ratio,prg,start_node_idn=0)
     node_value_range_map = {i:[1,50] for i in range(num_nodes)} 
@@ -348,18 +347,18 @@ class InadvertentDIPathNavigatorClass(unittest.TestCase):
         dipnh = InadvertentDIPathNavigator__sample_SIMP(info_mode=1)
         dipn = dipnh.dipn 
 
-        dipn.add_support(50) 
+        dipnh.add_support(50) 
         while not dipn.fin_stat: 
             next(dipnh)
 
         assert dipn.support_ < 0 
 
             # case: passed 
-        dipn.add_support(150) 
+        dipnh.add_support(150) 
         while not dipn.fin_stat: 
             next(dipnh)
 
-        assert dipn.support_ >= 0 
+        assert dipn.support_ >= 0, "got {}".format(dipn.support_) 
 
 if __name__ == '__main__':
     unittest.main()

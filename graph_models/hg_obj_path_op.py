@@ -140,7 +140,7 @@ class DIPathNavigator:
 
     def at_tail(self): 
         return self.loc == self.tail 
-
+    
     def set_type_for_PathDI(self,t): 
         assert t in PATH_TYPE_DI_NODE_ACTIVATION_TYPES
         self.dip_type = t 
@@ -315,6 +315,7 @@ class InadvertentDIPathNavigator(DIPathNavigator):
         return
 
     def add_support(self,s): 
+        assert s >= 0. 
         self.support += s 
         self.support_ = self.support 
         return 
@@ -322,6 +323,7 @@ class InadvertentDIPathNavigator(DIPathNavigator):
     def reset(self): 
         self.total_expense = 0 
         self.fin_stat = False 
+        self.loc = None 
         self.active_path.clear() 
         self.entire_path.clear() 
 
@@ -366,6 +368,15 @@ class DIPathNavigatorHandler:
 
         self.c = 0 
         return 
+
+    def reset(self): 
+        assert type(self.dipn) == InadvertentDIPathNavigator
+        self.dipn.reset() 
+        self.ptdi.reset() 
+
+    def add_support(self,f:float):
+        self.reset() 
+        self.dipn.add_support(f) 
 
     def set_prg(self,prg):
         assert type(prg) in {MethodType,FunctionType} 
