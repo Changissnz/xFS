@@ -114,6 +114,12 @@ with PRNG R:
     - R outputs decimal d1. 
     - If d1 < P_f, navigator backtracks for the next q timestamps to outside the 
         path (before start node s).  
+
+            ** Objective ** 
+There are two main objectives. The first, already mentioned, is for navigator to pass through the end 
+node, starting from the start node. The second is to achieve the first objective using the minumum 
+cumulative support for every node (non-unique) the navigator travels to; in other words, that would be 
+the sum of support values provided to every node traveled to). 
 """
 class EndsFixatedBot(DIPathNavigatorHandler): 
 
