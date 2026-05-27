@@ -18,6 +18,31 @@ def DIPathNavigator__sample__13(num_nodes,extra_edge_ratio,ratio_indirect_activa
     dipnh = DIPathNavigatorHandler(optdi,dipn,info_mode=info_mode,verbose=verbose) 
     return dipnh 
 
+def InadvertentDIPathNavigator__sample_SIMP(info_mode): 
+
+    prg = prg__LCG(34.55,-112.33,5433,91766.66)
+    prg2 = prg__LCG(13.41,3+4/3,-55.5,4610.55)
+
+    num_nodes = 7 
+    extra_edge_ratio = 0.15 
+    ratio_indirect_activation = 0.3 
+    prior_dependency_ratio = 0.3     
+    activation_type = "single"
+    info_mode = 0#1
+
+    G = generate_directed_implication_path(num_nodes,extra_edge_ratio,prg,start_node_idn=0)
+    node_value_range_map = {i:[1,50] for i in range(num_nodes)} 
+
+    optdi = ObjectivePathTypeDI.generate_instance(G,node_value_range_map,ratio_indirect_activation,\
+        prior_dependency_ratio,activation_type,prg)
+
+    dipn = InadvertentDIPathNavigator.from_PathTypeDI(optdi,prg2)
+    dipn.set_backtrack_pr(0.1,0.2)
+    assert type(dipn) == InadvertentDIPathNavigator
+
+    dipnh = DIPathNavigatorHandler(optdi,dipn,info_mode=info_mode,verbose=False)  
+    return dipnh 
+
 ### lone file test 
 """
 py -m tests.test_hg_obj_path_op 
@@ -301,6 +326,40 @@ class DIPathNavigatorClass(unittest.TestCase):
         assert i == 326, "got {}".format(i) 
         return
 
+
+class InadvertentDIPathNavigatorClass(unittest.TestCase):
+
+    def test__InadvertentDIPathNavigator__next__case_1(self):
+
+        # closed info 
+            # case: failed 
+        dipnh = InadvertentDIPathNavigator__sample_SIMP(info_mode=0)
+        dipn = dipnh.dipn 
+
+        dipn.add_support(500) 
+
+        while not dipn.fin_stat: 
+            next(dipnh)
+
+        assert dipn.support_ < 0, "got {}".format()
+
+        # open info 
+            # case: failed 
+        dipnh = InadvertentDIPathNavigator__sample_SIMP(info_mode=1)
+        dipn = dipnh.dipn 
+
+        dipn.add_support(50) 
+        while not dipn.fin_stat: 
+            next(dipnh)
+
+        assert dipn.support_ < 0 
+
+            # case: passed 
+        dipn.add_support(150) 
+        while not dipn.fin_stat: 
+            next(dipnh)
+
+        assert dipn.support_ >= 0 
 
 if __name__ == '__main__':
     unittest.main()

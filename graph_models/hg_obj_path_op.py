@@ -138,6 +138,9 @@ class DIPathNavigator:
         self.entire_path = [] 
         return
 
+    def at_tail(self): 
+        return self.loc == self.tail 
+
     def set_type_for_PathDI(self,t): 
         assert t in PATH_TYPE_DI_NODE_ACTIVATION_TYPES
         self.dip_type = t 
@@ -291,13 +294,67 @@ class DIPathNavigator:
         return DIPathNavigator(ptdi.G,ptdi.nv_map,prg) 
 
 """
+Subclass of class<DIPathNavigator>. 
+
+A reactant to a reference <DIPathNavigator>'s node contacts. The <DIPathNavigator> 
+is a separate instance not referenced by this class. 
+
+A 'passive' version of <DIPathNavigator>, in which navigator chooses support values, 
+given the maximum limit of variable<support>. The variable<support> can be updated. 
+Every time variable is updated, navigator resets its traversal variables, then 'fires' 
+up and attempts to reach the tail, starting from the head.
+
+"""
+class InadvertentDIPathNavigator(DIPathNavigator): 
+
+    def __init__(self,G,node_value_range_map,prg,backtrack_pr=0.5,complete_backtrack_pr=0.):
+        super().__init__(G,node_value_range_map,prg,backtrack_pr,complete_backtrack_pr) 
+        
+        self.support = 0 
+        self.support_ = 0 
+        return
+
+    def add_support(self,s): 
+        self.support += s 
+        self.support_ = self.support 
+        return 
+
+    def reset(self): 
+        self.total_expense = 0 
+        self.fin_stat = False 
+        self.active_path.clear() 
+        self.entire_path.clear() 
+
+        self.support_ = self.support
+
+    def __next__(self): 
+        is_forward,x = super().__next__()
+
+        # case: not enough granted support to provide support, 
+        #       move backward 
+        if is_forward: 
+            self.support_ -= x[1] 
+
+            if self.support_ < 0.: 
+                self.fin_stat = True
+                return 
+
+        return is_forward,x
+
+    @staticmethod
+    def from_PathTypeDI(ptdi:PathTypeDI,prg): 
+        assert issubclass(type(ptdi),PathTypeDI) 
+        assert type(prg) in {MethodType,FunctionType}
+        return InadvertentDIPathNavigator(ptdi.G,ptdi.nv_map,prg) 
+
+"""
 Processes <DIPathNavigator> decisions on a Path Type (D)irected (I)mplication.
 """
 class DIPathNavigatorHandler: 
 
     def __init__(self,ptdi:PathTypeDI,dipn:DIPathNavigator,info_mode:int,verbose):  
         assert issubclass(type(ptdi),PathTypeDI) 
-        assert type(dipn) == DIPathNavigator
+        assert issubclass(type(dipn),DIPathNavigator)
         assert ptdi.nv_map == dipn.nv_map 
         assert info_mode in {0,1} 
         
@@ -334,7 +391,12 @@ class DIPathNavigatorHandler:
             print("LOC: ",self.dipn.loc)
 
         # have navigator make next node decision 
-        is_forward,x = next(self.dipn)
+        q = next(self.dipn)
+        if type(q) == type(None): 
+            return 
+
+        is_forward,x = q 
+
         if self.verbose: 
             print("moving forward? ",is_forward) 
             if is_forward: 
