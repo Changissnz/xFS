@@ -1,3 +1,6 @@
+from collections import defaultdict
+from morebs2.numerical_generator import * 
+from types import MethodType,FunctionType
 
 DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES = {"compatible characterization","third-party contra"} 
 
@@ -26,8 +29,8 @@ class AgentType2F3MMOContainer:
                 assert q == set(cat2label_map.keys())
 
                 # category -> label -> compatibility 
-                for k2,v2 in v2.items(): 
-                    assert set(cat2label_map[k2].keys()) == set(cat2label_map[k2]) 
+                for k2,v2 in v.items(): 
+                    assert set(cat2label_map[k2]) == set(v2.keys()) 
         else: 
             assert type(agent_action_comp_map) == type(None) 
             assert is_vector(attribute_vec_info[0]) 
@@ -42,7 +45,7 @@ class AgentType2F3MMOContainer:
         self.c2l_map = cat2label_map 
         self.comp_map = compatibility_map
         # agent idn -> category -> label -> r in [0.,1.]
-        self.aa_comp_map == agent_action_comp_map
+        self.aa_comp_map = agent_action_comp_map
         self.prg = prg 
 
         # characterization of self 
@@ -53,12 +56,12 @@ class AgentType2F3MMOContainer:
         self.other_char = dict() 
 
         # used for mo type "compatible characterization"
-        # other agent idn -> list::(category,label,jstrength) 
-        self.other_char_recv = defaultdict(list) 
+        # other agent idn -> category -> (label,jstrength) 
+        self.other_char_recv = dict()  
 
         # used for mo type "third-party contra" 
         # other agent idn -> category -> label -> # of times where first relay results in successful execution
-        self.success_exec_record_map = defaultdict()
+        self.success_exec_record_map = defaultdict(None)
         # other agent idn -> list::(category,label,bool) 
         self.current_exec_map = defaultdict(list) 
         return 
@@ -78,17 +81,24 @@ class AgentType2F3MMOContainer:
 
     def characterize_agent(self,other_agent:AgentType2F3M): 
         d = self.char_map() 
-        self.current_char[other_agent.idn] = d 
+        self.other_char[other_agent.idn] = d 
         return
 
     def char_map(self): 
-        categories = sorted(self.c2l_map.keys()) 
+        categories = self.cat_vec() 
 
         d = dict() 
         for c in categories: 
             c2 = self.independent_action(c) 
             d[c] = c2 
         return d 
+
+    def cat_vec(self): 
+        return sorted(self.c2l_map.keys()) 
+
+    def selfchar_seq(self): 
+        categories = self.cat_vec() 
+        return [(c,self.self_char[c]) for c in categories] 
 
     #------------------------------- for compatible characterization 
 
@@ -134,7 +144,40 @@ class AgentType2F3MMOContainer:
         return 
 
     def recv_justification(self,other_agent:AgentType2F3M,category,label,jstrength): 
-        self.other_char_recv[other_agent.idn].append((category,label,jstrength))
+        if other_agent.idn not in self.other_char_recv: 
+            self.other_char_recv[other_agent.idn] = dict() 
+        self.other_char_recv[other_agent.idn][category] = (label,jstrength)
+
+    def choose_char__CC(self,category):
+        selfcat = self.self_char[category]
+
+        other_agents = sorted(self.other_char_recv.keys())
+        assert len(other_agents) == 2 
+
+        non_compat = ((1 - self.comp_map[other_agents[0]]) + (1 - self.comp_map[other_agents[1]])) / 2.0 
+        V = [non_compat] 
+
+        p0 = self.other_char_recv[other_agents[0]][category][1] 
+        p1 = self.other_char_recv[other_agents[1]][category][1] 
+        V.extend([p0,p1]) 
+
+        V = [zero_div(v,non_compat+p0+p1,1/3) for v in V]
+        A = [label,self.other_char_recv[other_agents[0]][category][1],self.other_char_recv[other_agents[0]][category][1]] 
+        pr_vec = [(v,a) for (v,a) in zip(V,A)] 
+
+        pr = prg_decimal(self.prg,[0.,1.])
+        
+        l = probability_to_label(pr_vec,pr)
+        return l 
+
+    def choose_char_seq__CC(self): 
+        categories = self.cat_vec() 
+        catseq = [] 
+
+        for c in categories: 
+            q = self.choose_char__CC(c)
+            catseq.append((c,q)) 
+        return catseq 
 
     #------------------------------- for third-party contra 
 
@@ -144,19 +187,20 @@ class AgentType2F3MMOContainer:
     """
     def approve_action(self,other_agent:AgentType2F3M,category): 
         assert category in self.c2l_map
-        #assert label in self.c2l_map[category] 
-        label = self.current_char[other_agent.idn][category] 
+        label = other_agent.mo_container.self_char[category] 
 
-        prg = merge_two_prgs(self.prg,other_agent.prg,add) 
+        prg = merge_two_prgs(self.prg,other_agent.prg(),add) 
         d = prg_decimal(prg,[0.,1.]) 
         x = self.aa_comp_map[other_agent.idn][category][label] 
         return x <= d 
 
     """
+    For use by the first relay. 
+
     return: 
     - bool, ?trio-based decision to allow `actor_agent` to execute action `label` of `category? 
     """
-    def recv_action_leak(self,actor_agent:AgentType2F3M,sender_agent:AgentType2F3M,category,sender_approval:bool): 
+    def recv_action_leak(self,actor_agent:AgentType2F3M,recv_agent:AgentType2F3M,category,sender_approval:bool): 
         
         approval = int(self.approve_action(actor_agent,category))
         if approval == 0: approval = -1 
@@ -165,15 +209,16 @@ class AgentType2F3MMOContainer:
         if sender_approval == 0: sender_approval = -1 
 
         idn = actor_agent.idn 
-        
+        label = actor_agent.mo_container.self_char[category]
+
         d0_weight = 2 * sender_approval * \
-            sender_agent.mo_container.compatibility_with_agent(actor_agent) * \
-            sender_agent.mo_container.aa_comp_map[idn][category][label] 
+            recv_agent.mo_container.compatibility_with_agent(actor_agent) * \
+            recv_agent.mo_container.aa_comp_map[idn][category][label] 
 
         d1_weight = approval * self.compatibility_with_agent(actor_agent) * self.aa_comp_map[idn][category][label]
 
-        prg = merge_two_prgs(actor_agent.prg,sender_agent.prg) 
-        prg = merge_two_prgs(prg,self.prg)
+        prg = merge_two_prgs(actor_agent.prg(),recv_agent.prg(),add) 
+        prg = merge_two_prgs(prg,self.prg,add) 
 
         d = prg_decimal(prg,[0.,1.]) 
 
@@ -203,11 +248,11 @@ class AgentType2F3MMOContainer:
             self.success_exec_record_map[a_idn][category] = dict() 
         
         if label not in self.success_exec_record_map[a_idn][category]: 
-            self.success_exec_record_map[a_idn][category][label] = 1 
+            self.success_exec_record_map[a_idn][category][label] = s  
         else: 
-            self.success_exec_record_map[a_idn][category][label] += 1 
+            self.success_exec_record_map[a_idn][category][label] += s  
 
-        self.current_exec_map[a_idn].append((category,label,success_stat))
+        self.current_exec_map[category] = (a_idn,label,success_stat) 
 
     def choose_first_relay__3PC(self,a1,a2,category): 
 
@@ -230,7 +275,7 @@ class AgentType2F3MMOContainer:
         cat2label_map = defaultdict(list)
         x = 0 
         for c in categories: 
-            q = int(prg(),label_size_range)
+            q = modulo_in_range(int(prg()),label_size_range)
             cat2label_map[c] = [i for i in range(x,x+q)] 
             x = x + q 
         return cat2label_map
@@ -289,6 +334,17 @@ class AgentType2F3MMOContainer:
             container_seq.append(atmc) 
         return container_seq
 
+class AgentType2F3MActionLog: 
+
+    def __init__(self,mo_type): 
+        assert mo_type in DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES
+        self.l = []
+        return
+
+    def update(self,action): 
+        return -1 
+
+
 """
 Agent Type 2 (F)aces 3 (M)otives. 
 
@@ -299,11 +355,16 @@ class AgentType2F3M:
         self.idn = idn 
         self.mo_container = mo_container
 
+        # every element is a list. 
+        # every element of that element is ... 
         # if "compatible characterization": 
-        #   element := (category, executed label, agent 1 expected label, agent 2 expected label)
+        #   element1 := (category, expected label (of self), executed label (of self XOR from others))
         # if "third-party contra": 
-        #   element := (category, executed label, bool::success) 
+        #   element1 := (category, expected label (of self), bool::success) 
         self.exec_record = [] 
+
+    def prg(self): 
+        return self.mo_container.prg 
 
     def support_for_agent_cl(self,a_idn,category,label): 
         return self.mo_container.aa_comp_map[a_idn][category][label]
@@ -315,13 +376,14 @@ class AgentType2F3M:
         return self.mo_container.mo_type 
 
     def cat_vec(self): 
-        return sorted(self.mo_container.c2l_map.keys()) 
+        return self.mo_container.cat_vec() 
+
+    def preprocess_one(self,a1,a2): 
+        self.mo_container.characterize_self()
+        self.mo_container.characterize_agent(a1) 
+        self.mo_container.characterize_agent(a2) 
 
     def process_one(self,a1,a2):  
-
-        self.characterize_self()
-        self.characterize_agent(a1) 
-        self.characterize_agent(a2) 
         mt = self.mo_type()
 
         if mt == "compatible characterization": 
@@ -348,15 +410,15 @@ class AgentType2F3M:
     def process_one__3PC_(self,a1,a2,category):
 
         first_relay = self.mo_container.choose_first_relay__3PC(a1,a2,category)
-        second_relay = a1 if r0 == a2 else a2 
+        second_relay = a1 if first_relay == a2 else a2 
 
         label = self.mo_container.self_char[category] 
 
-        c = first_relay.mo_container.compatibility_with_agent(self.idn) 
+        c = first_relay.mo_container.compatibility_with_agent(self) 
         s = first_relay.support_for_agent_cl(self.idn,category,label) 
         s = s * c 
 
-        prg = merge_two_prgs(self.prg,first_relay,add) 
+        prg = merge_two_prgs(self.prg(),first_relay.prg(),add) 
         q = prg_decimal(prg,[0.,1.]) 
 
         sender_approval = q <= s 
@@ -366,22 +428,30 @@ class AgentType2F3M:
         return
 
     def execute(self): 
+        x = self.mo_container.selfchar_seq()
+
         if self.mo_type() == "compatible characterization":
-            self.mo_container.
+            y = self.choose_char_seq__CC() 
 
-        # used for mo type "compatible characterization"
-        # other agent idn -> list::(category,label,jstrength) 
-        self.other_char_recv = defaultdict(list) 
+            erecord = [] 
+            for x_,y_ in zip(x,y): 
+                c = x_[0]
+                erecord.append((c,x_[1],y_[1]))
+        else: 
 
-        # used for mo type "third-party contra" 
-        # other agent idn -> category -> label -> # of times where first relay results in successful execution
-        self.success_exec_record_map = defaultdict()
-        # other agent idn -> list::(category,label,bool) 
-        self.current_exec_map = defaultdict(list) 
+            categories = self.cat_vec() 
+            erecord = [] 
+            for i,c in enumerate(categories): 
+                # check current exec map 
+                stat = self.mo_container.current_exec_map[c][2] 
+                erecord.append(x[i] + (stat,)) 
+
+        self.exec_record.append(erecord)
         return  
 
 class AgentType2F3MTrifecta: 
 
+    # NOTE: does not perform parameter checks for any of the three agents
     def __init__(self,a0,a1,a2): 
         assert type(a0) == type(a1) == type(a2) == AgentType2F3M
 
@@ -392,11 +462,31 @@ class AgentType2F3MTrifecta:
 
     def __next__(self): 
 
-        return -1 
+        q = [self.a0,self.a1,self.a2] 
+        for i in range(3): 
+            self.agent_pproc(i,True) 
+        
+        for i in range(3): 
+            self.agent_pproc(i,False) 
+
+        for q_ in q: self.a0.execute() 
+        return 
+
+    def agent_pproc(self,number,is_preproc:bool): 
+        assert number in {0,1,2} 
+        assert type(is_preproc) == bool 
+
+        q = [self.a0,self.a1,self.a2] 
+        x = q.pop(number) 
+
+        if is_preproc: 
+            x.preprocess_one(q[0],q[1]) 
+        else: 
+            x.process_one(q[0],q[1]) 
 
     @staticmethod 
     def generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg): 
-        mo_containers = generate_three_instances(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
+        mo_containers = AgentType2F3MMOContainer.generate_three_instances(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
 
         A = [] 
         for mo in mo_containers: 
