@@ -19,9 +19,8 @@ class AgentType2F3MMOContainer:
 
         if mo_type == "third-party contra": 
             assert type(attribute_vec_info) == type(None) 
-
             assert type(agent_action_comp_map) == dict 
-            assert 
+
             for k,v in agent_action_comp_map.items(): 
                 q = set(v.keys()) 
                 assert q == set(cat2label_map.keys())
@@ -225,9 +224,70 @@ class AgentType2F3MMOContainer:
             return a1 
         return a2
 
+    @staticmethod
+    def generate_c2l_map(num_categories,label_size_range,prg): 
+        categories = [i for i in range(num_categories)] 
+        cat2label_map = defaultdict(list)
+        x = 0 
+        for c in categories: 
+            q = int(prg(),label_size_range)
+            cat2label_map[c] = [i for i in range(x,x+q)] 
+            x = x + q 
+        return cat2label_map
+
+    @staticmethod
+    def generate_tri_relations_(ref_agent_idn,other_agent_idns,cat2label_map,prg): 
+        assert len(other_agent_idns) == 2
+
+        other_agent_idns = sorted(other_agent_idns)
+        C = sorted(cat2label_map.keys()) 
+
+        agent_action_comp_map = {} 
+
+        for o in other_agent_idns: 
+            agent_action_comp_map[o] = dict() 
+            for c in C: 
+                l = cat2label_map[c]
+                agent_action_comp_map[o][c] = dict() 
+                for l_ in l: 
+                    agent_action_comp_map[o][c][l_] = prg_decimal(prg,[0.,1.])
+        return agent_action_comp_map 
+
     @staticmethod 
-    def generate_three_instances(agent_idns):
-        return -1 
+    def generate_three_instances(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg): 
+
+        if mo_type == "third-party contra": 
+            assert type(attribute_bound_vec) == type(None) 
+        else: 
+            assert is_bounds_vector(attribute_bound_vec)
+
+        # generate category-to-label map 
+        c2l_map = AgentType2F3MMOContainer.generate_c2l_map(num_categories,label_size_range,prg)
+
+        agent_idns = sorted(agent_idns) 
+
+        container_seq = [] 
+        for a in agent_idns: 
+            prg0 = prg_to_prg__LCG_sequence(prg,1,modulo_in_range(prg(),[1.,5.]))[0] 
+            other_agents = sorted(set(agent_idns) - {a})
+
+            action_compatibility_map = None 
+            attribute_vec_info = None 
+
+            if mo_type == "third-party contra": 
+                action_compatibility_map = AgentType2F3MMOContainer.generate_tri_relations_(a,other_agents,c2l_map,prg) 
+            else: 
+                vec = prg__single_to_nvec(prg,len(attribute_bound_vec))()
+                vec = vector_modulo_in_bounds(vec,attribute_vec_bounds)
+                attribute_vec_info = (vec,attribute_vec_bounds)
+
+            compatibility_map = {} 
+            for o in other_agents: 
+                compatibility_map[o] = prg_decimal(prg,[0.,1.]) 
+
+            atmc = AgentType2F3MMOContainer(a,mo_type,c2l_map,compatibility_map,attribute_vec_info,action_compatibility_map,prg0)
+            container_seq.append(atmc) 
+        return container_seq
 
 """
 Agent Type 2 (F)aces 3 (M)otives. 
@@ -333,3 +393,13 @@ class AgentType2F3MTrifecta:
     def __next__(self): 
 
         return -1 
+
+    @staticmethod 
+    def generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg): 
+        mo_containers = generate_three_instances(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
+
+        A = [] 
+        for mo in mo_containers: 
+            a = AgentType2F3M(mo.agent_idn,mo)
+            A.append(a) 
+        return AgentType2F3MTrifecta(A[0],A[1],A[2]) 
