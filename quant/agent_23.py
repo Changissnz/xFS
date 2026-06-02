@@ -247,22 +247,23 @@ class AgentType2F3MMOContainer:
     return: 
     - bool, ?trio-based decision to allow `actor_agent` to execute action `label` of `category? 
     """
-    def recv_action_leak(self,actor_agent:AgentType2F3M,recv_agent:AgentType2F3M,category,sender_approval:bool): 
+    def recv_action_leak(self,actor_agent:AgentType2F3M,recv_agent:AgentType2F3M,category):#,sender_approval:bool): 
         
         approval = int(self.approve_action(actor_agent,category))
         if approval == 0: approval = -1 
 
-        sender_approval = int(sender_approval) 
-        if sender_approval == 0: sender_approval = -1 
+        recv_approval = int(recv_agent.mo_container.approve_action(actor_agent,category)) 
+        if recv_approval == 0: recv_approval = -1 
 
         idn = actor_agent.idn 
         label = actor_agent.mo_container.self_char[category]
 
-        d0_weight = 2 * sender_approval * \
-            recv_agent.mo_container.compatibility_with_agent(actor_agent) * \
-            recv_agent.mo_container.aa_comp_map[idn][category][label] 
+        d0_weight = 2 * approval * \
+            self.compatibility_with_agent(actor_agent) * \
+            self.aa_comp_map[idn][category][label] 
 
-        d1_weight = approval * self.compatibility_with_agent(actor_agent) * self.aa_comp_map[idn][category][label]
+        d1_weight = recv_approval * recv_agent.mo_container.compatibility_with_agent(actor_agent) * \
+            recv_agent.mo_container.aa_comp_map[idn][category][label]
 
         prg = merge_two_prgs(actor_agent.prg(),recv_agent.prg(),add) 
         prg = merge_two_prgs(prg,self.prg,add) 
@@ -460,18 +461,9 @@ class AgentType2F3M:
 
         first_relay = self.mo_container.choose_first_relay__3PC(a1,a2,category)
         second_relay = a1 if first_relay == a2 else a2 
-
         label = self.mo_container.self_char[category] 
 
-        c = first_relay.mo_container.compatibility_with_agent(self) 
-        s = first_relay.support_for_agent_cl(self.idn,category,label) 
-        s = s * c 
-
-        prg = merge_two_prgs(self.prg(),first_relay.prg(),add) 
-        q = prg_decimal(prg,[0.,1.]) 
-
-        sender_approval = q <= s 
-        stat = first_relay.mo_container.recv_action_leak(self,second_relay,category,sender_approval)
+        stat = first_relay.mo_container.recv_action_leak(self,second_relay,category)#,sender_approval)
 
         self.mo_container.update_success_count(first_relay.idn,category,label,stat)
         return
