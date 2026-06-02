@@ -65,7 +65,7 @@ class AgentType2F3MMOContainer:
 
         # used for mo type "compatible characterization"
         # other agent idn -> category -> (label,jstrength) 
-        self.other_char_recv = dict()  
+        self.other_char_recv = dict()
 
         # used for mo type "third-party contra" 
         # other agent idn -> category -> label -> # of times where first relay results in successful execution
@@ -209,16 +209,19 @@ class AgentType2F3MMOContainer:
 
         pr = prg_decimal(self.prg,[0.,1.])
         l = probability_to_label(pr_vec,pr)
-        return l 
+
+        D = [(other_agents[0],A[1]), (other_agents[1],A[2])]
+        return l,D 
 
     def choose_char_seq__CC(self): 
         categories = self.cat_vec() 
         catseq = [] 
-
+        other_exp = dict() 
         for c in categories: 
-            q = self.choose_char__CC(c)
+            q,d = self.choose_char__CC(c)
             catseq.append((c,q)) 
-        return catseq 
+            other_exp[c] = d 
+        return catseq,other_exp
 
     #------------------------------- for third-party contra 
 
@@ -399,6 +402,10 @@ class AgentType2F3M:
         #   element1 := (category, expected label (of self), bool::success) 
         self.exec_record = [] 
 
+        # every element is a map 
+        # category -> list::(other agent idn,characterization by other agent) 
+        self.exec_record_cc = [] 
+
     def set_verbosity(self,verbose): 
         self.mo_container.verbose = True
 
@@ -473,12 +480,13 @@ class AgentType2F3M:
         x = self.mo_container.selfchar_seq()
 
         if self.mo_type() == "compatible characterization":
-            y = self.mo_container.choose_char_seq__CC() 
+            y,d = self.mo_container.choose_char_seq__CC() 
 
             erecord = [] 
             for x_,y_ in zip(x,y): 
                 c = x_[0]
                 erecord.append((c,x_[1],y_[1]))
+            self.exec_record_cc.append(d) 
         else: 
 
             categories = self.cat_vec() 
@@ -533,7 +541,6 @@ class AgentType2F3MTrifecta:
                 for c in cvec: 
                     x = q_.mo_container.other_char_recv_category_info(c)
                     print("category {} : {}".format(c,x))
-                #print(q_.mo_container.other_char_recv) 
                 print("\t* * * *\t") 
 
         if self.verbose: print("--- \t\tAGENT EXECUTION") 
