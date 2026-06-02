@@ -1,12 +1,15 @@
 from collections import defaultdict
 from morebs2.numerical_generator import * 
+from morebs2.onedimprt_classifier import *
+from morebs2.pr2label import * 
 from types import MethodType,FunctionType
+from copy import deepcopy 
 
 DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES = {"compatible characterization","third-party contra"} 
 
 class AgentType2F3MMOContainer: 
 
-    def __init__(self,agent_idn,mo_type,cat2label_map,compatibility_map,attribute_vec_info,agent_action_comp_map,prg):  
+    def __init__(self,agent_idn,mo_type,cat2label_map,compatibility_map,attribute_vec_info,agent_action_comp_map,prg,verbose=False):  
         assert mo_type in DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES
         assert len(cat2label_map) > 0 
         assert type(cat2label_map) in {dict,defaultdict} 
@@ -39,6 +42,7 @@ class AgentType2F3MMOContainer:
             self.attribute_vec_bounds = attribute_vec_info[1] 
 
         assert type(prg) in {MethodType,FunctionType} 
+        assert type(verbose) == bool 
 
         self.agent_idn = agent_idn 
         self.mo_type = mo_type 
@@ -47,6 +51,7 @@ class AgentType2F3MMOContainer:
         # agent idn -> category -> label -> r in [0.,1.]
         self.aa_comp_map = agent_action_comp_map
         self.prg = prg 
+        self.verbose = verbose 
 
         # characterization of self 
         #   category -> label
@@ -77,11 +82,20 @@ class AgentType2F3MMOContainer:
         return q[i] 
 
     def characterize_self(self): 
-        self.self_char = self.char_map() 
+        self.self_char = self.char_map()
+
+        if self.verbose: 
+            C = self.cat_vec() 
+            print("agent {} self-char:\n  {}".format(self.agent_idn,[(c,self.self_char[c]) for c in C]))
 
     def characterize_agent(self,other_agent:AgentType2F3M): 
         d = self.char_map() 
         self.other_char[other_agent.idn] = d 
+
+        if self.verbose: 
+            C = self.cat_vec() 
+            print("agent {} characterizes {}:\n  {}".format(self.agent_idn,other_agent.idn,[(c,d[c]) for c in C]))
+
         return
 
     def char_map(self): 
@@ -132,7 +146,7 @@ class AgentType2F3MMOContainer:
             D.append(v) 
             L.append(ol) 
 
-        D = np.array(D) 
+        D,L = np.array(D),np.array(L)
         pscheme = int(prg_decimal(self.prg,[0.,1.]) >= 0.5 )
         rodc = RecursiveOneDimClassifier(D,L,prg=self.prg,pscheme=pscheme) 
 
@@ -140,16 +154,16 @@ class AgentType2F3MMOContainer:
         c = rodc.score_accuracy(D,L) 
         jstrength = c / len(D)
 
-        other_agent.recv_justification(self,category,label,jstrength) 
+        other_agent.mo_container.recv_justification(self,category,label,jstrength) 
         return 
 
-    def recv_justification(self,other_agent:AgentType2F3M,category,label,jstrength): 
-        if other_agent.idn not in self.other_char_recv: 
-            self.other_char_recv[other_agent.idn] = dict() 
-        self.other_char_recv[other_agent.idn][category] = (label,jstrength)
+    def recv_justification(self,other_agent_mo:AgentType2F3MMOContainer,category,label,jstrength): 
+        if other_agent_mo.agent_idn not in self.other_char_recv: 
+            self.other_char_recv[other_agent_mo.agent_idn] = dict() 
+        self.other_char_recv[other_agent_mo.agent_idn][category] = (label,jstrength)
 
     def choose_char__CC(self,category):
-        selfcat = self.self_char[category]
+        label = self.self_char[category]
 
         other_agents = sorted(self.other_char_recv.keys())
         assert len(other_agents) == 2 
@@ -192,7 +206,10 @@ class AgentType2F3MMOContainer:
         prg = merge_two_prgs(self.prg,other_agent.prg(),add) 
         d = prg_decimal(prg,[0.,1.]) 
         x = self.aa_comp_map[other_agent.idn][category][label] 
-        return x <= d 
+        stat = x <= d 
+        if self.verbose: 
+            print("agent {} approves agent {} action {}? {}".format(self.agent_idn,other_agent.idn,(category,label),stat))  
+        return stat 
 
     """
     For use by the first relay. 
@@ -222,7 +239,10 @@ class AgentType2F3MMOContainer:
 
         d = prg_decimal(prg,[0.,1.]) 
 
-        return d <= d0_weight + d1_weight
+        stat = d <= d0_weight + d1_weight
+        if self.verbose: 
+            print("\tacting agent {} executes? {}".format(actor_agent.idn,stat))
+        return stat 
 
     def success_count(self,a_idn,category,label): 
         if a_idn not in self.success_exec_record_map: 
@@ -323,8 +343,8 @@ class AgentType2F3MMOContainer:
                 action_compatibility_map = AgentType2F3MMOContainer.generate_tri_relations_(a,other_agents,c2l_map,prg) 
             else: 
                 vec = prg__single_to_nvec(prg,len(attribute_bound_vec))()
-                vec = vector_modulo_in_bounds(vec,attribute_vec_bounds)
-                attribute_vec_info = (vec,attribute_vec_bounds)
+                vec = vector_modulo_in_bounds(vec,attribute_bound_vec)
+                attribute_vec_info = (vec,attribute_bound_vec)
 
             compatibility_map = {} 
             for o in other_agents: 
@@ -363,6 +383,9 @@ class AgentType2F3M:
         #   element1 := (category, expected label (of self), bool::success) 
         self.exec_record = [] 
 
+    def set_verbosity(self,verbose): 
+        self.mo_container.verbose = True
+
     def prg(self): 
         return self.mo_container.prg 
 
@@ -392,7 +415,6 @@ class AgentType2F3M:
             self.process_one__3PC(a1,a2) 
 
     def process_one__CC(self,a1,a2): 
-        self.other_char_recv.clear() 
 
         cats = self.cat_vec() 
         for c in cats: 
@@ -431,7 +453,7 @@ class AgentType2F3M:
         x = self.mo_container.selfchar_seq()
 
         if self.mo_type() == "compatible characterization":
-            y = self.choose_char_seq__CC() 
+            y = self.mo_container.choose_char_seq__CC() 
 
             erecord = [] 
             for x_,y_ in zip(x,y): 
@@ -445,6 +467,7 @@ class AgentType2F3M:
                 # check current exec map 
                 stat = self.mo_container.current_exec_map[c][2] 
                 erecord.append(x[i] + (stat,)) 
+            if self.mo_container.verbose: print("agent {} exec stat: {}".format(self.idn,erecord))
 
         self.exec_record.append(erecord)
         return  
@@ -452,24 +475,32 @@ class AgentType2F3M:
 class AgentType2F3MTrifecta: 
 
     # NOTE: does not perform parameter checks for any of the three agents
-    def __init__(self,a0,a1,a2): 
+    def __init__(self,a0,a1,a2,verbose=False): 
         assert type(a0) == type(a1) == type(a2) == AgentType2F3M
 
         self.a0 = a0 
         self.a1 = a1 
         self.a2 = a2  
+        self.set_verbosity(verbose) 
         return 
 
-    def __next__(self): 
+    def set_verbosity(self,verbose:bool):
+        assert type(verbose) == bool  
+        self.verbose = verbose 
+        for x in [self.a0,self.a1,self.a2]: 
+            x.set_verbosity(self.verbose)
 
+    def __next__(self): 
         q = [self.a0,self.a1,self.a2] 
+        for q_ in q: q_.mo_container.other_char_recv.clear() 
+
         for i in range(3): 
             self.agent_pproc(i,True) 
         
         for i in range(3): 
             self.agent_pproc(i,False) 
 
-        for q_ in q: self.a0.execute() 
+        for q_ in q: q_.execute() 
         return 
 
     def agent_pproc(self,number,is_preproc:bool): 
