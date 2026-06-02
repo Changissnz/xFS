@@ -6,6 +6,7 @@ from types import MethodType,FunctionType
 from copy import deepcopy 
 
 DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES = {"compatible characterization","third-party contra"} 
+DEFAULT_AGENT_TYPE_2F3M_CC_JUSTIFICATION_LABEL2SAMPLE_SIZE = 17  
 
 class AgentType2F3MMOContainer: 
 
@@ -37,9 +38,11 @@ class AgentType2F3MMOContainer:
         else: 
             assert type(agent_action_comp_map) == type(None) 
             assert is_vector(attribute_vec_info[0]) 
-            assert is_bounds_vector(attribute_vec_info[1])  
+            assert is_bounds_vector(attribute_vec_info[1]) 
+            assert type(attribute_vec_info[2]) == int and attribute_vec_info[2] > 1  
             self.attribute_vec = attribute_vec_info[0] 
             self.attribute_vec_bounds = attribute_vec_info[1] 
+            self.cc_justification_l2s_size = attribute_vec_info[2] 
 
         assert type(prg) in {MethodType,FunctionType} 
         assert type(verbose) == bool 
@@ -114,7 +117,41 @@ class AgentType2F3MMOContainer:
         categories = self.cat_vec() 
         return [(c,self.self_char[c]) for c in categories] 
 
+    def other_char_recv_category_info(self,category): 
+        q = dict() 
+        for k,v in self.other_char_recv.items(): 
+            if category not in v: continue 
+            q[k] = v[category] 
+        return q 
+
     #------------------------------- for compatible characterization 
+
+    def set_cc_dataset_justification_size(self,l): 
+        assert type(l) == int and l > 1 
+        self.cc_justification_l2s_size = l 
+
+    @staticmethod
+    def generate_justification_dataset(ref_vec,bounds_vec,ref_label,all_labels,samples_per_label,prg): 
+        assert is_vector(ref_vec)
+        assert is_bounds_vector(bounds_vec) 
+
+        D = [deepcopy(ref_vec)]   
+        L = [ref_label]  
+        prg_ = prg__single_to_nvec(prg,len(ref_vec)) 
+
+        def samples_for_label(label): 
+            for _ in range(samples_per_label): 
+                a = prg_() 
+                q = ref_vec + a 
+                v = vector_modulo_in_bounds(q,bounds_vec)  
+                D.append(v) 
+                L.append(label) 
+          
+        for x in all_labels: 
+            samples_for_label(x) 
+
+        D,L = np.array(D),np.array(L)
+        return D,L 
 
     """
     A `justification` scheme using class<RecursiveOneDimClassifier> from project<morebs2>. 
@@ -134,26 +171,17 @@ class AgentType2F3MMOContainer:
         prg = prg__single_to_nvec(self.prg,len(self.attribute_vec)) 
 
         avec = other_agent.attribute_vector() 
-        D = [deepcopy(avec)]  
-        L = [label] 
-        
-        other_labels = sorted(set(self.c2l_map[category]) - {label})  
 
-        for ol in other_labels: 
-            a = prg() 
-            q = avec + a 
-            v = vector_modulo_in_bounds(q,self.attribute_vec_bounds) 
-            D.append(v) 
-            L.append(ol) 
+        all_labels = sorted(set(self.c2l_map[category]))
+        D,L = AgentType2F3MMOContainer.generate_justification_dataset(avec,self.attribute_vec_bounds,\
+            label,all_labels,self.cc_justification_l2s_size,self.prg)
 
-        D,L = np.array(D),np.array(L)
         pscheme = int(prg_decimal(self.prg,[0.,1.]) >= 0.5 )
         rodc = RecursiveOneDimClassifier(D,L,prg=self.prg,pscheme=pscheme) 
 
         rodc.fit() 
-        c = rodc.score_accuracy(D,L) 
+        c = rodc.score_accuracy(D,L)
         jstrength = c / len(D)
-
         other_agent.mo_container.recv_justification(self,category,label,jstrength) 
         return 
 
@@ -176,11 +204,10 @@ class AgentType2F3MMOContainer:
         V.extend([p0,p1]) 
 
         V = [zero_div(v,non_compat+p0+p1,1/3) for v in V]
-        A = [label,self.other_char_recv[other_agents[0]][category][1],self.other_char_recv[other_agents[0]][category][1]] 
+        A = [label,self.other_char_recv[other_agents[0]][category][0],self.other_char_recv[other_agents[1]][category][0]] 
         pr_vec = [(v,a) for (v,a) in zip(V,A)] 
 
         pr = prg_decimal(self.prg,[0.,1.])
-        
         l = probability_to_label(pr_vec,pr)
         return l 
 
@@ -344,7 +371,7 @@ class AgentType2F3MMOContainer:
             else: 
                 vec = prg__single_to_nvec(prg,len(attribute_bound_vec))()
                 vec = vector_modulo_in_bounds(vec,attribute_bound_vec)
-                attribute_vec_info = (vec,attribute_bound_vec)
+                attribute_vec_info = (vec,attribute_bound_vec,DEFAULT_AGENT_TYPE_2F3M_CC_JUSTIFICATION_LABEL2SAMPLE_SIZE)
 
             compatibility_map = {} 
             for o in other_agents: 
@@ -353,17 +380,6 @@ class AgentType2F3MMOContainer:
             atmc = AgentType2F3MMOContainer(a,mo_type,c2l_map,compatibility_map,attribute_vec_info,action_compatibility_map,prg0)
             container_seq.append(atmc) 
         return container_seq
-
-class AgentType2F3MActionLog: 
-
-    def __init__(self,mo_type): 
-        assert mo_type in DEFAULT_AGENT_TYPE_2F3M_MODUS_OPERANDI_TYPES
-        self.l = []
-        return
-
-    def update(self,action): 
-        return -1 
-
 
 """
 Agent Type 2 (F)aces 3 (M)otives. 
@@ -420,6 +436,10 @@ class AgentType2F3M:
         for c in cats: 
             self.mo_container.justify_char(a1,c) 
             self.mo_container.justify_char(a2,c) 
+            if self.mo_container.verbose: 
+                d = self.mo_container.other_char_recv_category_info(c)
+                k = sorted(d.keys())
+                d_ = [(k_,d[k_]) for k_ in k]
         return
 
     def process_one__3PC(self,a1,a2): 
@@ -467,7 +487,8 @@ class AgentType2F3M:
                 # check current exec map 
                 stat = self.mo_container.current_exec_map[c][2] 
                 erecord.append(x[i] + (stat,)) 
-            if self.mo_container.verbose: print("agent {} exec stat: {}".format(self.idn,erecord))
+        
+        if self.mo_container.verbose: print("agent {} exec stat: {}".format(self.idn,erecord))
 
         self.exec_record.append(erecord)
         return  
@@ -484,6 +505,9 @@ class AgentType2F3MTrifecta:
         self.set_verbosity(verbose) 
         return 
 
+    def mo_type(self): 
+        return self.a0.mo_container.mo_type 
+
     def set_verbosity(self,verbose:bool):
         assert type(verbose) == bool  
         self.verbose = verbose 
@@ -494,12 +518,25 @@ class AgentType2F3MTrifecta:
         q = [self.a0,self.a1,self.a2] 
         for q_ in q: q_.mo_container.other_char_recv.clear() 
 
+        if self.verbose: print("--- \t\tAGENT PREPROCESS")
         for i in range(3): 
             self.agent_pproc(i,True) 
         
+        if self.verbose: print("--- \t\tAGENT PROCESS")
         for i in range(3): 
             self.agent_pproc(i,False) 
 
+        if self.verbose and self.mo_type() == "compatible characterization": 
+            for q_ in q: 
+                print("other characterizations for agent {}".format(q_.idn)) 
+                cvec = q_.mo_container.cat_vec() 
+                for c in cvec: 
+                    x = q_.mo_container.other_char_recv_category_info(c)
+                    print("category {} : {}".format(c,x))
+                #print(q_.mo_container.other_char_recv) 
+                print("\t* * * *\t") 
+
+        if self.verbose: print("--- \t\tAGENT EXECUTION") 
         for q_ in q: q_.execute() 
         return 
 
