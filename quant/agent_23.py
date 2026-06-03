@@ -458,14 +458,14 @@ For step 3:
     - The three probabilities are normalized to sum to 1. 
     - Agent A uses its PRNG to output a decimal d in [0.,1.] using its PRNG. 
     - Value d maps out to a label l_d of the three labels, according to their associated normalized probabilities.
-    - Label l_d is the executed action for category T
+    - Label l_d is the executed action for category T.
 
     - 3PC 
 - For every category T, 
 
     - For the other two agents: 
         - Agent A and the relay X merge their PRNGs into one, via addition. Merged PRNG outputs a float d in [0.,1.]. 
-        - X retrieves its compatibility c for A's selection L in category T (see variable<AgentType2F3M.mo_container.aa_comp_map>). 
+        - X retrieves its compatibility c for A's selection l in category T (see variable<AgentType2F3M.mo_container.aa_comp_map>). 
         - Relay R approves if B_R = (d <= c). B_R is set to 1 if True and -1 if False.  
     - Agent A uses PRNG to output float d0 in [0.,1.]. It uses d0 to select exactly one of {B,C}, the other two agents, to be 
       the first relay. If d0 <= (success rate of executing (T,l) by choosing B for the first relay), A chooses B, otherwise C. 
