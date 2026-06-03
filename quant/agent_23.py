@@ -279,7 +279,7 @@ class AgentType2F3MMOContainer:
 
         d = prg_decimal(prg,[0.,1.]) 
 
-        stat = d <= d0_weight + d1_weight
+        stat = d < d0_weight + d1_weight
         if self.verbose: 
             print("\tacting agent {} executes? {}".format(actor_agent.idn,stat))
         return stat 
@@ -672,6 +672,9 @@ class AgentType2F3MTrifecta:
     def set_uniform_compatibility(self,f:float,is_agent2agent:bool):
         for q in [self.a0,self.a1,self.a2]: 
             q.set_uniform_compatibility(f,is_agent2agent) 
+
+    def scores(self): 
+        return [q.score() for q in [self.a0,self.a1,self.a2]]
 
     def mo_type(self): 
         return self.a0.mo_container.mo_type 
