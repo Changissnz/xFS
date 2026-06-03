@@ -495,7 +495,7 @@ class AgentType2F3M:
         self.exec_record = [] 
 
         # every element is a map 
-        # category -> list::(other agent idn,characterization by other agent) 
+        # category -> list::(other agent idn,characterization by other agent)
         self.exec_record_cc = [] 
 
     #----------------------------- setter/getter methods 
@@ -515,7 +515,7 @@ class AgentType2F3M:
         return c,c2 
 
     def set_verbosity(self,verbose): 
-        self.mo_container.verbose = True
+        self.mo_container.verbose = verbose 
 
     def set_prg(self,prg): 
         assert type(prg) in {MethodType,FunctionType}
@@ -604,6 +604,28 @@ class AgentType2F3M:
         return
     
     #---------------------------- execute action based on circumstantial characterization 
+
+    """
+    return:
+    - list::(other agent idn,# of occurrences that this agent took other agent's label for corresponding category)
+    """
+    # NOTE: for use strictly with m/o "compatible characterization"
+    def score_type_2(self): 
+        assert self.mo_type() == "compatible characterization"
+
+        d = defaultdict(int)
+
+        for (i,x) in enumerate(self.exec_record): 
+
+            x2 = self.exec_record_cc[i] 
+
+            for x_ in x: 
+                c = x_[0] 
+                got = x_[2] 
+                q = x2[c] 
+                for other,ch in q: 
+                    d[other] += (ch == got) 
+        return d
 
     def execute(self): 
         x = self.mo_container.selfchar_seq()
