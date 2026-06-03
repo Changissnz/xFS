@@ -654,8 +654,6 @@ class AgentType2F3M:
 
 """
 Processing container for three instances of <AgentType2F3M>. 
-
-
 """
 class AgentType2F3MTrifecta: 
 
