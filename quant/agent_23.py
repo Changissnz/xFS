@@ -462,10 +462,14 @@ For step 3:
 
     - 3PC 
 - For every category T, 
+
     - For the other two agents: 
         - Agent A and the relay X merge their PRNGs into one, via addition. Merged PRNG outputs a float d in [0.,1.]. 
         - X retrieves its compatibility c for A's selection L in category T (see variable<AgentType2F3M.mo_container.aa_comp_map>). 
         - Relay R approves if B_R = (d <= c). B_R is set to 1 if True and -1 if False.  
+    - Agent A uses PRNG to output float d0 in [0.,1.]. It uses d0 to select exactly one of {B,C}, the other two agents, to be 
+      the first relay. If d0 <= (success rate of executing (T,l) by choosing B for the first relay), A chooses B, otherwise C. 
+      See usage of variable<AgentType2F3M.mo_container.success_exec_record_map> for more details. 
     - The three PRNGS of A, first relay R_0, and second relay R_1 are merged, via addition. 
     - This merged PRNG produces float d1 in [0.,1.].
     - The boolean of approval from the combined influence of the first relay R_0 and the second relay R_1 
