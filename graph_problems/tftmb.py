@@ -1,5 +1,14 @@
 from quant.agent_23 import * 
 
+"""
+NOTE: 
+See description for class<AgentType2F3M> in file<quant.agent_23> for information on the logistics 
+of this bot. 
+
+If `variable_comp` is set to True, after every timestamp, bot modifies the agent-to-agent compatibilities 
+and agent-to-agent-categorical-label compatibilities. See variable<AgentType2F3MMOContainer.comp_map> 
+and variable<AgentType2F3MMOContainer.aa_comp_map> for more information. 
+"""
 class ThreeFacesTwoMotivesBot(AgentType2F3MTrifecta): 
 
     def __init__(self,a0,a1,a2,variable_comp:bool,verbose=False): 
