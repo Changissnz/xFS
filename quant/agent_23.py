@@ -500,8 +500,24 @@ class AgentType2F3M:
 
     #----------------------------- setter/getter methods 
 
+    def score(self):
+
+        if self.mo_type() == "compatible characterization": 
+            f = lambda x: sum([int(x_[1] == x_[2]) for x_ in x])
+        else: 
+            f = lambda x: sum([int(x_[2]) for x_ in x])
+
+        c = 0 
+        for x in self.exec_record:
+            c += f(x) 
+        return c
+
     def set_verbosity(self,verbose): 
         self.mo_container.verbose = True
+
+    def set_prg(self,prg): 
+        assert type(prg) in {MethodType,FunctionType}
+        self.mo_container.prg = prg 
 
     def prg(self): 
         return self.mo_container.prg 
