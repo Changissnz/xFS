@@ -109,7 +109,7 @@ Here is a list of graph problems in the project:
         support values (real numbers) to the nodes of relevance. 
     - file: `graph_problems/efb.py` 
 - Two Faces Three Motives Bot (work in progress) 
-- Proaction-Driven Inadvertency (work in progress) 
+- Proaction-Driven Inadvertency Bot (work in progress) 
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 

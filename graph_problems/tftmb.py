@@ -9,7 +9,7 @@ If `variable_comp` is set to True, after every timestamp, bot modifies the agent
 and agent-to-agent-categorical-label compatibilities. See variable<AgentType2F3MMOContainer.comp_map> 
 and variable<AgentType2F3MMOContainer.aa_comp_map> for more information. 
 """
-class ThreeFacesTwoMotivesBot(AgentType2F3MTrifecta): 
+class TwoFacesThreeMotivesBot(AgentType2F3MTrifecta): 
 
     def __init__(self,a0,a1,a2,variable_comp:bool,verbose=False): 
         assert type(variable_comp) == bool 
@@ -42,5 +42,5 @@ class ThreeFacesTwoMotivesBot(AgentType2F3MTrifecta):
     def generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,variable_comp:bool,prg):
 
         ATT = AgentType2F3MTrifecta.generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
-        tbot = ThreeFacesTwoMotivesBot(ATT.a0,ATT.a1,ATT.a2,variable_comp,verbose=False)
+        tbot = TwoFacesThreeMotivesBot(ATT.a0,ATT.a1,ATT.a2,variable_comp,verbose=False)
         return tbot 
