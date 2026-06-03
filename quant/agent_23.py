@@ -407,7 +407,7 @@ category-to-labels map M:
 
 
 Agent is used in weighted processes that determine whether it moves by its own "characterization" 
-or not. This "characterization" 
+or not. 
 
 Agent moves by a three-step procedure: 
 I) preprocessing: characterize self and other two agents. 
