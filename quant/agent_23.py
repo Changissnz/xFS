@@ -508,9 +508,11 @@ class AgentType2F3M:
             f = lambda x: sum([int(x_[2]) for x_ in x])
 
         c = 0 
+        c2 = 0 
         for x in self.exec_record:
             c += f(x) 
-        return c
+            c2 += len(x) 
+        return c,c2 
 
     def set_verbosity(self,verbose): 
         self.mo_container.verbose = True
