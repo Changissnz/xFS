@@ -545,14 +545,25 @@ class AgentType2F3M:
         assert 0. <= f <= 1. 
         assert type(is_agent2agent) == bool 
 
+        def g(): 
+            return f 
+        
+        return self.set_compatibility(g,is_agent2agent)
+
+    # NOTE: careful, does not check that `prg` outputs values strictly in [0.,1.] 
+    def set_compatibility(self,prg,is_agent2agent:bool): 
+        assert type(prg) in {MethodType,FunctionType} 
+        assert type(is_agent2agent) == bool 
+
         if is_agent2agent: 
             for k in self.mo_container.comp_map.keys(): 
-                self.mo_container.comp_map[k] = f 
+                self.mo_container.comp_map[k] = prg() 
         else: 
             for k,v in self.mo_container.aa_comp_map.items(): 
                 for k2,v2 in v.items(): 
                     for k3 in v2.keys(): 
-                        v2[k3] = f
+                        v2[k3] = prg() 
+        return 
 
     #---------------------------- preprocessing phase: characterization of self and others  
 
@@ -577,12 +588,6 @@ class AgentType2F3M:
         for c in cats: 
             self.mo_container.justify_char(a1,c) 
             self.mo_container.justify_char(a2,c) 
-            '''
-            if self.mo_container.verbose: 
-                d = self.mo_container.other_char_recv_category_info(c)
-                k = sorted(d.keys())
-                d_ = [(k_,d[k_]) for k_ in k]
-            ''' 
         return
 
     def process_one__3PC(self,a1,a2): 
