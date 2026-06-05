@@ -5,6 +5,24 @@ from morebs2.numerical_generator import is_number
 DEFAULT_DIPNAV_LOG_LENGTH = 5 
 DEFAULT_DIPNAV_LINEXP_SOLVER_COEFF_RANGE = [0.05,2.] 
 
+def generate_nv_map_from_nv_range(nodeseq,node_value_range,prg):
+    assert type(nodeseq) == list 
+    assert is_valid_range(node_value_range,True,False) or is_valid_range(node_value_range,False,False) 
+    assert type(prg) in {FunctionType,MethodType} 
+
+    node_value_range_map = {} 
+    #for i in range(num_nodes): 
+    for n in nodeseq: 
+        r0 = modulo_in_range(prg(),node_value_range) 
+        r1 = modulo_in_range(prg(),node_value_range)
+
+        if r0 == r1: 
+            r1 = modulo_in_range(r0 + 1,node_value_range)
+
+        r0,r1 = sorted([r0,r1]) 
+        node_value_range_map[n] = (r0,r1) 
+    return node_value_range_map 
+
 """
 Used for navigating a Directed Implication Path (see class<PathTypeDI>), in 
 the case of `open_info`. 
@@ -369,6 +387,9 @@ class DIPathNavigatorHandler:
         self.c = 0 
         return 
 
+    def path_nodeset(self): 
+        return set(self.dipn.G.keys())
+
     def reset(self): 
         assert type(self.dipn) == InadvertentDIPathNavigator
         self.dipn.reset() 
@@ -381,6 +402,9 @@ class DIPathNavigatorHandler:
     def set_prg(self,prg):
         assert type(prg) in {MethodType,FunctionType} 
         self.dipn.prg = prg 
+
+    def current_extra_value(self): 
+        return self.ptdi.current_extra_value 
 
     """
     return: (0|1,?,?,?)
@@ -423,7 +447,6 @@ class DIPathNavigatorHandler:
             # feed navigator on-contact threshold info for node, if `open_info`
             #if self.info_mode: 
             self.feed_info_to_navigator(node_idn) 
-
             does_advance,x2,stat1,stat2 = self.ptdi.register_advance(node_idn,value,self.verbose) 
 
             if self.verbose: 
@@ -465,7 +488,6 @@ class DIPathNavigatorHandler:
                 self.dipn.entire_path.append(stat1) 
         else: 
             self.ptdi.register_backtrack()
-
         self.c += 1 
         return 
 

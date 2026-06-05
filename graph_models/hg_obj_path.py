@@ -36,6 +36,13 @@ class NodeActivationFunctionTypeMT:
         self.n2mt_map = n2mt_map 
         self.act_type = activation_type 
         self.lin_exp_value = lin_exp_value 
+
+        # for use when navigator attempts to travel associated node of this class. 
+        # This class logs the absolute value of the difference between minimal support 
+        # and support D by navigator registered into this class. 
+        # if "linexp": difference b/t `lin_exp_value` and LC(D).  
+        # if "single": difference b/t minimal support of node n and D[n]
+        self.current_extra_value = 0. 
         return
 
     def __str__(self): 
@@ -86,6 +93,8 @@ class NodeActivationFunctionTypeMT:
                 
     def register(self,d):
         assert type(d) == defaultdict 
+
+        self.current_extra_value = 0. 
         ##print("NODE IDN {} ACTIVATION {}".format(self.node_idn,self.activation_node_idn))
         if self.act_type == "linexp": 
             return self.register__linexp(d) 
@@ -98,7 +107,8 @@ class NodeActivationFunctionTypeMT:
             c = c + (v * d[k]) 
         #print("keys: {} / {}".format(sorted(d.keys()),sorted(self.n2mt_map.keys())))
         #print("S: {} / {}".format(c,self.lin_exp_value))
-        return c - self.lin_exp_value, c >= self.lin_exp_value 
+        self.current_extra_value = c - self.lin_exp_value
+        return self.current_extra_value, c >= self.lin_exp_value 
 
     def register__single(self,d): 
 
@@ -107,10 +117,13 @@ class NodeActivationFunctionTypeMT:
         for k in keys: 
             v = self.n2mt_map[k] 
             if k not in d: 
+                self.current_extra_value = -abs(v) 
                 return k,False
             if d[k] < v: 
+                self.current_extra_value = v - d[k] 
                 return k,False 
 
+        self.current_extra_value = d[self.node_idn] - self.n2mt_map[k]
         return d[self.node_idn] - self.n2mt_map[k],True 
 
     @staticmethod 
@@ -276,6 +289,7 @@ class ObjectivePathTypeDI(PathTypeDI):
 
     def __init__(self,G,node_value_map,node_act_function_map): 
         super().__init__(G,node_value_map,node_act_function_map)
+        self.current_extra_value = 0. 
         return
 
     """
@@ -291,6 +305,8 @@ class ObjectivePathTypeDI(PathTypeDI):
         - bool: ?immediate effect? 
     """
     def register_advance(self,node_idn,value:float,verbose=False):  
+        self.current_extra_value = 0. 
+
         if verbose: 
             print("** navigator path record **")
             print(self.navigator_path_record)
@@ -306,7 +322,9 @@ class ObjectivePathTypeDI(PathTypeDI):
 
         # check that value fits required range for node 
         r = self.nv_map[node_idn] 
-        assert r[0] <= value <= r[1], "got {},   {}".format(value,r) 
+        if value > r[1]: value = r[1] 
+        elif value < r[0]: value = r[0]
+        #assert r[0] <= value <= r[1], "got {},   {}".format(value,r) 
 
         # case: pending failures activate 
         backtracked_nodes,new_loc = self.process_pending_failure(node_idn) 
@@ -317,6 +335,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         d = defaultdict(float,self.path_record_to_dict())
         d[node_idn] = value 
         v,stat = q.register(d) 
+        self.current_extra_value = q.current_extra_value
 
             # immediate action 
         stat2 = True 
