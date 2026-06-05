@@ -71,7 +71,6 @@ class PRNGProactionInadvertentEffectClass(unittest.TestCase):
 class PRNGProactionInadvertentEffectChainClass(unittest.TestCase): 
 
     def test__PRNGProactionInadvertentEffectChain__next__case_1(self): 
-        ##return -1 
         prior_connectivity_pr = 0.3 
         inadvertency_ratio_range = [0.05,0.15]
         node_value_range = [30.,350.]
@@ -87,7 +86,13 @@ class PRNGProactionInadvertentEffectChainClass(unittest.TestCase):
 
             if not _ % 10: 
                 print("score: ",ec.iscore_prev()) 
-
+        
+        s = ec.iscore_full()
+        print("SS: ",s)
+        assert s == 203342
+        
+        l = len(ec) 
+        assert l == 115, "got {}".format(l)
 
 if __name__ == '__main__':
     unittest.main()
