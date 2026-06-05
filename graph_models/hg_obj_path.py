@@ -42,7 +42,7 @@ class NodeActivationFunctionTypeMT:
         # and support D by navigator registered into this class. 
         # if "linexp": difference b/t `lin_exp_value` and LC(D).  
         # if "single": difference b/t minimal support of node n and D[n]
-        self.current_extra_value = 0. 
+        self.current_extra_value = 0.
         return
 
     def __str__(self): 
@@ -94,7 +94,7 @@ class NodeActivationFunctionTypeMT:
     def register(self,d):
         assert type(d) == defaultdict 
 
-        self.current_extra_value = 0. 
+        self.current_extra_value = 0.
         ##print("NODE IDN {} ACTIVATION {}".format(self.node_idn,self.activation_node_idn))
         if self.act_type == "linexp": 
             return self.register__linexp(d) 
@@ -290,7 +290,12 @@ class ObjectivePathTypeDI(PathTypeDI):
     def __init__(self,G,node_value_map,node_act_function_map): 
         super().__init__(G,node_value_map,node_act_function_map)
         self.current_extra_value = 0. 
+        self.last_registered_node = None 
         return
+
+    def clear_current_extra(self): 
+        self.current_extra_value = 0. 
+        self.last_registered_node = None 
 
     """
     return: (0|1,?,?,?)
@@ -305,7 +310,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         - bool: ?immediate effect? 
     """
     def register_advance(self,node_idn,value:float,verbose=False):  
-        self.current_extra_value = 0. 
+        self.current_extra_value,self.last_registered_node = 0.,node_idn 
 
         if verbose: 
             print("** navigator path record **")
@@ -329,6 +334,7 @@ class ObjectivePathTypeDI(PathTypeDI):
         # case: pending failures activate 
         backtracked_nodes,new_loc = self.process_pending_failure(node_idn) 
         if type(new_loc) != type(None):  
+            self.current_extra_value = value 
             return 0,backtracked_nodes,new_loc,True 
 
         q = self.node_act_function_map[node_idn] 
@@ -336,7 +342,8 @@ class ObjectivePathTypeDI(PathTypeDI):
         d[node_idn] = value 
         v,stat = q.register(d) 
         self.current_extra_value = q.current_extra_value
-
+        self.last_registered_node = node_idn 
+        
             # immediate action 
         stat2 = True 
 

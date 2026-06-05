@@ -1,4 +1,5 @@
 from graph_models.hg_obj_path_op import * 
+from morebs2.numerical_generator import prg_to_prg__LCG_sequence
 
 class PRNGProactionInadvertentEffect: 
 
@@ -15,10 +16,33 @@ class PRNGProactionInadvertentEffect:
 
         self.ppn = proaction_path_navigator
         self.n2ipn_map = proaction_node_to_inadvertent_path_navigators
+        self.fin_stat = False 
+        self.imap = defaultdict(int)
         return
 
     def __next__(self): 
+        if self.ppn.dipn.fin_stat:
+            self.fin_stat = True 
+        
+        if self.fin_stat: return 
+
+        # proaction 
+        next(self.ppn)
+
+        # inadvertency 
+        c,v = self.ppn.current_extra_value() 
+        if type(c) == type(None): 
+            return 
+        self.inadvertency_on_proaction_node(c,abs(v)) 
         return 
+
+    def inadvertency_on_proaction_node(self,n,v): 
+        q = self.n2ipn_map[n] 
+        for (i,q_) in enumerate(q): 
+            q_.add_support(abs(v)) 
+            while not q_.dipn.fin_stat: 
+                next(q_) 
+            self.imap[(n,i)] += q_.dipn.at_tail() 
 
     @staticmethod 
     def generate_instance(start_node_idn,inadvertency_ratio_range,node_value_range,\
@@ -37,12 +61,13 @@ class PRNGProactionInadvertentEffect:
             inadvertencies = modulo_in_range(int(prg()),inadvertency_size_range)
             D[n] = [] 
             for i in range(inadvertencies): 
-                d0,d1 = prg_decimal(prg,[0.,1.]),prg_decimal(prg,[0.,1.]) 
+                prg0 = prg_to_prg__LCG_sequence(prg,1,modulo_in_range(prg(),[1,5.]))[0]
+                d0,d1 = prg_decimal(prg,inadvertency_ratio_range),prg_decimal(prg,inadvertency_ratio_range) 
                 d2 = sorted([d0,d1]) 
                 m = modulo_in_range(prg(),node_value_range)
                 d3 = [d2[0] * m,d2[1] * m] 
                 ieffect = PRNGProactionInadvertentEffect.generate_one_DIPathNavigatorHandler(\
-                    start_node_idn,d3,info_mode,is_inadvertent=True,prg=prg) 
+                    start_node_idn,d3,info_mode,is_inadvertent=True,prg=prg0) 
                 D[n].append(ieffect) 
                 start_node_idn += 3 
         return PRNGProactionInadvertentEffect(dipnh,D) 

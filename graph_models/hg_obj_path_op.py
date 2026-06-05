@@ -404,7 +404,7 @@ class DIPathNavigatorHandler:
         self.dipn.prg = prg 
 
     def current_extra_value(self): 
-        return self.ptdi.current_extra_value 
+        return (self.ptdi.last_registered_node,self.ptdi.current_extra_value) 
 
     """
     return: (0|1,?,?,?)
@@ -420,7 +420,8 @@ class DIPathNavigatorHandler:
     """
     def __next__(self): 
         if self.dipn.fin_stat: return 
-
+        self.ptdi.clear_current_extra() 
+        
         if self.verbose: 
             print("----------------------------------")
             print("LOC: ",self.dipn.loc)
