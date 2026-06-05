@@ -17,8 +17,15 @@ class PRNGProactionInadvertentEffect:
         self.ppn = proaction_path_navigator
         self.n2ipn_map = proaction_node_to_inadvertent_path_navigators
         self.fin_stat = False 
+        # (node,inadvertent path index) -> # of times inadvertent path fired completely 
         self.imap = defaultdict(int)
         return
+
+    def iscore(self): 
+        D = defaultdict(int) 
+        for k,v in self.imap.items(): 
+            D[k[0]] += v 
+        return D 
 
     def set_prg(self,prg): 
         assert type(prg) in {FunctionType,MethodType}
@@ -53,7 +60,13 @@ class PRNGProactionInadvertentEffect:
             q_.add_support(abs(v)) 
             while not q_.dipn.fin_stat: 
                 next(q_) 
-            self.imap[(n,i)] += q_.dipn.at_tail() 
+
+            stat = q_.dipn.at_tail()
+            self.imap[(n,i)] += stat 
+
+            # case: inadvertent path fired. Reset support to 0 
+            if stat: 
+                q_.reset_support() 
 
     @staticmethod 
     def generate_instance(start_node_idn,inadvertency_ratio_range,node_value_range,\
@@ -132,6 +145,21 @@ class PRNGProactionInadvertentEffectChain:
         self.current_to_prior_links = None  
         self.previous_pie = [] 
 
+    def iscore_full(self): 
+        S = 0
+        if type(self.current_pie) != type(None):
+            S = sum(list(self.current_pie.iscore().values()))
+        return S + self.iscore_prev() 
+
+    def iscore_prev(self): 
+        S = 0 
+        for p in self.previous_pie: 
+            S += sum(list(p.iscore().values()))
+        return S 
+
+    def __len__(self): 
+        return len(self.previous_pie) + (type(self.current_pie) != type(None)) 
+
     def __next__(self): 
         if type(self.current_pie) == type(None): 
             self.next_PIE() 
@@ -141,6 +169,7 @@ class PRNGProactionInadvertentEffectChain:
             self.activate_links(c,v) 
         
         if self.current_pie.fin_stat: 
+            self.previous_pie.append(self.current_pie) 
             self.current_pie = None 
             self.current_to_prior_links = None 
 
@@ -173,7 +202,6 @@ class PRNGProactionInadvertentEffectChain:
         for i in range(len(self.previous_pie)): 
             self.select_linking_nodes_for_PIE__(current_pie_node,i) 
 
-    # current PIE node -> prior PIE index -> prior PIE nodeseq 
     def select_linking_nodes_for_PIE__(self,current_pie_node,i):
         assert len(self.previous_pie) > i >= 0 
 

@@ -398,6 +398,11 @@ class DIPathNavigatorHandler:
     def add_support(self,f:float):
         self.reset() 
         self.dipn.add_support(f) 
+    
+    def reset_support(self): 
+        self.reset()
+        self.dipn.support = 0
+        self.dipn.support_ = 0 
 
     def set_prg(self,prg):
         assert type(prg) in {MethodType,FunctionType} 
@@ -421,7 +426,7 @@ class DIPathNavigatorHandler:
     def __next__(self): 
         if self.dipn.fin_stat: return 
         self.ptdi.clear_current_extra() 
-        
+
         if self.verbose: 
             print("----------------------------------")
             print("LOC: ",self.dipn.loc)

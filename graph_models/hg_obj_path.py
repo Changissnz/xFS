@@ -172,7 +172,7 @@ class NodeActivationFunctionTypeMT:
         # get number of nodes with indirect activation (post-contact activation)
         max_indirect_activation = len(dip.G) - 2 
         num_indirect_activation = ceil(max_indirect_activation * ratio_indirect_activation) 
-        print("INDIRECT ACTIVATION {} / {}".format(num_indirect_activation,len(dip.G))) 
+        ##print("INDIRECT ACTIVATION {} / {}".format(num_indirect_activation,len(dip.G))) 
         indirect_activated_nodes = [] 
         if num_indirect_activation > 0: 
             X = sorted(dip.spine().p[:-2]) 
