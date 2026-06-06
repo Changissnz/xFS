@@ -422,6 +422,7 @@ method<AgentType2F3MMOContainer.characterize_agent> and method<AgentType2F3MMOCo
 
 
         **Description of the Two Modus Operandis** 
+
 Step 1 is identical for both M/Os. 
 
     -/-/-/-/-/
@@ -689,6 +690,14 @@ class AgentType2F3MTrifecta:
         self.verbose = verbose 
         for x in [self.a0,self.a1,self.a2]: 
             x.set_verbosity(self.verbose)
+
+    def set_prg(self,number,prg): 
+        assert number in {0,1,2} 
+
+        q = [self.a0,self.a1,self.a2] 
+        q_ = q.pop(number) 
+
+        q_.set_prg(prg) 
 
     def __next__(self): 
         q = [self.a0,self.a1,self.a2] 

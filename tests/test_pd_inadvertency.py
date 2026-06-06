@@ -62,7 +62,7 @@ class PRNGProactionInadvertentEffectClass(unittest.TestCase):
         i = 0 
         while not PIE.fin_stat and i < 1000:
             next(PIE)
-            print("i: {}".format(i)) 
+            ##print("i: {}".format(i)) 
             i += 1 
 
         D = PIE.iscore() 
@@ -84,11 +84,11 @@ class PRNGProactionInadvertentEffectChainClass(unittest.TestCase):
         for _ in range(2500): 
             next(ec) 
 
-            if not _ % 10: 
-                print("score: ",ec.iscore_prev()) 
+            ##if not _ % 10: 
+            ##    print("score: ",ec.iscore_prev()) 
         
         s = ec.iscore_full()
-        print("SS: ",s)
+        ##print("SS: ",s)
         assert s == 203342
         
         l = len(ec) 
