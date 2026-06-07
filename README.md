@@ -108,7 +108,9 @@ Here is a list of graph problems in the project:
         node is associated with an activation function navigator must pass, via providing appropriate 
         support values (real numbers) to the nodes of relevance. 
     - file: `graph_problems/efb.py` 
-- Two Faces Three Motives Bot (work in progress) 
+- Two Faces Three Motives Bot (Alpha)
+    - vantage point for learning: an agent, connected to two other agents in a trifecta arrangement, that 
+        has to execute its independently selected move at every timestamp. 
 - Proaction-Driven Inadvertency Bot (work in progress) 
 
 #### NOTE: 
