@@ -1,0 +1,90 @@
+This lab focuses on modus operandi "compatible characterization". The calculations involved 
+in this m.o. result in the average runtime of the Two Two Faces Three Motives Bot being 
+roughly hundreds of times slower than the "third-party contra" mode. The "compatible characterization" 
+mode requires every agent to perform a relatively expensive classification task for every timestamp. 
+
+Below is the base code. Note that the parameters used in instantiating this bot are set much lower 
+than in Lab 1. 
+
+#-------------------------------------------------------------------------------------------------------
+
+from graph_problems.tftmb_ext import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+agent_idns = [2,1,0] 
+mo_type = "compatible characterization"  
+num_categories = 4  
+label_size_range = [3,5]  
+attribute_bound_vec = np.array([[0,10],\
+    [0,10],[0,10],[0,10]]) 
+prg = prg__LCG(45.55,-133.2,300.6,1599.6) 
+
+variable_comp = True 
+
+ATT = TwoFacesThreeMotivesBot.generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,\
+    variable_comp,prg)
+
+prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21) 
+
+
+TFTMB_env_run = TFTMB_env_run_(50) 
+TFTMB_env_cmp_solution = TFTMB_env_cmp_solution_(1) 
+
+S = SimulationSolutionSearch(ATT,TFTMB_env_run,prng_seq,\
+    TFTMB_env_prng_assignment_function,TFTMB_env_mode_shift_function,\
+    TFTMB_env_solution_fetch_function,TFTMB_env_cmp_solution,verbose=True) 
+
+t = time.time()
+t_ = t 
+while not S.fin_stat: 
+    t = time.time() 
+    S.process_one()
+    t2 = time.time() - t 
+    print("\t\t** runtime: ",t2)  
+
+t2 = time.time() - t 
+
+print('total runtime: ',t2) 
+
+Q = [TFTMB_env_score_function_type_1(q[1]) for q in S.results]
+
+print("OVERALL")
+print("- min: ",round(np.min(Q),5)) 
+print("- max: ",round(np.max(Q),5)) 
+print("- mean: ",round(np.mean(Q),5)) 
+print("- best: ",TFTMB_env_score_function_type_1(S.best[1])) 
+
+###################################
+
+############################ RESULTS 
+
+####### TRIAL 1 
+
+    ######### OUTPUT
+OVERALL
+- min:  76
+- max:  111
+- mean:  92.56667
+- best:  111
+
+####### TRIAL 2 
+
+First, add these lines after line 28 for a different 90 PRNGs. 
+
+'''
+prng_seq_ = prg_to_prg__LCG_sequence(prg,90,3-15/17) 
+P = [] 
+O = [add,sub] 
+for i, (p0,p1) in enumerate(zip(prng_seq,prng_seq_)): 
+    p2 = merge_two_prgs(p0,p1,O[i % 2]) 
+    P.append(p2) 
+prng_seq = P 
+'''
+
+    ########## OUTPUT
+OVERALL
+- min:  54
+- max:  114
+- mean:  85.52222
+- best:  114
