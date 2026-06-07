@@ -10,6 +10,10 @@ both hardware and those projects' code implementation have pressured me to cease
 further development.
 
 ```
+NOTE: 06/07/2026, unofficial completion of project. Indefinite hiatus on project. 
+```
+
+```
 NOTE: 5/24/2026, planned completion for project < 30 days. 
 ```
 
