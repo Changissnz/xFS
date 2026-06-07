@@ -1,0 +1,56 @@
+There is one trial running over 90 PRNGs in this lab. Below is the base code. 
+
+#-------------------------------------------------------------------------------------------------------
+
+from graph_problems.tftmb_ext import * 
+from graph_problems.sim_solution_search import * 
+import time 
+
+agent_idns = [2,1,0] 
+mo_type = "third-party contra" 
+num_categories = 8  
+label_size_range = [3,10] 
+attribute_bound_vec = None 
+prg = prg__LCG(45.55,-133.2,300.6,1599.6) 
+
+variable_comp = True 
+
+ATT = TwoFacesThreeMotivesBot.generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,\
+    variable_comp,prg)
+
+
+prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21) 
+TFTMB_env_run = TFTMB_env_run_(1000) 
+TFTMB_env_cmp_solution = TFTMB_env_cmp_solution_(1) 
+
+S = SimulationSolutionSearch(ATT,TFTMB_env_run,prng_seq,\
+    TFTMB_env_prng_assignment_function,TFTMB_env_mode_shift_function,\
+    TFTMB_env_solution_fetch_function,TFTMB_env_cmp_solution,verbose=True) 
+
+t = time.time()
+t_ = t 
+while not S.fin_stat: 
+    t = time.time() 
+    S.process_one()
+    t2 = time.time() - t 
+    print("\t\t** runtime: ",t2)  
+
+t2 = time.time() - t 
+
+print('total runtime: ',t2) 
+
+Q = [TFTMB_env_score_function_type_1(q[1]) for q in S.results]
+
+print("OVERALL")
+print("- min: ",round(np.min(Q),5)) 
+print("- max: ",round(np.max(Q),5)) 
+print("- mean: ",round(np.mean(Q),5)) 
+print("- best: ",TFTMB_env_score_function_type_1(S.best[1])) 
+
+############################ RESULTS 
+
+OVERALL
+- min:  1049
+- max:  1664
+- mean:  1512.12222
+- best:  1664
