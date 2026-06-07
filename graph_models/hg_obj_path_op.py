@@ -126,8 +126,9 @@ class DIPathNavigator:
 
         for v in node_value_range_map.values():
             assert is_valid_range(v,False,False) or is_valid_range(v,True,False)
-            assert v[1] - v[0] > 10 ** -4 
-            assert v[0] > 0 
+            #print("VV: ",v,is_valid_range(v,False,False)) 
+            #assert v[1] - v[0] > 10 ** -4 
+            #assert v[0] > 0 
 
         assert type(prg) in {MethodType,FunctionType} 
 

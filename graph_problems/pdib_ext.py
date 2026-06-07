@@ -16,13 +16,9 @@ minimize score
 """
 def PDIB_env_cmp_solution(pbot1:PDIBot,pbot2:PDIBot): 
 
-    if ftype == 1: 
-        Q = PDIB_env_score_function_type_1
-    else: 
-        Q = PDIB_env_score_function_type_2
 
-    s1 = Q(pbot1) 
-    s2 = Q(pbot2) 
+    s1 = PDIB_env_solution_fetch_function(pbot1) 
+    s2 = PDIB_env_solution_fetch_function(pbot2) 
 
     print("best {} now {}".format(s2,s1)) 
     return s1 < s2 

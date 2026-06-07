@@ -1,0 +1,83 @@
+There are two trials in this lab. 
+
+Here is the base code for the first. 
+
+#------------------------------------------------------------------------------------------
+
+from graph_problems.pdib_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import merge_two_prgs
+import time 
+
+num_moves = 20  
+prior_connectivity_pr = 0.3 
+inadvertency_ratio_range = [0.05,0.15]
+node_value_range = [30.,350.]
+inadvertency_size_range = [2,6] 
+info_mode = 0 
+chain_prg = prg__LCG(-31453.5,1116.5,-7417.3,-18082.5) 
+solver_prg = prg__LCG(12.36,7156.6,-906.3,9199.45)  
+ec = PDIBot(num_moves,prior_connectivity_pr,inadvertency_ratio_range,node_value_range,\
+        inadvertency_size_range,info_mode,chain_prg,solver_prg)
+
+prg = deepcopy(chain_prg)
+prng_seq = prg_to_prg__LCG_sequence(prg,90,4+7/11) 
+prng_seq_ = prg_to_prg__LCG_sequence(prg,90,4-15/17) 
+P = [] 
+O = [add,sub] 
+for i, (p0,p1) in enumerate(zip(prng_seq,prng_seq_)): 
+    p2 = merge_two_prgs(p0,p1,O[i % 2]) 
+    P.append(p2) 
+prng_seq = P 
+
+S = SimulationSolutionSearch(ec,PDIB_env_run,prng_seq,\
+    PDIB_env_prng_assignment_function,PDIB_env_mode_shift_function,\
+    PDIB_env_solution_fetch_function,PDIB_env_cmp_solution,verbose=True) 
+
+t0 = time.time()
+t_ = t0 
+while not S.fin_stat: 
+    t = time.time() 
+    S.process_one()
+    t2 = time.time() - t 
+    print("\t\t** runtime: ",t2)  
+
+t2 = time.time() - t0 
+
+print('total runtime: ',t2) 
+
+Q = [q[2] for q in S.results]
+
+print("OVERALL")
+print("- min: ",round(np.min(Q),5)) 
+print("- max: ",round(np.max(Q),5)) 
+print("- mean: ",round(np.mean(Q),5)) 
+print("- best: ",S.best[2])
+
+
+################# TRIAL 1 
+
+    ########### OUTPUT 
+total runtime:  55.24076294898987
+OVERALL
+- min:  2895
+- max:  7824
+- mean:  4746.9
+- best:  2895
+
+#############################################################################################
+
+Now change lines 18-19 to 
+
+'''
+chain_prg = prg__LCG(0,2,2,80008) 
+solver_prg = prg__LCG(976.41,1154.6,1906.3,19888.77)  
+''' 
+
+    ############ OUTPUT 
+
+OVERALL
+- min:  1178
+- max:  2861
+- mean:  1831.62222
+- best:  1178

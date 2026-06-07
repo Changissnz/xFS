@@ -1,6 +1,29 @@
 from graph_models.hg_obj_path_op import * 
 from morebs2.numerical_generator import prg_to_prg__LCG_sequence
 
+"""
+A Proaction Inadvertent Effect consists of one pro-action, a Directed Implication Path of 
+three nodes (see file<graph_models.dir_imp_path> for a formal mathematical description), 
+and I inadvertent actions, s.t. I = i0 + i1 + i2, i0 the number of inadvertencies associated 
+with the head, i1 with the center, and i2 with the tail. 
+
+NOTE: 
+See file<graph_models.hg_obj_path_op> for the programmatic details to the data structures 
+representing pro-actions and inadvertent actions. 
+See class<graph_models.hg_obj_path_op.InadvertentDIPathNavigator> for more information on 
+how the inadvertencies work, which is a subclass of class<DIPathNavigator>. 
+
+When the navigator selects a support value v to cross one of the nodes n of the 3-node pro-action, 
+one of two events occur: 
+- the navigator is able to pass with support value v => process applies the extra |v - M(n)| to every 
+  one of that node's inadvertencies. 
+- the navigator does not pass with support value v => process applies v to every one of that node's 
+  inadvertencies. 
+
+Each of those <InadvertentDIPathNavigator>s attempt to fire completely (travel their respective 
+three-node Directed Implication Paths). For every one of these navigators that fires completely, 
+the inadvertency score is +1. 
+"""
 class PRNGProactionInadvertentEffect: 
 
     def __init__(self,proaction_path_navigator,proaction_node_to_inadvertent_path_navigators): 
@@ -120,12 +143,22 @@ class PRNGProactionInadvertentEffect:
 
         return DIPathNavigatorHandler(optdi,dipn,info_mode=info_mode,verbose=False)
 
+"""
+A generator that uses its `chain_prg` PRNG to generate one <PRNGProactionInadvertentEffect> 
+every time the `current_pie` is null. The `solver_prg` is to solve the active `current_pie` 
+at every timestamp. 
+"""
 class PRNGProactionInadvertentEffectChain: 
 
     def __init__(self,prior_connectivity_pr,inadvertency_ratio_range,node_value_range,\
         inadvertency_size_range,info_mode,chain_prg,solver_prg):   
 
         assert 0. <= prior_connectivity_pr <= 1. 
+        assert is_valid_range(inadvertency_ratio_range,False,False)
+        assert 0. <= inadvertency_ratio_range[0] < inadvertency_ratio_range[1] <= 1. 
+        assert is_valid_range(node_value_range,False,False) or is_valid_range(node_value_range,True,False)
+        assert node_value_range[0] > 0. 
+
         assert info_mode in {0,1}
         assert type(chain_prg) in {MethodType,FunctionType}
         assert type(solver_prg) in {MethodType,FunctionType}
@@ -144,6 +177,8 @@ class PRNGProactionInadvertentEffectChain:
         # current PIE node -> prior PIE index -> prior PIE nodeseq 
         self.current_to_prior_links = None  
         self.previous_pie = [] 
+
+        self.c = 0 
 
     def set_prg(self,prg,set_for_solver:bool): 
         assert type(prg) in {FunctionType,MethodType} 
@@ -181,6 +216,8 @@ class PRNGProactionInadvertentEffectChain:
             self.previous_pie.append(self.current_pie) 
             self.current_pie = None 
             self.current_to_prior_links = None 
+        
+        self.c += 1 
 
     def next_PIE(self): 
         assert type(self.current_pie) == type(None) == type(self.current_to_prior_links) 
