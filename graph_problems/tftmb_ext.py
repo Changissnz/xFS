@@ -8,10 +8,6 @@ def TFTMB_env_prng_assignment_function(tfbot:TwoFacesThreeMotivesBot,prg):
 def TFTMB_env_mode_shift_function(tfbot:TwoFacesThreeMotivesBot): 
     return None 
 
-"""
-score is (# of swaps) if token graph is solved, 
-        infinity otherwise. 
-"""
 def TFTMB_env_solution_fetch_function(tfbot:TwoFacesThreeMotivesBot): 
     return tfbot.scores()
 

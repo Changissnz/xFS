@@ -8,10 +8,6 @@ def PDIB_env_prng_assignment_function(pbot:PDIBot,prg):
 def PDIB_env_mode_shift_function(pbot:PDIBot): 
     return None 
 
-"""
-score is (# of swaps) if token graph is solved, 
-        infinity otherwise. 
-"""
 def PDIB_env_solution_fetch_function(pbot:PDIBot): 
     return pbot.iscore_full() 
 
