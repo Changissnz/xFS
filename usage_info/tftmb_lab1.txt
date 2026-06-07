@@ -1,4 +1,4 @@
-There is one trial running over 90 PRNGs in this lab. Below is the base code. 
+There are two trials, each running over 90 PRNGs in this lab. Below is the base code. 
 
 #-------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ ATT = TwoFacesThreeMotivesBot.generate_instance(agent_idns,mo_type,num_categorie
     variable_comp,prg)
 
 
-prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21) 
+prng_seq = ?  
 TFTMB_env_run = TFTMB_env_run_(1000) 
 TFTMB_env_cmp_solution = TFTMB_env_cmp_solution_(1) 
 
@@ -27,15 +27,15 @@ S = SimulationSolutionSearch(ATT,TFTMB_env_run,prng_seq,\
     TFTMB_env_prng_assignment_function,TFTMB_env_mode_shift_function,\
     TFTMB_env_solution_fetch_function,TFTMB_env_cmp_solution,verbose=True) 
 
-t = time.time()
-t_ = t 
+t0 = time.time()
+t_ = t0  
 while not S.fin_stat: 
     t = time.time() 
     S.process_one()
     t2 = time.time() - t 
     print("\t\t** runtime: ",t2)  
 
-t2 = time.time() - t 
+t2 = time.time() - t0  
 
 print('total runtime: ',t2) 
 
@@ -49,8 +49,39 @@ print("- best: ",TFTMB_env_score_function_type_1(S.best[1]))
 
 ############################ RESULTS 
 
+####### TRIAL 1 
+
+First, change line 22 to 
+
+prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21)
+
+    ######### OUTPUT  
+
 OVERALL
 - min:  1049
 - max:  1664
 - mean:  1512.12222
 - best:  1664
+
+####### TRIAL 2 
+
+First, remove line 22 and add these lines instead 
+
+'''
+prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21) 
+prng_seq_ = prg_to_prg__LCG_sequence(prg,90,3-15/17) 
+P = [] 
+O = [add,sub] 
+for i, (p0,p1) in enumerate(zip(prng_seq,prng_seq_)): 
+    p2 = merge_two_prgs(p0,p1,O[i % 2]) 
+    P.append(p2) 
+prng_seq = P 
+'''
+
+    ######### OUTPUT 
+
+OVERALL
+- min:  812
+- max:  2066
+- mean:  1486.94444
+- best:  2066
