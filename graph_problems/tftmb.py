@@ -15,11 +15,15 @@ class TwoFacesThreeMotivesBot(AgentType2F3MTrifecta):
         assert type(variable_comp) == bool 
         super().__init__(a0,a1,a2,verbose) 
         self.variable_comp = variable_comp
+
+        self.i = 0 
         return
 
     def __next__(self): 
         super().__next__() 
         self.alter_compatibilities()
+        ##print("i: ",self.i)
+        self.i += 1
 
     def alter_compatibilities(self): 
         if not self.variable_comp: return 
@@ -35,7 +39,9 @@ class TwoFacesThreeMotivesBot(AgentType2F3MTrifecta):
             return prg_decimal(prg,[0.,1.])
 
         a.set_compatibility(prg_,True)
-        a.set_compatibility(prg_,False) 
+
+        if self.mo_type() != "compatible characterization": 
+            a.set_compatibility(prg_,False) 
         return
 
     @staticmethod 

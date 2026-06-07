@@ -1,4 +1,7 @@
-There are two trials, each running over 90 PRNGs in this lab. Below is the base code. 
+There are four trials, each running over 90 PRNGs in this lab. Below is the base code. 
+The first two trials run over the same 90 PRNGs, the last two trials run over a different 
+sequence of 90 PRNGs. The first and third measure by score type 1, and the second and fourth 
+measure by score type 2. 
 
 #-------------------------------------------------------------------------------------------------------
 
@@ -7,7 +10,7 @@ from graph_problems.sim_solution_search import *
 import time 
 
 agent_idns = [2,1,0] 
-mo_type = "third-party contra" 
+mo_type = ?  
 num_categories = 8  
 label_size_range = [3,10] 
 attribute_bound_vec = None 
@@ -51,10 +54,17 @@ print("- best: ",TFTMB_env_score_function_type_1(S.best[1]))
 
 ####### TRIAL 1 
 
-First, change line 22 to 
+First, change line 10 to 
 
+'''
+mo_type = "third-party contra"
+'''
+
+and line 22 to 
+
+'''
 prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21)
-
+''' 
     ######### OUTPUT  
 
 OVERALL
@@ -65,7 +75,31 @@ OVERALL
 
 ####### TRIAL 2 
 
-First, remove line 22 and add these lines instead 
+Keep line 10 at "third-party contra". Change score type 1 to 2. At line 24, 
+change to 
+'''
+TFTMB_env_cmp_solution = TFTMB_env_cmp_solution_(2) 
+''' 
+
+and at line 42, change to 
+
+'''
+Q = [TFTMB_env_score_function_type_2(q[1]) for q in S.results]
+'''
+
+    ########## OUTPUT 
+
+total runtime:  192.5433487892151
+OVERALL
+- min:  -566
+- max:  240
+- mean:  -61.81111
+- best:  240
+
+####### TRIAL 3 
+
+Keep line 10 at "third-party contra". Lines 24 and 42 are for score type 1. 
+Then, remove line 22 and add these lines instead. 
 
 '''
 prng_seq = prg_to_prg__LCG_sequence(prg,90,4.21) 
@@ -85,3 +119,15 @@ OVERALL
 - max:  2066
 - mean:  1486.94444
 - best:  2066
+
+######## TRIAL 4 
+
+Lines 24 and 42 are for score type 2. The variable `prng_seq` is the same as from 
+Trial 3. 
+
+    ######### OUTPUT 
+
+- min:  -779
+- max:  824
+- mean:  -80.31111
+- best:  824
