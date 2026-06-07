@@ -111,7 +111,11 @@ Here is a list of graph problems in the project:
 - Two Faces Three Motives Bot (Alpha)
     - vantage point for learning: an agent, connected to two other agents in a trifecta arrangement, that 
         has to execute its independently selected move at every timestamp. 
-- Proaction-Driven Inadvertency Bot (work in progress) 
+    - file: `graph_problems/tftmb.py`
+- Proaction-Driven Inadvertency Bot (Alpha) 
+    - vantage point for learning: executing n three-noded steps with the least number of inadvertencies 
+       activated.
+    - file: `graph_problems/pdib.py`
 
 #### NOTE: 
 Some of these bots rely on Python/Numpy random. User results may differ from 
