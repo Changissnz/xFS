@@ -145,6 +145,15 @@ class PRNGProactionInadvertentEffectChain:
         self.current_to_prior_links = None  
         self.previous_pie = [] 
 
+    def set_prg(self,prg,set_for_solver:bool): 
+        assert type(prg) in {FunctionType,MethodType} 
+        assert type(set_for_solver) == bool 
+
+        if set_for_solver: 
+            self.solver_prg = prg 
+        else: 
+            self.chain_prg = prg 
+
     def iscore_full(self): 
         S = 0
         if type(self.current_pie) != type(None):
