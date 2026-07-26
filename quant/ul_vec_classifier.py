@@ -1,3 +1,7 @@
+"""
+unlabelled vector classifier 
+"""
+
 from morebs2.ball_comp import * 
 
 class VecClassifierTypeBC: 

@@ -6,7 +6,7 @@ from morebs2.numerical_generator import prg_decimal,prg_to_prg__LCG_sequence,\
 class ControverterNet: 
 
     def __init__(self,amap:dict,tmap:dict,N:NodePath,prg,allow_agent_move_knowledge,\
-        is_correlation_variable:bool): 
+        is_correlation_variable:bool,verbose:bool=False): 
 
         for v in amap.values(): assert type(v) == GTAgent
         assert len(amap) > 1 
@@ -17,7 +17,7 @@ class ControverterNet:
         assert type(N) == NodePath
         assert type(allow_agent_move_knowledge) == bool 
         assert type(is_correlation_variable) == bool 
-
+        assert type(verbose) == bool 
 
         self.amap = amap 
         self.tmap = tmap 
@@ -29,6 +29,7 @@ class ControverterNet:
 
         self.allow_agent_move_knowledge = allow_agent_move_knowledge
         self.is_correlation_variable = is_correlation_variable
+        self.verbose = verbose 
         return
 
     def set_non_auto_agent(self,a_idn,prg=None): 
@@ -79,6 +80,9 @@ class ControverterNet:
         
         if self.is_correlation_variable:
             self.prng_set_correlation_values()
+
+        if self.verbose: 
+            print(self.agent_value_ranking())
 
     def agent_value_ranking(self):
         d = [] 

@@ -127,11 +127,11 @@ class StrangleEnv:
 
     @staticmethod 
     def generate_instance(strangler_force_assignment_type,info_mode,prg,strangler_energy=10**6,\
-        strangle_subject_energy=10**6,enable_consumption=False): 
+        strangle_subject_energy=10**6,enable_consumption=False,graph_node_size_range=DEFAULT_GRAPH_NODE_SIZE_RANGE): 
 
         connectivity_range = [0.009,0.025]
 
-        vertex_degree = modulo_in_range(int(prg()),DEFAULT_GRAPH_NODE_SIZE_RANGE)
+        vertex_degree = modulo_in_range(int(prg()),graph_node_size_range)
         connectivity = modulo_in_range(prg(),connectivity_range)
         is_realtime_gen = bool(int(prg()) % 2)
 

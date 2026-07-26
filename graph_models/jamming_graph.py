@@ -1,6 +1,8 @@
 #from .node_path import * 
 from .analog_schemes_aux import * 
 
+DEFAULT_JAMMING_GRAPH_TYPES = ["c","o"]
+
 DEFAULT_JAMMING_GRAPH_ALTER_NODE_RATIO_RANGE = [-0.2,0.2] 
 DEFAULT_JAMMING_GRAPH_ALTER_EDGE_RATIO_RANGE = [-0.2,0.2]
 
@@ -296,7 +298,7 @@ class JammingGraph:
     """
     @staticmethod
     def generate_3node_instance(is_directed,jam_type,prg,jam_nodesize_range=DEFAULT_JAMMING_GRAPH_JAMSIZE_RANGE):
-        assert jam_type in {"c","o"} 
+        assert jam_type in DEFAULT_JAMMING_GRAPH_TYPES 
 
         p = NodePath.preload([0,1,2],[1,1]) 
         modifiable = {1} 

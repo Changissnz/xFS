@@ -77,7 +77,7 @@ Item 2 is used by the target T_j's successors to accurately predict poison p_k f
 Item 1 is used by target's successors to implement pseudo-accurate predictive capabilities. Successors 
 can place a <PoisonRelay> onto a node in the nodeset. When a <PoisonPath> crosses this <PoisonRelay>, 
 this <PoisonRelay> outputs a set of suspected <PoisonSource>s. This set contains the actual source, as 
-well as other sources in cases in inaccurate <PoisonRelay> (see code for specifics). The information 
+well as other sources in cases of inaccurate <PoisonRelay>s (see code for specifics). The information 
 that <PoisonRelay> communicates to its <PoisonTarget> owner is advantageous for a <PoisonTarget> to 
 more quickly narrow down possible <PoisonSource> candidates, in cases where it has to make a hypothesis 
 on (poison identifier, source identifier). 

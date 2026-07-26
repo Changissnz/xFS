@@ -125,6 +125,11 @@ Here is a list of graph problems in the project:
 Some of these bots rely on Python/Numpy random. User results may differ from 
 developer results. As of this time in writing, developer Python version is 3.14.2. 
 
+
+#### NOTE: 
+The methods provided in `file<graph_problems.easy_gen>` allow for easy generation of 
+these bots (less instantiating parameters). 
+
 ## The Machine-Learning Aspect 
 
 The graph problems defined in this project involve software agents. These agents are 

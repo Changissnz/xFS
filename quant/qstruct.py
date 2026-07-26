@@ -5,6 +5,8 @@ from copy import deepcopy
 from collections import Counter,defaultdict 
 from types import MethodType,FunctionType 
 
+DEFAULT_QSTRUCT_GENERATION_ANSWER_TYPES = ["most frequent","random","none"]
+
 """
 For use with Respondent Network Bot (see file<graph_problems.rnb>)
 
@@ -144,7 +146,7 @@ class QStruct:
     @staticmethod 
     def generate_instance_from_RStructMap(rs_map,answer_type:str,prg=None,energy=float(10**5)):
         assert len(rs_map) > 0 
-        assert answer_type in {"most frequent","random","none"}  
+        assert answer_type in DEFAULT_QSTRUCT_GENERATION_ANSWER_TYPES  
 
         if type(prg) == type(None): 
             prg = default_std_Python_prng() 

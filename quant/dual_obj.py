@@ -154,7 +154,8 @@ This is the basic gist of the dual role problem the agent is forced to contend w
 """
 class DualEnvTypeHL: 
 
-    def __init__(self,dual_agent,ce_effect,third_party_demands,option_size_range,prg): 
+    def __init__(self,dual_agent,ce_effect,third_party_demands,option_size_range,prg,\
+        verbose:bool = False): 
         assert type(dual_agent) == DualRoleAgentTypeHL
         assert type(ce_effect) == PRClassExpectedEffectTypeHL
         assert type(prg) in {MethodType,FunctionType}
@@ -162,6 +163,8 @@ class DualEnvTypeHL:
         assert len(dual_agent.independent_demands) == len(third_party_demands) 
         assert is_valid_range(option_size_range,True,False)
         assert option_size_range[0] > 0 
+
+        assert type(verbose) == bool 
 
         self.dual_agent = dual_agent
         self.ce_effect = ce_effect 
@@ -175,6 +178,7 @@ class DualEnvTypeHL:
         
         self.cost_record = DualCostsTypeHL() 
         self.fin_stat = False 
+        self.verbose = verbose 
         return
 
     def running_score(self): 
@@ -227,6 +231,9 @@ class DualEnvTypeHL:
         independent_path = self.path_for_independent_demand(indep_demand)
         self.cost_record.register_agent_path__independent_req(independent_path)
 
+        if self.verbose: 
+            self.running_score()
+            print() 
 
     def choose_n_labels(self): 
         hg = self.ce_effect.hg

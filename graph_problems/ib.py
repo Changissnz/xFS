@@ -48,12 +48,15 @@ or another PRNG, set with method<set_prg>.
 """ 
 class IntrospectionBot(DefaultGraphIntrospectorProcess): 
 
-    def __init__(self,introspector,sequence,num_minpaths):  
+    def __init__(self,introspector,sequence,num_minpaths,verbose:bool=False):  
+        assert type(verbose) == bool 
+        
         self.introspector = introspector
         self.introspector_ = deepcopy(introspector) 
 
         self.sequence = sequence  
         self.num_minpaths = num_minpaths
+        self.verbose = verbose 
         self.rlog = None 
         self.ilog = None 
         self.run(is_ref=True)

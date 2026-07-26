@@ -34,7 +34,7 @@ values of the middle agent default variables (top of this file).
 class MiddleManNetwork:  
 
     def __init__(self,buying_agent:MiddleAgentBuyer,unit_price,unit_shelf_life,\
-        reprod_rate,seller_lifespan:int,jg:JammingGraph,prg,verbose:bool=False):
+        reprod_rate,seller_lifespan:int,jg:JammingGraph,prg,do_preproc:bool=True,verbose:bool=False):
 
         assert type(buying_agent) == MiddleAgentBuyer
         assert is_number(unit_price) 
@@ -61,7 +61,8 @@ class MiddleManNetwork:
         self.eliminated_dominants = set()  
         self.eliminated_bankrupts = set() 
 
-        self.preproc()  
+        if do_preproc: 
+            self.preproc()  
         self.seller_idn_log = [] 
         return
 
@@ -325,7 +326,7 @@ class MiddleManNetwork:
 
     @staticmethod
     def generate_instance(jamming_graph_type,unit_price,\
-        allow_buyer_memoryless_navigation:bool,prg1,prg2):
+        allow_buyer_memoryless_navigation:bool,prg1,prg2,do_preproc:bool=True):
 
         max_seller_candidates = modulo_in_range(int(prg1()),\
             DEFAULT_MIDDLE_AGENT_BUYER__MAX_NUMBER_OF_SELLER_CANDIDATES_RANGE)
@@ -342,4 +343,4 @@ class MiddleManNetwork:
         seller_rate = modulo_in_range(int(prg2()),\
             DEFAULT_MIDDLE_AGENT_LIFESPAN_RANGE)
         return MiddleManNetwork(buyer,unit_price,unit_shelf_life,\
-            reprod_rate,seller_rate,jg,prg2)
+            reprod_rate,seller_rate,jg,prg2,do_preproc)

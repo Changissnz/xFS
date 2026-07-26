@@ -737,8 +737,11 @@ class AgentType2F3MTrifecta:
             x.process_one(q[0],q[1]) 
 
     @staticmethod 
-    def generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg): 
-        mo_containers = AgentType2F3MMOContainer.generate_three_instances(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
+    def generate_instance(agent_idns,mo_type,num_categories,label_size_range,\
+        attribute_bound_vec,prg): 
+
+        mo_containers = AgentType2F3MMOContainer.generate_three_instances(agent_idns,\
+            mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
 
         A = [] 
         for mo in mo_containers: 

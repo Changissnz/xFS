@@ -23,7 +23,7 @@ def AgentType2F3MTrifecta__sample_TREI(mo_type,uc=None):
 py -m tests.test_agent_23
 """
 # NOTE: runtime on developer's device: approx. 180 seconds. 
-class AnalogGraphClass(unittest.TestCase):
+class AgentType2F3MTrifectaClass(unittest.TestCase):
 
     def test__AgentType2F3MTrifecta__next__case_1(self): 
         print("\t\tCASE 1: CC") 

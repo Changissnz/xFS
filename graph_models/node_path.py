@@ -329,7 +329,7 @@ class XFSCache:
         i = 0 
         while i < len(self.reference_varcache):
             if self.reference_varcache[i] in nodeset:
-                self.reference_varcache.pop(i)
+                del self.reference_varcache[i]
             else:
                 i += 1 
 
@@ -337,7 +337,7 @@ class XFSCache:
             self.reference = None 
 
         if len(self.reference_varcache) > 0:
-            self.reference = self.reference_varcache.pop(0)
+            self.reference = self.reference_varcache.popleft()
 
     def filter_no_duplicate_touch_nodes(self,q): 
         if not self.no_duplicate_touch_nodes: 

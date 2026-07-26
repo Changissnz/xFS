@@ -15,10 +15,10 @@ NFA#3 -> None.
 """
 def RNB_env_mode_shift_function(rnbot:RNBot): 
     if rnbot.qstruct.nfa_type == 1: 
-        rnbot.qstruct.nfa_type = 2 
+        rnbot.set_qstruct_nfa_type(2)
         return rnbot 
     elif rnbot.qstruct.nfa_type == 2: 
-        rnbot.qstruct.nfa_type = 3
+        rnbot.set_qstruct_nfa_type(3)
         return rnbot 
     else: 
         return None 

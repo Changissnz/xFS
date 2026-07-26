@@ -1,0 +1,67 @@
+This lab pertains to <ControverterBot>. 
+
+--------------------------------------------------------------------
+
+from graph_problems.cb_ext import * 
+from graph_problems.sim_solution_search import * 
+from morebs2.numerical_generator import * 
+import time 
+
+num_agents = 5 
+path_size = 1
+agent_action_value_range = [-100.,100.] 
+cumulative_payoff_multiplier_range = [-2.5,2.5]
+prg = prg__LCG(55.6,-31.45,119.5,2005.77) 
+
+T = ControverterBot.generate_instance(num_agents,path_size,agent_action_value_range,\
+        cumulative_payoff_multiplier_range,prg)
+T.set_correlation_values(None,1.)
+
+prg_seq = prg_to_prg__LCG_sequence(prg,25,2.55) 
+prg_seq0 = prg_to_prg__LCG_sequence(prg_seq[-1],13,-3.44) 
+prg_seq1 = prg_to_prg__LCG_sequence(prg_seq[0],12,2.66)
+
+prg_seq.extend(prg_seq0)
+prg_seq.extend(prg_seq1) 
+
+prg = prg__LCG(15.63,-819.6,7150.1919,10101.88) 
+T.set_non_auto_agent(4,prg)  
+
+CB_env_run = CB_env_run_(20) 
+CB_env_prng_assignment_function = CB_env_prng_assignment_function_(4) 
+CB_env_solution_fetch_function = CB_env_solution_fetch_function_(4) 
+CB_env_cmp_solution = CB_env_cmp_solution_(4,2)
+
+S = SimulationSolutionSearch(T,CB_env_run,prg_seq,\
+        CB_env_prng_assignment_function,CB_env_mode_shift_function,\
+        CB_env_solution_fetch_function,CB_env_cmp_solution,\
+        verbose=True) 
+
+i = 0 
+t = time.time() 
+while not S.fin_stat: 
+    S.process_one()
+    i += 1 
+print("runtime: ", time.time() - t) 
+
+F = CB_env_solution_score_(4,2)
+
+x = np.array([F(r[1]) for r in S.results])
+high = np.max(x) 
+low = np.min(x) 
+m = np.mean(x) 
+
+print("max: ",high)
+print('min: ',low)
+print("mean: ",m)
+print("best: ",F(S.best[1])) 
+
+#--------------------------------------------------- OUTPUT 
+'''
+runtime:  1935.9293060302734
+
+max:  185848.17137000003
+min:  -30301.985990000005
+mean:  10000.884741400001
+best:  185848.17137000003
+''' 

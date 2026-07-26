@@ -149,7 +149,7 @@ class RNBotClass(unittest.TestCase):
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
                 verbose=False)
         rnbot.qstruct.energy /= 100 
-        rnbot.qstruct.nfa_type = 1 
+        rnbot.set_qstruct_nfa_type(1)
         rnbot2 = deepcopy(rnbot) 
 
         while not rnbot.fin_stat:
@@ -185,7 +185,7 @@ class RNBotClass(unittest.TestCase):
                 answer_range,num_questions_to_vary,prg,0,qstructgen_answer_type,qstruct_open_info_mode,\
                 verbose=False)
         rnbot.qstruct.energy /= 10 
-        rnbot.qstruct.nfa_type = 3 
+        rnbot.set_qstruct_nfa_type(3) 
         rnbot2 = deepcopy(rnbot) 
 
         while not rnbot.fin_stat:

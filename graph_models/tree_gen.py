@@ -6,6 +6,7 @@ from math import ceil
 from types import MethodType,FunctionType
 
 DEFAULT_TREE_BRANCHING_RANGE = [1,8] 
+DEFAULT_TREE_GEN_GROWTH_TYPES = ["distributed","ordered"]
 
 # NOTE: does not check if G is actually a tree or not. 
 class SimpleTreeContainer: 
@@ -35,7 +36,7 @@ class TreeGen:
         assert is_valid_range(branching_range,True,True)
         self.branching_range = branching_range 
 
-        assert growth_type in {"distributed","ordered"} 
+        assert growth_type in DEFAULT_TREE_GEN_GROWTH_TYPES
         self.growth_type = growth_type
         self.ctr_function = SimpleCounter(max(self.starting_nodeset) + 1).__next__ 
         self.leaves = deepcopy(self.starting_nodeset)

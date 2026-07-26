@@ -7,6 +7,7 @@ from .reactive_graph_introspector import *
 from .static_graph_introspector import * 
 from graph_models.graph_gen import * 
 
+DEFAULT_INTROSPECTOR_TYPES = ["reactive","varmem"]
 DEFAULT_INTROSPECTOR_INIT_NODESIZE_RANGE = [25,300] 
 DEFAULT_INTROSPECTOR_NODECHANGE_ABSMAX = 8
 DEFAULT_INTROSPECTOR_EDGECHANGE_ABSMAX = 8 
@@ -17,9 +18,12 @@ DEFAULT_INTROSPECTOR_EDGE_WEIGHT_RANGE = [1.,6.]
 
 class DefaultGraphIntrospectorProcess: 
 
-    def __init__(self,introspector): 
+    def __init__(self,introspector,verbose:bool=False): 
         assert issubclass(type(introspector),GraphIntrospectorTypeCNO)  
+        assert type(verbose) == bool 
+
         self.introspector = introspector 
+        self.verbose = verbose 
         return 
 
     def set_prg(self,prg): 
@@ -70,6 +74,9 @@ class DefaultGraphIntrospectorProcess:
                 i = int(self.introspector.prg()) % len(k)
                 s0 = k[i] 
                 s1 = s 
+
+            if self.verbose: 
+                print("* running introspection @ node={} for {} iterations".format(s0,s1))
             nos = self.run_(s0,s1) 
             node_output_sequence.append(nos) 
 
@@ -89,7 +96,7 @@ class DefaultGraphIntrospectorProcess:
     @staticmethod 
     def generate_instance(introspector_description,is_bfs:bool,ascending_priority:bool,prg):  
 
-        assert introspector_description[0] in {"reactive","varmem"} 
+        assert introspector_description[0] in DEFAULT_INTROSPECTOR_TYPES 
 
         vertex_degree = modulo_in_range(int(prg()),DEFAULT_INTROSPECTOR_INIT_NODESIZE_RANGE)
 

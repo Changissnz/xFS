@@ -1,0 +1,104 @@
+'''
+    def generate_instance(num_nodes,resistance,num_questions,answer_objective,\
+        answer_range,num_questions_to_vary,prg,start_node_idn,qstructgen_answer_type,\
+        qstruct_open_info_mode=(0,0,0,0),verbose=True): 
+''' 
+
+from .rnb import * 
+from .hte_ext import * 
+from .snb_ext import * 
+from .ptb_ext import * 
+from .bkb_ext import * 
+from .hfb_ext import * 
+from .mkb_ext import * 
+from .sb_ext import * 
+from .cb_ext import * 
+from .tsb_ext import * 
+from .drb_ext import * 
+from .mmb_ext import * 
+from .vtb_ext import * 
+from .ib_ext import * 
+from .pib_ext import * 
+from .efb_ext import * 
+from .tftmb_ext import * 
+from .pdib_ext import * 
+
+def default_easy_generation_LCG(prg): 
+
+    prg_seq = prg_to_prg__LCG_sequence(prg,5,3.05) 
+    prg_seq2 = prg_to_prg__LCG_sequence(prg,5,-2.99) 
+    
+    prg_seq = [merge_two_prgs(p0,p1,add) for p0,p1 in zip(prg_seq,prg_seq2)] 
+    prg2 = prg_seq.pop(0) 
+    for (i,p0) in enumerate(prg_seq): 
+        prg2 = merge_two_prgs(prg2,p0,add if i % 2 else sub) 
+    
+    return prg2 
+
+DEFAULT_RNB_NUM_NODES_RANGE = [2,16] 
+DEFAULT_RNB_NODE_RESISTANCE_RANGE = [10**2,10**5+1] 
+DEFAULT_RNB_ANSWER_RANGE = [-10,10] 
+DEFAULT_RNB_NUM_QUESTIONS_RANGE = [3,12] 
+
+DEFAULT_HTEB_NUM_ENTRY_POINTS_RANGE = [2,25]
+DEFAULT_HTEB_GRAPH_NODE_SIZE_RANGE = [75,1001] 
+DEFAULT_HTEB_GRAPH_EDGE_CONN_RANGE = [0.003, 0.0105]
+DEFAULT_HTEB_NUM_OBJECTIVE_POINTS_RANGE = [2,11] 
+DEFAULT_HTEB_THREAT_RATIO_RANGE = [0.07,0.21] 
+DEFAULT_HTEB_THREAT_MOBILITY_RATIO_RANGE = [0.3,0.7] 
+
+DEFAULT_SNB_NUM_AGENTS_RANGE = [3,20] 
+DEFAULT_SNB_STATE_SHAPE_RANGE = [3,10]
+DEFAULT_SNB_XCONN_RANGE = [0.12,0.7] 
+
+DEFAULT_PTB_NUM_ST_RANGE = [3,13] 
+DEFAULT_PTB_NUM_POISONS_RANGE = DEFAULT_PTB_NUM_ST_RANGE
+DEFAULT_PTB_P2S_RATIO_RANGE = [0.2,1.0]
+DEFAULT_PTB_POISON_MATRIX_SQUARE_DIM_RANGE = [2,11]
+DEFAULT_PTB_RELAYS_PER_SOURCE_RANGE = [2,7]
+
+DEFAULT_BKB_NUM_NODES_RANGE = [300,1201]
+DEFAULT_BKB_NUM_ENTRY_POINTS_RANGE = [3,10]
+DEFAULT_BKB_NUM_AGENTS_RANGE = [3,9]
+DEFAULT_BKB_CHASER_COORD_RADIUS_RANGE = [3,7] 
+DEFAULT_BKB_AGENT_ENERGY_RANGE = [250,4501] 
+
+DEFAULT_HFB_NUM_AGENTS_RANGE = [5,31]
+DEFAULT_HFB_INITIAL_AGENT_SCORE_RANGE = [25000,75001]
+
+DEFAULT_MKB_NUM_AGENTS_RANGE = [100,1501]
+DEFAULT_MKB_MOB_AGENT_UNIFORM_SCORE_RANGE = [1000,75000]
+DEFAULT_MKB_ANTIMOB_SCORE_MULTIPLIER_RANGE = [5.0,20.005] 
+
+DEFAULT_SB_SUBJECT_ENERGY_RANGE = [10**3,10**5+1] 
+DEFAULT_SB_STRANGLER_ENERGY_MULTIPLIER_RANGE = [1.05,10.0] 
+DEFAULT_SB_GRAPH_NODE_SIZE_RANGE = [212,799]
+
+DEFAULT_CB_NUM_AGENTS_RANGE = [2,6]  
+DEFAULT_CB_AGENT_ACTION_VALUE_RANGE = [-20.,20.]
+DEFAULT_CB_CUMULATIVE_PAYOFF_MULTIPLIER_RANGE = [-(2 + 5/9),2+5/11] 
+
+DEFAULT_MMB_UNIT_PRICE_RANGE = [1.05,5.05] 
+
+DEFAULT_VTB_NUM_CHASERS_RANGE = [3,11]
+DEFAULT_VTB_BOUNDS_DIM_RANGE = [4,10] 
+DEFAULT_VTB_VECTOR_BOUND_SINGLE_RANGE = [-105.0,105.0] 
+DEFAULT_VTB_TRACKER_POINT_DISPERSAL_RANGE = [5.0,10.001] 
+
+DEFAULT_IB_NUM_MINPATHS_RANGE = [2,6] 
+DEFAULT_IB_SEQUENCE_LENGTH = [2,7] 
+DEFAULT_IB_TRAVERSAL_RANGE = [25,66]
+
+DEFAULT_PIB_OFFENDER_LCGV_MAX_VALUE = 2048 
+
+DEFAULT_EFB_NODE_VALUE_RANGE = [1.,101.] 
+DEFAULT_EFB_EXTRA_EDGE_RATIO = [0.12,0.45]
+
+DEFAULT_TFTMB_CC_ATTRIBUTE_RANGE = [0.,20.]
+DEFAULT_TFTMB_NUM_CATEGORIES_RANGE = [4,10] 
+DEFAULT_TFTMB_NUM_LABELS_RANGE = [3,7] 
+
+DEFAULT_PDIB_NUM_MOVES_RANGE = [20,76]
+DEFAULT_PDIB_INADVERTENCY_SIZE_RANGE = [2,8]  
+DEFAULT_PDIB_INADVERTENCY_RATIO_RANGE = [0.05,0.22] 
+DEFAULT_PDIB_NODE_VALUE_RANGE = [30.,2500.]

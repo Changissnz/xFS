@@ -111,7 +111,7 @@ class MiddleManBot(MiddleManNetwork):
         reprod_rate,seller_lifespan:int,jg:JammingGraph,prg,verbose:bool=False):
 
         super().__init__(buying_agent,unit_price,unit_shelf_life,reprod_rate,\
-            seller_lifespan,jg,prg,verbose) 
+            seller_lifespan,jg,prg,True,verbose) 
         return 
 
     @staticmethod 
@@ -121,7 +121,6 @@ class MiddleManBot(MiddleManNetwork):
         mm = MiddleManNetwork.generate_instance(\
             jamming_graph_type,unit_price,\
             allow_buyer_memoryless_navigation,\
-            prg1=prg1,prg2=prg2)
-
+            prg1=prg1,prg2=prg2,do_preproc=False)
         return MiddleManBot(mm.buying_agent,mm.unit_price,mm.unit_shelf_life,\
             mm.reprod_rate,mm.seller_lifespan,mm.jg,mm.prg,mm.verbose)

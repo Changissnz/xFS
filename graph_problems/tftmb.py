@@ -45,8 +45,10 @@ class TwoFacesThreeMotivesBot(AgentType2F3MTrifecta):
         return
 
     @staticmethod 
-    def generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,variable_comp:bool,prg):
+    def generate_instance(agent_idns,mo_type,num_categories,label_size_range,\
+        attribute_bound_vec,variable_comp:bool,prg):
 
-        ATT = AgentType2F3MTrifecta.generate_instance(agent_idns,mo_type,num_categories,label_size_range,attribute_bound_vec,prg)
+        ATT = AgentType2F3MTrifecta.generate_instance(agent_idns,mo_type,num_categories,\
+            label_size_range,attribute_bound_vec,prg)
         tbot = TwoFacesThreeMotivesBot(ATT.a0,ATT.a1,ATT.a2,variable_comp,verbose=False)
         return tbot 

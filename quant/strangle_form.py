@@ -12,6 +12,8 @@ DEFAULT_STRANGLESUBJECT_COMMUNITY_SIZE_RANGE = [20,100]
 DEFAULT_STRANGLER_HOLD_FREQUENCY_CONSUMPTION_MIN_THRESHOLD = 5 
 DEFAULT_MAX_NUMBER_OF_STRANGLEFORM_ENTITIES = 50 
 
+DEFAULT_STRANGLER_FORCE_ASSIGNMENT = ["random","degree-proportional"] 
+
 """
 Function used by strangle subject to break out of stranglehold. 
 
@@ -110,7 +112,7 @@ class StrangleForm:
         assert type(G) == defaultdict
         assert type(prg) in {FunctionType,MethodType}
         assert type(edge_cost_function) in {FunctionType,MethodType}
-        assert force_assignment_type in {"random","degree-proportional"}
+        assert force_assignment_type in DEFAULT_STRANGLER_FORCE_ASSIGNMENT
         assert is_valid_range(force_per_node_range,True,False) or is_valid_range(force_per_node_range,False,False)
         assert force_per_node_range[0] > 0
         assert type(enable_consumption) == bool 

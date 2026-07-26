@@ -79,6 +79,10 @@ class RNBot:
 
         self.fin_stat = False 
 
+    def set_qstruct_nfa_type(self,n): 
+        assert n in {1,2,3}  
+        self.qstruct.nfa_type = n 
+
     @staticmethod 
     def generate_instance(num_nodes,resistance,num_questions,answer_objective,\
         answer_range,num_questions_to_vary,prg,start_node_idn,qstructgen_answer_type,\

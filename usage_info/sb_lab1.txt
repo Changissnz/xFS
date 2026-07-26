@@ -43,7 +43,7 @@ print("Finished timestamp: ",se.timestamp)
 # First, set these variables from the base code (lines 12-16).
 
 info_mode = 0 
-strangler_energy = float('inf) 
+strangler_energy = float('inf') 
 strangle_subject_energy = 10**8 
 enable_consumption = False  
 max_timestamps = 500 

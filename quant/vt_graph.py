@@ -30,12 +30,14 @@ NOTE: symmetry calculation is done in method<MVTrackingGroupTypeSO.calculate_bal
 """
 class VectorTrackingNetwork: 
 
-    def __init__(self,target,mt_group): 
+    def __init__(self,target,mt_group,verbose:bool=False): 
         assert type(target) == MobileVectorAgent
         assert type(mt_group) == MVTrackingGroupTypeSO  
+        assert type(verbose) == bool 
 
         self.target = target 
         self.mt_group = mt_group
+        self.verbose = verbose 
 
         self.timestamp = 0 
         self.euclidean_difference = 0 
