@@ -1,7 +1,8 @@
 # xFS
 
 This project is allocated for algorithms I have attempted in some of my past projects, 
-as well as some emerging ideas of mine. 
+as well as some emerging ideas of mine. Project is also pip-installable 
+[here](https://pypi.org/project/xFS-bots/).
 
 The projects [puissec](https://github.com/Changissnz/puissec) and 
 [r2apart](https://github.com/Changissnz/r2apart), in particular, are not fully functional 

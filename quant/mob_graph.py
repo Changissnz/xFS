@@ -1,4 +1,4 @@
-from quant.usg_controller import * 
+from .usg_controller import * 
 from morebs2.numerical_generator import modulo_in_range,prg_to_prg__LCG_sequence,\
     merge_two_prgs_into_LCG_sequence,prg_decimal
 from graph_models.graph_gen import * 

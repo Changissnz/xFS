@@ -1,4 +1,4 @@
-from quant.gt_agent import * 
+from .gt_agent import * 
 from graph_models.node_path import * 
 from morebs2.numerical_generator import prg_decimal,prg_to_prg__LCG_sequence,\
     prg_partition_for_float__type2
