@@ -276,7 +276,7 @@ class BDFSCache(XFSCache):
     - components, list of sets 
     """
     @staticmethod 
-    def BFS_full(G:defaultdict,return_type="distance",prg=None,max_search_radius=float('inf'),\
+    def BFS_full(G:defaultdict,nodeset=None,return_type="distance",prg=None,max_search_radius=float('inf'),\
         edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2,verbose=False):  
         assert return_type in {"distance","paths"} 
 
@@ -311,7 +311,11 @@ class BDFSCache(XFSCache):
             if component not in components: 
                 components.append(component) 
 
-        nodeset = sorted(G.keys())
+        if type(nodeset) == type(None): 
+            nodeset = sorted(G.keys())
+        else: 
+            assert nodeset.issubset(set(G.keys())) 
+            
         for s in nodeset: 
             one_bfs(s) 
         return paths_info, components
