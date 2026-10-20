@@ -2,6 +2,11 @@ from .shortest_paths import *
 from morebs2.matrix_methods import is_valid_range
 from morebs2.numerical_generator import modulo_in_range,prg__single_to_int
 
+"""
+Used to induce additional paths to any target node, starting from 
+reference node. Induction uses available path information `P`, 
+    P: target node -> list<paths>. 
+"""
 class PathInduction: 
 
     def __init__(self,reference,P,prg,num_segment_range): 
