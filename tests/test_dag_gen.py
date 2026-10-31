@@ -21,7 +21,7 @@ class DAGraphGenClass(unittest.TestCase):
     - gen. scheme = "constant", 
     - multi-parent connectivity in range [0.,0.2],
     - intralayer conn. range in range [0.1,0.2],
-    - uniform_depth = True 
+    - uniform_depth = True.
     """
     def test__DAGraphGen__next__case_1(self): 
 
@@ -95,6 +95,44 @@ class DAGraphGenClass(unittest.TestCase):
             5: 3, 6: 3, 2: 8, 1: 4, 8: 1}),\
             "got {}".format(children_count_freq)
         return 
+
+    '''
+    demonstrates proper child/parent connectivity for case 
+    of: 
+    - gen. scheme = "mult",
+    - no multiple parents,
+    - no intra-layer connections,
+    - uniform depth = True.
+    '''
+    def test__DAGraphGen__next__case_3(self): 
+
+        dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
+            multiparent_pr_range = [0.0,0.0],\
+            intralayer_conn_range = [0.0,0.0],uniform_depth = True)
+
+        next(dagg) 
+        assert len(dagg.intralayer_edges(dagg.level-1)) == 0 
+        next(dagg) 
+
+        parent_count_freq = defaultdict(int) 
+        children_count_freq = defaultdict(int) 
+
+        for _ in range(5): 
+            next(dagg) 
+            print("{}".format(_))
+
+        l3 = dagg.l2n_map[3] 
+        d = defaultdict(int) 
+
+        for n in l3: 
+            lp = len(dagg.parents_of_node(n)) 
+            d[lp] += 1 
+
+        assert d == {1:1966}
+
+        I = dagg.intralayer_edges(3) 
+        assert len(I) == 0 
+
 
 if __name__ == '__main__':
     unittest.main()

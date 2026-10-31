@@ -11,11 +11,16 @@ class DAGraphContainer:
         assert type(G) == defaultdict 
         assert type(l2n_map) == dict 
         self.G = G 
+        self.G_rev = reverse_graph_edges(self.G) 
         self.l2n_map = l2n_map 
         return
 
+    def add_edge(self,source,target):
+        self.G[source] |= {target} 
+        self.G_rev[target] |= {source}  
+
     def parents_of_node(self,n):  
-        q = parents_of(self.G,n) 
+        q = children_of(self.G_rev,n) 
         l = self.node_to_level(n) 
         return q - self.l2n_map[l]
 
@@ -28,6 +33,30 @@ class DAGraphContainer:
         for l,v in self.l2n_map.items(): 
             if n in v: return l 
         return -1 
+
+    #------------------------- intralayer edge operations 
+
+    def intrasets_of_layer(self,l): 
+
+        return -1 
+
+    def intralayer_edges(self,l): 
+        N = self.l2n_map[l] 
+        edges = []
+        for n in N: 
+            q = self.G[n].intersection(N)
+            edges.extend([(n,q_) for q_ in q]) 
+        return edges 
+
+    def clear_intralayer_edges(self,l): 
+        nodeset = self.l2n_map[l]
+
+        for n in nodeset: 
+            self.G[n] = self.G[n] - nodeset 
+        return 
+
+    #-------------------------- other 
+
 
     def n_paths_with_node(self): 
         return -1 
@@ -153,7 +182,8 @@ class DAGraphGen(DAGraphContainer):
             n2 = A[j] 
 
             parent_node_map[n2] |= {n} 
-            self.G[n] |= {n2} 
+            self.add_edge(n,n2) 
+            ##self.G[n] |= {n2} 
             return (n,n2) 
 
         for _ in range(num_edges): 
@@ -223,7 +253,10 @@ class DAGraphGen(DAGraphContainer):
         for (i,q_) in enumerate(parent_nodes): 
             end_index = start_index + P[i]
             children = cnodes[start_index:end_index]
-            self.G[q_] |= set(children) 
+
+            for c in children: 
+                self.add_edge(q_,c) 
+            #self.G[q_] |= set(children) 
             start_index = end_index 
         return parent_nodes
 
@@ -242,7 +275,8 @@ class DAGraphGen(DAGraphContainer):
                     j = 0 
                 
                 c = L[j] 
-                self.G[p] |= {c} 
+                #self.G[p] |= {c} 
+                self.add_edge(p,c) 
                 j += 1
             return parent_nodes 
     
@@ -253,7 +287,8 @@ class DAGraphGen(DAGraphContainer):
 
         for (i,p) in enumerate(parents): 
             c = self.leaf_nodes[i] 
-            self.G[p] |= {c} 
+            #self.G[p] |= {c} 
+            self.add_edge(p,c) 
 
         return parents
 
@@ -281,7 +316,8 @@ class DAGraphGen(DAGraphContainer):
             i = safe_modulo_in_range(int(self.prg()),lr)
             for _ in range(i): 
                 self.G[self.node_index] = set()
-                self.G[l] |= {self.node_index} 
+                #self.G[l] |= {self.node_index} 
+                self.add_edge(l,self.node_index) 
                 new_leaves.append(self.node_index) 
 
                 self.node_index += 1 
@@ -312,30 +348,8 @@ class DAGraphGen(DAGraphContainer):
 
                 # case: add edge 
                 if d < x: 
-                    self.G[l] |= {l2}
-
-    #------------------------- intralayer edge operations 
-
-    def intrasets_of_layer(self,l): 
-
-        return -1 
-
-    def intralayer_edges(self,l): 
-        N = self.l2n_map[l] 
-        edges = []
-        for n in N: 
-            q = self.G[n].union(N)
-            edges.extend([(n,q_) for q_ in q]) 
-        return edges 
-
-    def clear_intralayer_edges(self,l): 
-        nodeset = self.l2n_map[l]
-
-        for n in nodeset: 
-            self.G[n] = self.G[n] - nodeset 
-        return 
-
-    #-------------------------- other 
+                    #self.G[l] |= {l2}
+                    self.add_edge(l,l2) 
 
     def permute_nodes(self): 
         return -1 
