@@ -12,10 +12,10 @@ a node `n` cannot be at the same level as `n`.
 
 NOTE: the terms `level` and `layer` are interchangeable, and are 
 integers assigned to nodes that signify their minimum distances from 
-the root node. 
+the root node/s. 
 
 Calculates any variable k' <= k number of paths that have node `n` 
-of DAG in them. 
+of `G` in them. 
 '''
 class DAGraphContainer: 
 
@@ -185,6 +185,36 @@ class DAGraphContainer:
                     print("[!] wrong level for node {}: got {},expected {}".format(v_,level,k))
                     return False 
         return True 
+
+    #------------------------------- permuting nodes 
+
+    # TODO: needs to be tested. 
+    def permute_nodes(self,prg): 
+
+        # case: empty graph 
+        if len(self.G) == 0: return 
+
+        # calculate the isomap first 
+        nodes = sorted(self.G.keys()) 
+        nodes2 = prg_seqsort(deepcopy(nodes),prg) 
+        D = {n:n2 for (n,n2) in zip(nodes,nodes2)} 
+
+        # change the graph 
+        mg = MicroGraph(self.G) 
+        mg2 = MicroGraph.isotransform_MG(mg,D) 
+        G2 = mg2.dg 
+
+        # change the level-to-nodeset map 
+        l2n_map2 = dict() 
+
+        for k,v in self.l2n_map.items(): 
+            v2 = [D[v_] for v_ in v] 
+            l2n_map2[k] = set(v2)  
+
+        self.G = G2 
+        self.G_rev = reverse_graph_edges(self.G) 
+        self.l2n_map = l2n_map2
+        return 
 
 """
 (D)irected (A)cyclic (G)raph Generator. 
@@ -478,5 +508,24 @@ class DAGraphGen(DAGraphContainer):
                     #self.G[l] |= {l2}
                     self.add_edge(l,l2) 
 
+    #----------------------------- extra ops: 
+    #----------------------------- converting to <DAGraphContainer> and permuting nodes 
+
+    def to_DAGraph(self): 
+        return DAGraphContainer(self.G,self.l2n_map,check_input_graph=False)
+
     def permute_nodes(self): 
-        return -1 
+        if len(self.G) == 0: return 
+
+        super().permute_nodes(self.prg)  
+
+        # update the leaf variables 
+        K = sorted(self.l2n_map.keys())
+        i0 = K.pop(-1) 
+        self.leaf_nodes = sorted(self.l2n_map[i0]) 
+
+        if len(K) > 0: 
+            i1 = K.pop(-1) 
+            self.prev_leaf_nodes = sorted(self.l2n_map[i1]) 
+        else: 
+            self.prev_leaf_nodes = [] 

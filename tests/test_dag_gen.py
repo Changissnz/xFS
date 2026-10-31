@@ -206,6 +206,30 @@ class DAGraphGenClass(unittest.TestCase):
         C = DAGraphContainer(G3,l2n_map,True)  
         assert C.erroneous_node == 4  
 
+    def test__DAGraphContainer__permute_nodes__case_1(self):
+
+        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        num_node_range_per_layer = [2,4],\
+        multiparent_pr_range = [0.05,0.15],\
+        intralayer_conn_range = [0.0,0.0],uniform_depth = True)
+
+        for _ in range(5): 
+            next(dagg) 
+
+        leaf_nodes = deepcopy(dagg.leaf_nodes)
+
+        G_ = deepcopy(dagg.G)
+        dagg.permute_nodes() 
+
+        leaf_nodes2 = deepcopy(dagg.leaf_nodes)
+
+        assert leaf_nodes == [11, 12, 13]
+        assert leaf_nodes2 == [1, 6, 8]
+
+        for k in dagg.G.keys(): 
+            P = dagg.n_paths_with_node(k,1,dagg.prg)[0] 
+            level = P.p.index(k)    
+            assert k in dagg.l2n_map[level] 
 
         
 
