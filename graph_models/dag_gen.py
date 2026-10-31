@@ -1,18 +1,53 @@
 from .node_path import * 
 from .graph_gen import * 
-from morebs2.matrix_methods import is_number#, is_valid_range
-from morebs2.numerical_generator import modulo_in_range,safe_modulo_in_range,\
+from morebs2.matrix_methods import is_number
+from morebs2.numerical_generator import safe_modulo_in_range,\
     prg_decimal,safe_prg_decimal,prg_partition_for_sz__n_rounds,prg_choose_n
 
+'''
+Storage container and operator for Directed Acyclic Graphs. Stores 
+nodesets per DAG `level`. Calculates proper children and parents 
+of any arbitrary node of DAG. Proper children/parent nodes of 
+a node `n` cannot be at the same level as `n`. 
 
+NOTE: the terms `level` and `layer` are interchangeable, and are 
+integers assigned to nodes that signify their minimum distances from 
+the root node. 
+
+Calculates any variable k' <= k number of paths that have node `n` 
+of DAG in them. 
+'''
 class DAGraphContainer: 
 
     def __init__(self,G,l2n_map,check_input_graph:bool=True):
         assert type(G) == defaultdict 
         assert type(l2n_map) == dict 
+        
+        nodeset = set() 
+        for k,v in l2n_map.items(): 
+            assert type(k) == int and k >= 0 
+            assert type(v) == set 
+            nodeset |= v 
+        nodeset2 = set(G.keys())
+        assert nodeset == nodeset2, "diff of {}".format((nodeset - nodeset2) | (nodeset2 - nodeset)) 
+
         self.G = G 
+        self.G_ = None 
+        # reversed edges of `G`; used for quicker lookup of parent nodes
         self.G_rev = reverse_graph_edges(self.G) 
         self.l2n_map = l2n_map 
+
+        # path traversal cache + queue, 
+        # used for method<n_paths_with_node>. 
+        #   element := (NodePath, ?finished head?, ?finished tail?)
+        self.ptrav_queue = deque()
+        self.ptrav_cache = deque() 
+
+        self.erroneous_node = None 
+        if check_input_graph: 
+            self.verify()
+            self.G = deepcopy(self.G_) 
+            self.G_ = None 
         return
 
     def add_edge(self,source,target):
@@ -34,10 +69,15 @@ class DAGraphContainer:
             if n in v: return l 
         return -1 
 
+    def level_to_nodeset(self,l): 
+        if l not in self.l2n_map: 
+            return None 
+        return deepcopy(self.l2n_map[l])
+
     #------------------------- intralayer edge operations 
 
     def intrasets_of_layer(self,l): 
-
+        nodes = sorted(self.l2n_map[l]) 
         return -1 
 
     def intralayer_edges(self,l): 
@@ -55,11 +95,96 @@ class DAGraphContainer:
             self.G[n] = self.G[n] - nodeset 
         return 
 
-    #-------------------------- other 
+    #-------------------------- path operations  
 
+    def n_paths_with_node(self,node,num_paths,prg=None): 
+        self.ptrav_queue.clear()
+        self.ptrav_cache.clear() 
 
-    def n_paths_with_node(self): 
-        return -1 
+        if node not in self.G: 
+            return deque() 
+
+        N = NodePath(node) 
+        self.ptrav_queue.append([N,False,False]) 
+
+        stat = True 
+        while stat and len(self.ptrav_cache) < num_paths: 
+            stat = self.next_from_queue(prg) 
+
+        return self.ptrav_cache 
+
+    def next_from_queue(self,prg): 
+        if len(self.ptrav_queue) == 0: 
+            return False 
+
+        x = self.ptrav_queue.popleft() 
+        P = x[0] 
+        
+        parents = self.parents_of_node(P.head())
+        C = self.children_of_node(P.tail()) 
+
+        # case: reached root node/s 
+        if len(parents) == 0: 
+            x[1] = True 
+
+        # case: reached leaf node/s 
+        if len(C) == 0: 
+            x[2] = True 
+
+        # case: finished 
+        if x[1] and x[2]: 
+            self.ptrav_cache.append(x[0]) 
+            return True 
+
+        new_paths = [] 
+
+        # case: add parents
+        if not x[1]: 
+            parents = sorted(parents) 
+            for p in parents: 
+                pth = deepcopy(P) 
+                pth.prepend(p,1) 
+                new_paths.append([pth,x[1],x[2]])
+
+        # case: add children 
+        if not x[2]: 
+            C = sorted(C) 
+            for c in C: 
+                pth = deepcopy(P) 
+                pth.append(c,1) 
+                new_paths.append([pth,x[1],x[2]])
+
+        # use PRNG to sort 
+        if type(prg) != type(None): 
+            new_paths = prg_seqsort(new_paths,prg)
+        
+        for npth in new_paths: 
+            self.ptrav_queue.appendleft(npth) 
+        return True 
+
+    #------------------------------- verifying instantiating parameters 
+
+    def verify(self): 
+        self.G_ = deepcopy(self.G) 
+
+        for k_ in self.l2n_map.keys(): 
+            self.clear_intralayer_edges(k_) 
+
+        for k,v in self.l2n_map.items(): 
+
+            for v_ in v: 
+                P = self.n_paths_with_node(v_,1)
+                if len(P) == 0: 
+                    self.erroneous_node = v_ 
+                    print("[!] non-existent node??")
+                    return False 
+
+                level = P[0].p.index(v_)  
+                if level != k: 
+                    self.erroneous_node = v_
+                    print("[!] wrong level for node {}: got {},expected {}".format(v_,level,k))
+                    return False 
+        return True 
 
 """
 (D)irected (A)cyclic (G)raph Generator. 
@@ -69,6 +194,8 @@ class DAGraphGen(DAGraphContainer):
     """
     num_node_range_per_layer := int range | list<int range>; specifies the range of nodes per layer. 
             If format is list of ranges, cyclically iterates through list of ranges. 
+    gen_scheme := "mult" -> every node has x number of children in range of `num_node_range_per_layer`,
+                "constant" -> every layer has x number of nodes in range of `num_node_range_per_layer`.
     intralayer_conn_range := float range, of [0.,1.], ratios specify the possible number of directed 
             edges between nodes of the same layer. 
     prg := PRNG, inputless function.
@@ -104,7 +231,7 @@ class DAGraphGen(DAGraphContainer):
         self.prg = prg 
         self.uniform_depth = uniform_depth 
 
-        super().__init__(defaultdict(set),dict())
+        super().__init__(defaultdict(set),dict(),False) 
 
         self.level = 0 
         self.prev_leaf_nodes = []  

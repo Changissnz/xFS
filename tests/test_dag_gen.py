@@ -1,9 +1,9 @@
 from graph_models.dag_gen import * 
 import unittest
 
-def DAGraphGen__sample_QSTD(gen_scheme,multiparent_pr_range,intralayer_conn_range,uniform_depth): 
+def DAGraphGen__sample_QSTD(gen_scheme,num_node_range_per_layer,\
+    multiparent_pr_range,intralayer_conn_range,uniform_depth): 
 
-    num_node_range_per_layer = [5,10] 
     prg = prg__LCG(6235.54,-6234,3252.6346,547632.1) 
 
     dagg = DAGraphGen(num_node_range_per_layer,gen_scheme,multiparent_pr_range,\
@@ -26,6 +26,7 @@ class DAGraphGenClass(unittest.TestCase):
     def test__DAGraphGen__next__case_1(self): 
 
         dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.,0.2],\
             intralayer_conn_range = [0.1,0.2],uniform_depth = True)
 
@@ -50,6 +51,7 @@ class DAGraphGenClass(unittest.TestCase):
 
             next(dagg) 
 
+        assert len(dagg.G) == 76, "got {}".format(len(dagg.G))
         assert dagg.level == 12 
 
         return 
@@ -62,6 +64,7 @@ class DAGraphGenClass(unittest.TestCase):
     '''
     def test__DAGraphGen__next__case_2(self):
         dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.0,0.8],\
             intralayer_conn_range = [0.1,0.2],uniform_depth = False)
 
@@ -88,6 +91,7 @@ class DAGraphGenClass(unittest.TestCase):
                 children_count_freq[len(children)] += 1 
 
             next(dagg) 
+        assert len(dagg.G) == 77, "got {}".format(len(dagg.G))
 
         assert parent_count_freq == defaultdict(int, {1: 33, 4: 5, 5: 1, 2: 15, 3: 10}),\
             "got {}".format(parent_count_freq)
@@ -107,6 +111,7 @@ class DAGraphGenClass(unittest.TestCase):
     def test__DAGraphGen__next__case_3(self): 
 
         dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
+            num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.0,0.0],\
             intralayer_conn_range = [0.0,0.0],uniform_depth = True)
 
@@ -114,12 +119,10 @@ class DAGraphGenClass(unittest.TestCase):
         assert len(dagg.intralayer_edges(dagg.level-1)) == 0 
         next(dagg) 
 
-        parent_count_freq = defaultdict(int) 
-        children_count_freq = defaultdict(int) 
-
         for _ in range(5): 
             next(dagg) 
             print("{}".format(_))
+        assert len(dagg.G) == 783463, "got {}".format(len(dagg.G))
 
         l3 = dagg.l2n_map[3] 
         d = defaultdict(int) 
@@ -133,6 +136,78 @@ class DAGraphGenClass(unittest.TestCase):
         I = dagg.intralayer_edges(3) 
         assert len(I) == 0 
 
+    def test__DAGraphContainer__n_paths_with_node__case_1(self): 
+
+        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [5,10],\
+            multiparent_pr_range = [0.5,1.0],\
+            intralayer_conn_range = [0.1,0.35],uniform_depth = True)
+
+        next(dagg) 
+        next(dagg) 
+
+        for _ in range(15): 
+            next(dagg) 
+            print("{}".format(_))
+
+        assert len(dagg.G) == 125, "got {}".format(len(dagg.G))
+
+        target_node = 110 
+        num_paths = 12
+        P = dagg.n_paths_with_node(target_node,num_paths,dagg.prg)
+
+        # check for uniqueness 
+        P_ = set() 
+        for p in P: 
+            P_ |= {str(p)}
+        assert len(P_) == num_paths 
+
+        for p in P: 
+            l = p.p 
+            assert target_node in l 
+            assert does_path_exist(dagg.G,l) 
+
+    def test__DAGraphContainer__verify__case_1(self): 
+
+        dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
+        num_node_range_per_layer = [2,4],\
+        multiparent_pr_range = [0.05,0.1],\
+        intralayer_conn_range = [0.01,0.3],uniform_depth = True)
+
+        next(dagg) 
+        next(dagg) 
+
+        for _ in range(5): 
+            next(dagg) 
+            print("{}".format(_))
+
+        # check that verification works for good info., over 10 rounds 
+        l2n_map = deepcopy(dagg.l2n_map) 
+        G2 = deepcopy(dagg.G)
+
+        for _ in range(10): 
+            C = DAGraphContainer(G2,l2n_map,True) 
+            assert type(C.erroneous_node) == type(None) 
+
+        G2 = deepcopy(dagg.G)
+        G3 = deepcopy(dagg.G)
+
+        # mismatch node 22 
+        l2n_map = deepcopy(dagg.l2n_map) 
+        l2n_map[2] -= {22} 
+        l2n_map[1] |= {22} 
+        C = DAGraphContainer(G2,l2n_map,True)  
+        assert C.erroneous_node == 22 
+
+        # mismatch node 9 
+        l2n_map = deepcopy(dagg.l2n_map) 
+        l2n_map[1] -= {9} 
+        l2n_map[3] |= {9} 
+        C = DAGraphContainer(G3,l2n_map,True)  
+        assert C.erroneous_node == 4  
+
+
+        
 
 if __name__ == '__main__':
     unittest.main()

@@ -135,6 +135,10 @@ class NodePath:
     def append(self,node,weight):
         self.p.append(node)
         self.pweights.append(weight)
+    
+    def prepend(self,node,weight): 
+        self.p.insert(0,node) 
+        self.pweights.insert(0,weight) 
 
     def invert(self):
         npath = NodePath("void")
