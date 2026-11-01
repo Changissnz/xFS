@@ -15,7 +15,10 @@ integers assigned to nodes that signify their minimum distances from
 the root node/s. 
 
 Calculates any variable k' <= k number of paths that have node `n` 
-of `G` in them. 
+of `G` in them. Paths can be proper paths or non-proper paths. Every 
+node of a proper path P, s.t |P| > 1, is a proper child and/or proper 
+parent node. Non-proper paths include source/target nodes that are at 
+the same level as the reference nodes. 
 '''
 class DAGraphContainer: 
 
@@ -54,13 +57,21 @@ class DAGraphContainer:
         self.G[source] |= {target} 
         self.G_rev[target] |= {source}  
 
-    def parents_of_node(self,n):  
+    def parents_of_node(self,n,is_proper:bool=True):  
+        assert type(is_proper) == bool 
+
         q = children_of(self.G_rev,n) 
+        if not is_proper: return q 
+
         l = self.node_to_level(n) 
         return q - self.l2n_map[l]
 
-    def children_of_node(self,n): 
+    def children_of_node(self,n,is_proper:bool=True): 
+        assert type(is_proper) == bool 
+
         q = children_of(self.G,n) 
+        if not is_proper: return q 
+
         l = self.node_to_level(n) 
         return q - self.l2n_map[l]  
 
@@ -97,7 +108,14 @@ class DAGraphContainer:
 
     #-------------------------- path operations  
 
-    def n_paths_with_node(self,node,num_paths,prg=None): 
+    """
+    proper_paths_only := if set to True, every path has at most one 
+        node per level. Otherwise, output paths vary in length according 
+        to 
+    """
+    def n_paths_with_node(self,node,num_paths,proper_paths_only:bool=True,prg=None): 
+        assert type(proper_paths_only) == bool 
+
         self.ptrav_queue.clear()
         self.ptrav_cache.clear() 
 
@@ -109,19 +127,21 @@ class DAGraphContainer:
 
         stat = True 
         while stat and len(self.ptrav_cache) < num_paths: 
-            stat = self.next_from_queue(prg) 
+            stat = self.next_from_queue(prg,proper_paths_only) 
 
-        return self.ptrav_cache 
+        return list(self.ptrav_cache) 
 
-    def next_from_queue(self,prg): 
+    def next_from_queue(self,prg,is_proper_path:bool):
+        assert type(is_proper_path) == bool 
+        
         if len(self.ptrav_queue) == 0: 
             return False 
 
         x = self.ptrav_queue.popleft() 
         P = x[0] 
         
-        parents = self.parents_of_node(P.head())
-        C = self.children_of_node(P.tail()) 
+        parents = self.parents_of_node(P.head(),is_proper_path)
+        C = self.children_of_node(P.tail(),is_proper_path) 
 
         # case: reached root node/s 
         if len(parents) == 0: 
@@ -173,7 +193,7 @@ class DAGraphContainer:
         for k,v in self.l2n_map.items(): 
 
             for v_ in v: 
-                P = self.n_paths_with_node(v_,1)
+                P = self.n_paths_with_node(v_,1,True)
                 if len(P) == 0: 
                     self.erroneous_node = v_ 
                     print("[!] non-existent node??")
@@ -216,6 +236,10 @@ class DAGraphContainer:
         self.l2n_map = l2n_map2
         return 
 
+    def nodepath_to_level_map(self,P:NodePath): 
+        assert type(P) == NodePath
+        return {p:self.node_to_level(p) for p in P.p} 
+            
 """
 (D)irected (A)cyclic (G)raph Generator. 
 """

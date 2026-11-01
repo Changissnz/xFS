@@ -109,7 +109,6 @@ class DAGraphGenClass(unittest.TestCase):
     - uniform depth = True.
     '''
     def test__DAGraphGen__next__case_3(self): 
-
         dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.0,0.0],\
@@ -137,7 +136,6 @@ class DAGraphGenClass(unittest.TestCase):
         assert len(I) == 0 
 
     def test__DAGraphContainer__n_paths_with_node__case_1(self): 
-
         dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.5,1.0],\
@@ -154,7 +152,8 @@ class DAGraphGenClass(unittest.TestCase):
 
         target_node = 110 
         num_paths = 12
-        P = dagg.n_paths_with_node(target_node,num_paths,dagg.prg)
+        proper_paths_only = True 
+        P = dagg.n_paths_with_node(target_node,num_paths,proper_paths_only,dagg.prg)
 
         # check for uniqueness 
         P_ = set() 
@@ -167,8 +166,28 @@ class DAGraphGenClass(unittest.TestCase):
             assert target_node in l 
             assert does_path_exist(dagg.G,l) 
 
-    def test__DAGraphContainer__verify__case_1(self): 
+    def test__DAGraphGen__n_paths_with_node__case_2(self): 
+        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        num_node_range_per_layer = [2,4],\
+        multiparent_pr_range = [0.05,0.15],\
+        intralayer_conn_range = [0.0,0.4],uniform_depth = True)
 
+        for _ in range(10): 
+            next(dagg) 
+
+        Q = dagg.n_paths_with_node(19,10,True,dagg.prg)
+        Q2 = dagg.n_paths_with_node(19,10,False,dagg.prg) 
+
+        L = [len(q) for q in Q] 
+        L2 = [len(q) for q in Q2] 
+
+        assert L == [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+        assert L2 == [12, 14, 13, 13, 13, 15, 12, 14, 17, 15]
+
+    """
+    NOTE: verification is relatively long process. 
+    """
+    def test__DAGraphContainer__verify__case_1(self): 
         dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
         num_node_range_per_layer = [2,4],\
         multiparent_pr_range = [0.05,0.1],\
@@ -207,7 +226,6 @@ class DAGraphGenClass(unittest.TestCase):
         assert C.erroneous_node == 4  
 
     def test__DAGraphContainer__permute_nodes__case_1(self):
-
         dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
         num_node_range_per_layer = [2,4],\
         multiparent_pr_range = [0.05,0.15],\
@@ -226,8 +244,9 @@ class DAGraphGenClass(unittest.TestCase):
         assert leaf_nodes == [11, 12, 13]
         assert leaf_nodes2 == [1, 6, 8]
 
+        proper_paths_only = True 
         for k in dagg.G.keys(): 
-            P = dagg.n_paths_with_node(k,1,dagg.prg)[0] 
+            P = dagg.n_paths_with_node(k,1,proper_paths_only,dagg.prg)[0] 
             level = P.p.index(k)    
             assert k in dagg.l2n_map[level] 
 
