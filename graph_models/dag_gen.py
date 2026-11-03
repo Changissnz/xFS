@@ -19,6 +19,10 @@ of `G` in them. Paths can be proper paths or non-proper paths. Every
 node of a proper path P, s.t |P| > 1, is a proper child and/or proper 
 parent node. Non-proper paths include source/target nodes that are at 
 the same level as the reference nodes. 
+
+NOTE: verification process also checks for circularity of layers. 
+      This checking process is not suited for graphs with layers of 
+      large size for the calculation ( > 50 nodes).
 '''
 class DAGraphContainer: 
 
@@ -37,7 +41,7 @@ class DAGraphContainer:
         self.G = G 
         self.G_ = None 
         # reversed edges of `G`; used for quicker lookup of parent nodes
-        self.G_rev = reverse_graph_edges(self.G) 
+        self.G_rev = reverse_graph_edges(deepcopy(self.G))
         self.l2n_map = l2n_map 
 
         # path traversal cache + queue, 
@@ -49,7 +53,6 @@ class DAGraphContainer:
         self.erroneous_node = None 
         if check_input_graph: 
             self.verify()
-            self.G = deepcopy(self.G_) 
             self.G_ = None 
         return
 
@@ -85,11 +88,32 @@ class DAGraphContainer:
             return None 
         return deepcopy(self.l2n_map[l])
 
+    def leaf_nodeset(self): 
+        l = sorted(self.l2n_map.keys()) 
+
+        if len(l) == 0: return None 
+        return deepcopy(self.l2n_map[l[-1]])
+
     #------------------------- intralayer edge operations 
 
+    # NOTE: caution. Do NOT exceed size of 50 nodes or 
+    #       so. 
+    # NOTE: also performs assertion of no circularity within 
+    #       layer. 
     def intrasets_of_layer(self,l): 
-        nodes = sorted(self.l2n_map[l]) 
-        return -1 
+        s = deepcopy(self.l2n_map[l])
+        if len(s) == 0: return [] 
+
+        M = MicroGraph(self.G) 
+        M2 = M.subgraph_by_nodeset_(s) 
+
+        g = GraphComponentDecomposition(M2.dg) 
+        g.decompose() 
+
+        assert len(g.cyclic_keys) == 0 
+        if type(g.components[0]) == set: 
+            return g.components 
+        return [flatten_setseq(q) for q in g.components]
 
     def intralayer_edges(self,l): 
         N = self.l2n_map[l] 
@@ -188,6 +212,7 @@ class DAGraphContainer:
         self.G_ = deepcopy(self.G) 
 
         for k_ in self.l2n_map.keys(): 
+            self.intrasets_of_layer(k_) 
             self.clear_intralayer_edges(k_) 
 
         for k,v in self.l2n_map.items(): 
@@ -197,13 +222,18 @@ class DAGraphContainer:
                 if len(P) == 0: 
                     self.erroneous_node = v_ 
                     print("[!] non-existent node??")
+                    self.G = deepcopy(self.G_) 
                     return False 
 
                 level = P[0].p.index(v_)  
+
                 if level != k: 
                     self.erroneous_node = v_
                     print("[!] wrong level for node {}: got {},expected {}".format(v_,level,k))
+                    self.G = deepcopy(self.G_) 
                     return False 
+
+        self.G = deepcopy(self.G_) 
         return True 
 
     #------------------------------- permuting nodes 
@@ -338,34 +368,37 @@ class DAGraphGen(DAGraphContainer):
         # clear any present intralayer edges first 
         self.clear_intralayer_edges(l) 
 
+        # case: less than two nodes in level 
+        if len(self.l2n_map[l]) < 2: 
+            return 
+
         q = safe_prg_decimal(self.prg,self.intra_conn_range) 
         nodeset = self.l2n_map[l] 
 
-        max_edges = max_simple_edges(len(self.l2n_map[l]))
+        max_edges = len(self.l2n_map[l]) - 1 
         num_edges = ceil(max_edges * q)
-
         available_nodes = sorted(nodeset) 
-
-        # agent idn -> parent nodeset 
-        parent_node_map = defaultdict(set) 
+        intra_nodesets = [set([n]) for n in available_nodes]
 
         def one_edge(): 
-            i = int(self.prg()) % len(available_nodes) 
-            n = available_nodes[i] 
+            # choose two sets from `intra_nodesets`
+            i = int(self.prg()) % len(intra_nodesets)
+            s0 = intra_nodesets.pop(i) 
 
-            A = nodeset - {n} - parent_node_map[n] - self.G[n] 
-            if len(A) == 0: 
-                available_nodes.pop(i) 
-                return one_edge() 
-            
-            A = sorted(A) 
-            j = int(self.prg()) % len(A) 
-            n2 = A[j] 
+            j = int(self.prg()) % len(intra_nodesets)
+            s1 = intra_nodesets.pop(j) 
 
-            parent_node_map[n2] |= {n} 
-            self.add_edge(n,n2) 
-            ##self.G[n] |= {n2} 
-            return (n,n2) 
+            # choose a node from each of the sets 
+            s0_ = sorted(s0)
+            s1_ = sorted(s1) 
+
+            n0 = int(self.prg()) % len(s0_)
+            n1 = int(self.prg()) % len(s1_) 
+
+            self.add_edge(s0_[n0],s1_[n1]) 
+
+            intra_nodesets.append(s0 | s1) 
+            return (n0,n1) 
 
         for _ in range(num_edges): 
             one_edge() 

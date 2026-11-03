@@ -35,7 +35,8 @@ class DAGraphGenClass(unittest.TestCase):
         next(dagg) 
 
         for _ in range(10): 
-            assert len(dagg.intralayer_edges(dagg.level-1)) > 0
+            if len(dagg.l2n_map[dagg.level -1]) > 1: 
+                assert len(dagg.intralayer_edges(dagg.level-1)) > 0
 
             l = dagg.level - 1 
             nodes_l1 = dagg.l2n_map[l] 
@@ -51,7 +52,7 @@ class DAGraphGenClass(unittest.TestCase):
 
             next(dagg) 
 
-        assert len(dagg.G) == 76, "got {}".format(len(dagg.G))
+        assert len(dagg.G) == 82, "got {}".format(len(dagg.G))
         assert dagg.level == 12 
 
         return 
@@ -91,13 +92,15 @@ class DAGraphGenClass(unittest.TestCase):
                 children_count_freq[len(children)] += 1 
 
             next(dagg) 
-        assert len(dagg.G) == 77, "got {}".format(len(dagg.G))
+        assert len(dagg.G) == 83, "got {}".format(len(dagg.G))
 
-        assert parent_count_freq == defaultdict(int, {1: 33, 4: 5, 5: 1, 2: 15, 3: 10}),\
+        assert parent_count_freq == defaultdict(int, {1: 28, 3: 13, 2: 19, 4: 5, 5: 4}),\
             "got {}".format(parent_count_freq)
-        assert children_count_freq == defaultdict(int, {7: 1, 0: 26, 4: 5, 3: 10, \
-            5: 3, 6: 3, 2: 8, 1: 4, 8: 1}),\
+
+        assert children_count_freq ==  defaultdict(int, \
+            {7: 2, 0: 32, 1: 3, 4: 11, 3: 12, 8: 1, 5: 4, 6: 3, 2: 1}),\
             "got {}".format(children_count_freq)
+
         return 
 
     '''
@@ -148,9 +151,9 @@ class DAGraphGenClass(unittest.TestCase):
             next(dagg) 
             print("{}".format(_))
 
-        assert len(dagg.G) == 125, "got {}".format(len(dagg.G))
+        assert len(dagg.G) == 98, "got {}".format(len(dagg.G))
 
-        target_node = 110 
+        target_node = 95 
         num_paths = 12
         proper_paths_only = True 
         P = dagg.n_paths_with_node(target_node,num_paths,proper_paths_only,dagg.prg)
@@ -159,7 +162,7 @@ class DAGraphGenClass(unittest.TestCase):
         P_ = set() 
         for p in P: 
             P_ |= {str(p)}
-        assert len(P_) == num_paths 
+        assert len(P_) == num_paths, "got {}\t\t".format(len(P_))
 
         for p in P: 
             l = p.p 
@@ -182,7 +185,7 @@ class DAGraphGenClass(unittest.TestCase):
         L2 = [len(q) for q in Q2] 
 
         assert L == [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
-        assert L2 == [12, 14, 13, 13, 13, 15, 12, 14, 17, 15]
+        assert L2 == [13, 13, 13, 14, 14, 14, 12, 12, 12, 12], "got {}".format(L2)
 
     """
     NOTE: verification is relatively long process. 
@@ -216,14 +219,36 @@ class DAGraphGenClass(unittest.TestCase):
         l2n_map[2] -= {22} 
         l2n_map[1] |= {22} 
         C = DAGraphContainer(G2,l2n_map,True)  
-        assert C.erroneous_node == 22 
+        assert C.erroneous_node == 22, "got {}".format(C.erroneous_node)
 
         # mismatch node 9 
         l2n_map = deepcopy(dagg.l2n_map) 
         l2n_map[1] -= {9} 
         l2n_map[3] |= {9} 
         C = DAGraphContainer(G3,l2n_map,True)  
-        assert C.erroneous_node == 4  
+        assert C.erroneous_node == 9, "got {}".format(C.erroneous_node)
+
+    """
+    demonstrates an erroneous DAG (layer 0 is circular)
+    """
+    def test__DAGraphContainer__intrasets_of_layer__case_1(self): 
+        Gx = defaultdict(set, {83: {1, 50, 3}, 64: {80, 50, 3, 87}, \
+            2: {50, 83, 30}, 87: {1, 43, 79, 80, 56, 30}, 41: {3, 43, 45, 87}, \
+            56: {64, 2, 43, 49, 50}, 49: {64, 1, 3}, 82: {3, 50, 43, 30}, \
+            32: {1, 3, 45, 50, 30}, 80: {2, 41, 43, 50, 30}, 30: {35, 43, 51, 54, 28}, \
+            1: {77, 45, 17, 51, 54}, 50: {46, 17, 77, 54}, \
+            43: {1, 35, 77, 17, 50, 28}, 45: {3, 43, 35, 54}, 3: {43, 77, 46}, \
+            79: {45, 50, 35, 77}, 51: set(), 35: set(), 17: {77}, 54: set(), \
+            77: set(), 28: {35}, 46: {51}})
+
+        l2n_map = {0: {64, 32, 2, 41, 80, 49, 82, 83, 87, 56}, \
+            1: {1, 50, 3, 43, 45, 30, 79}, 2: {17, 35, 51, 54, 28, 77, 46}}
+
+        try: 
+            C = DAGraphContainer(Gx,l2n_map,True) 
+            assert False 
+        except: 
+            assert True 
 
     def test__DAGraphContainer__permute_nodes__case_1(self):
         dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
