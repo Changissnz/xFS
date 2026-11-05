@@ -43,10 +43,10 @@ class ExtendedDAGTypeLTPN(DAGraphContainer):
         threshold = self.tfunc(n)
 
         index_vec = np.zeros(len(weight_vec))
-        for i in indices: 
+        for (j,i) in enumerate(indices): 
             if i in index2bool_map: 
                 q = int(index2bool_map[i]) 
-                index_vec[i] = q 
+                index_vec[j] = q 
 
         s = np.sum(index_vec * weight_vec) 
 
