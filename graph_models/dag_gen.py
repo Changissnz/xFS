@@ -3,6 +3,7 @@ from .graph_gen import *
 from morebs2.matrix_methods import is_number
 from morebs2.numerical_generator import safe_modulo_in_range,\
     prg_decimal,safe_prg_decimal,prg_partition_for_sz__n_rounds,prg_choose_n
+from math import floor 
 
 '''
 Storage container and operator for Directed Acyclic Graphs. Stores 
@@ -50,10 +51,16 @@ class DAGraphContainer:
         self.ptrav_queue = deque()
         self.ptrav_cache = deque() 
 
+        # extra queue used for calculating paths that require nodesets 
+        self.ptrav_queue2 = deque() 
+
         self.erroneous_node = None 
         if check_input_graph: 
             self.verify()
             self.G_ = None 
+
+        # status for calculating paths that include required nodeset 
+        self.trav_error = False 
         return
 
     def add_edge(self,source,target):
@@ -78,6 +85,22 @@ class DAGraphContainer:
         l = self.node_to_level(n) 
         return q - self.l2n_map[l]  
 
+    """
+    A 'sibling' of `n` is a node at the same level as `n`, 
+    one with either an edge to `n` (older sibling) or from `n` (younger sibling).  
+    """
+    def siblings_of_node(self,n,is_older:bool):
+        assert type(is_older) == bool 
+
+        if is_older: 
+            P0 = self.parents_of_node(n,False) 
+            P = self.parents_of_node(n,True) 
+            return P0 - P 
+
+        C0 = self.children_of_node(n,False) 
+        C = self.children_of_node(n,True) 
+        return C0 - C 
+
     def node_to_level(self,n): 
         for l,v in self.l2n_map.items(): 
             if n in v: return l 
@@ -97,7 +120,8 @@ class DAGraphContainer:
     #------------------------- intralayer edge operations 
 
     # NOTE: caution. Do NOT exceed size of 50 nodes or 
-    #       so. 
+    #       so. Computation uses <GraphComponentDecomposition>, 
+    #       not of the most efficient process. 
     # NOTE: also performs assertion of no circularity within 
     #       layer. 
     def intrasets_of_layer(self,l): 
@@ -130,7 +154,9 @@ class DAGraphContainer:
             self.G[n] = self.G[n] - nodeset 
         return 
 
-    #-------------------------- path operations  
+    #-------------------------------------- path operations  
+
+    ##------------------- full paths (from roots to leaves) 
 
     """
     proper_paths_only := if set to True, every path has at most one 
@@ -140,20 +166,168 @@ class DAGraphContainer:
     def n_paths_with_node(self,node,num_paths,proper_paths_only:bool=True,prg=None): 
         assert type(proper_paths_only) == bool 
 
-        self.ptrav_queue.clear()
-        self.ptrav_cache.clear() 
-
         if node not in self.G: 
-            return deque() 
+            return []  
 
         N = NodePath(node) 
-        self.ptrav_queue.append([N,False,False]) 
+        return self.run_full_traversal(N,num_paths,proper_paths_only,prg)  
+
+    """
+    calculates p < `num_paths` that include `nodeset`, every node of `nodeset` 
+    being of the same level. 
+    """
+    def n_paths_with_intra_nodeset(self,nodeset,num_paths,proper_paths_only:bool=True,prg=None): 
+
+        P = self.intralayer_nodeset_path(nodeset,prg)
+
+        if type(P) == type(None): 
+            return [] 
+
+        return self.run_full_traversal(P,num_paths,proper_paths_only,prg) 
+
+    """
+    calculates p < `num_paths` that include every node from arbitrary `nodeset`.
+    """
+    def n_paths_with_nodeset(self,nodeset,num_paths,proper_paths_only:bool=True,prg=None): 
+        
+        if len(nodeset) == 0: return None 
+
+        n2l_map = {n:[self.node_to_level(n)] for n in nodeset} 
+        l2nodeset_map = invert_map__seqvalue(n2l_map) 
+        l2nodeset_map = {k:set(v) for k,v in l2nodeset_map.items()}
+        return self.run_full_traversal__nodeset_req(l2nodeset_map,\
+            num_paths,proper_paths_only,prg)
+
+    def run_full_traversal(self,starting_path:NodePath,\
+        num_paths,proper_paths_only:bool=True,prg=None): 
+
+        assert type(starting_path) == NodePath 
+
+        self.ptrav_queue.clear()
+        self.ptrav_cache.clear() 
+        self.ptrav_queue.append([starting_path,False,False]) 
+        self.trav_error = False 
 
         stat = True 
         while stat and len(self.ptrav_cache) < num_paths: 
             stat = self.next_from_queue(prg,proper_paths_only) 
 
         return list(self.ptrav_cache) 
+
+    def run_full_traversal__nodeset_req(self,l2nodeset_map,num_paths,\
+        proper_paths_only:bool,prg=None):
+
+        self.ptrav_queue.clear()
+        self.ptrav_cache.clear() 
+        self.ptrav_queue2.clear() 
+
+        L = sorted(l2nodeset_map.keys())
+        i = floor(len(L) / 2) 
+        start = L[i] 
+
+        N = l2nodeset_map[start]
+
+        if len(N) == 1: 
+            P = NodePath(N.pop()) 
+        else: 
+            P = self.intralayer_nodeset_path(N,prg) 
+        self.ptrav_queue.append([P,False,False]) 
+
+        while len(self.ptrav_queue) > 0 and not self.trav_error and \
+            len(self.ptrav_cache) < num_paths: 
+            self.next_from_queue__nodeset_req(prg,proper_paths_only,\
+                l2nodeset_map)
+        return list(self.ptrav_cache)
+
+    ##------------------ partial paths (intralayer paths that include selected nodes) 
+
+    """
+    calculates one path in a layer that includes all nodes of nset 
+    """
+    def intralayer_nodeset_path(self,nset,prg=None): 
+        assert type(nset) == set and len(nset) > 1 
+
+        L = set() 
+        for n in nset: 
+            l = self.node_to_level(n)
+            assert type(l) != type(None) 
+
+            L |= {l} 
+        assert len(L) == 1 
+
+        nset_ = sorted(nset) 
+        if type(prg) != type(None): 
+            nset_ = prg_seqsort(nset_,prg) 
+
+        # declare starting paths 
+        Q = deque() 
+        for n in nset_: 
+            P = NodePath(n) 
+            Q.append(P)
+
+        while len(Q) > 0: 
+            P_ = Q.popleft()
+            rem_nodes = nset - set(P_.p) 
+
+            if len(rem_nodes) == 0: 
+                return P_ 
+
+            C = self.siblings_of_node(P_.tail(),False)
+            if len(C) == 0: continue 
+
+
+            C = sorted(C) 
+            if type(prg) != type(None): 
+                C = prg_seqsort(C,prg) 
+
+            for c in C: 
+                P1 = deepcopy(P_) 
+                P1.append(c,1) 
+                Q.appendleft(P1)
+
+        return None 
+        
+    """
+    calculates one path in a layer that includes nodes n0 and n1  
+    """
+    def intralayer_node2node_path(self,n0,n1,prg=None): 
+        q0 = self.intralayer_node2node_path_(n0,n1,prg) 
+        if type(q0) == NodePath: return q0 
+
+        q1 = self.intralayer_node2node_path_(n1,n0,prg) 
+        if type(q1) == NodePath: return q1 
+
+        return None 
+
+
+    def intralayer_node2node_path_(self,start_node,end_node,prg=None): 
+        assert type(prg) == type(None) or type(prg) in {MethodType,FunctionType}
+
+        l0 = self.node_to_level(start_node) 
+        l1 = self.node_to_level(end_node) 
+        assert l0 == l1 
+
+        P = NodePath(start_node) 
+        Q = deque([P]) 
+
+        while len(Q) > 0: 
+            P_ = Q.popleft()
+            C = sorted(self.siblings_of_node(P_.tail(),False)) 
+
+            if len(C) == 0: continue 
+
+            if type(prg) != type(None): 
+                C = prg_seqsort(C,prg) 
+
+            if end_node in C: 
+                P_.append(end_node,1) 
+                return P_ 
+
+            for c in C: 
+                P1 = deepcopy(P_) 
+                P1.append(c,1) 
+                Q.appendleft(P1)
+        return None 
 
     def next_from_queue(self,prg,is_proper_path:bool):
         assert type(is_proper_path) == bool 
@@ -205,6 +379,141 @@ class DAGraphContainer:
         for npth in new_paths: 
             self.ptrav_queue.appendleft(npth) 
         return True 
+
+    def next_from_queue__nodeset_req(self,prg,is_proper_path:bool,\
+        l2nodeset_map:dict): 
+        assert type(is_proper_path) == bool 
+        self.ptrav_queue2.clear() 
+
+        if len(self.ptrav_queue) == 0: 
+            return  
+
+        x = self.ptrav_queue.popleft() 
+
+        # case: done 
+        if x[1] == x[2] == True: 
+            self.ptrav_cache.appendleft(x[0]) 
+            return 
+
+        if not x[1]: 
+            c0 = self.add_next_level_nodes__nodeset_req(x[0],prg,\
+            is_proper_path,l2nodeset_map,add_parent=True)
+            if c0 == 0: 
+                x[1] = True   
+
+        if not x[2]: 
+            c1 = self.add_next_level_nodes__nodeset_req(x[0],prg,\
+            is_proper_path,l2nodeset_map,add_parent=False) 
+            if c1 == 0: 
+                x[2] = True 
+
+        if len(self.ptrav_queue2) == 0: 
+            self.ptrav_queue.appendleft([x[0],x[1],x[2]])
+            return 
+
+        R = list(self.ptrav_queue2)
+        if type(prg) != type(None): 
+            R = prg_seqsort(R,prg) 
+
+        for r in R: 
+            self.ptrav_queue.appendleft([r,x[1],x[2]]) 
+        return 
+
+    """
+    adds nodes to path `P`, at either the head (parents) or tail (children). 
+    
+    return:
+    - integer, number of new paths produced from `P`. 
+    """
+    def add_next_level_nodes__nodeset_req(self,P:NodePath,prg,\
+        is_proper_path:bool,l2nodeset_map:dict,add_parent:bool): 
+        assert type(P) == NodePath 
+
+        def add_to_path(pth,node): 
+            if add_parent: 
+                pth.prepend(node,1) 
+            else: 
+                pth.append(node,1)
+            self.ptrav_queue2.appendleft(pth)  
+
+        if add_parent: 
+            l = self.node_to_level(P.head()) 
+            C = self.parents_of_node(P.head(),is_proper_path)
+            i = -1 
+        else: 
+            l = self.node_to_level(P.tail()) 
+            C = self.children_of_node(P.tail(),is_proper_path) 
+            i = 1 
+
+        pset = set() 
+
+        # case: next layer is in required nodeset 
+        if l + i in l2nodeset_map: 
+            pset = l2nodeset_map[l + i]
+
+        # add sibling nodes first  
+        C_ = set() 
+            # subcase: no next layer 
+        try: 
+            C_ = C - self.l2n_map[l + i] 
+        except: 
+            pass 
+        C2 = C - C_ 
+
+        count = 0 
+        for c in C_: 
+            P_ = deepcopy(P) 
+            add_to_path(P_,c)
+            count += 1 
+
+        # add the next layers 
+
+            # case: 0 required nodes of next layer 
+        if len(pset) == 0: 
+            for c in C2: 
+                P_ = deepcopy(P) 
+                add_to_path(P_,c) 
+                count += 1 
+
+            # case: only one node per next layer 
+        elif len(pset) == 1: 
+            P_ = deepcopy(P) 
+            x = pset.pop() 
+            stat = False 
+            if add_parent: 
+                q = P.head() 
+                if q in self.G[x]: 
+                    stat = True 
+            else: 
+                q = P.tail() 
+                if q in self.G_rev[x]: 
+                    stat = True 
+
+            if not stat: 
+                self.trav_error = True 
+                return count  
+            add_to_path(P_,x)
+            count += 1 
+
+            # case: required nodeset of size > 1 
+        else: 
+            ppath = self.intralayer_nodeset_path(pset,prg) 
+            
+            # subcase: nodeset does not exist 
+            if type(ppath) == type(None): 
+                self.trav_error = True 
+                return False 
+
+            X = None 
+            if add_parent: 
+                ppath.add_path_v2(P) 
+                X = ppath 
+            else: 
+                P.add_path_v2(ppath) 
+                X = P 
+            self.ptrav_queue2.appendleft(X) 
+            count += 1 
+        return count 
 
     #------------------------------- verifying instantiating parameters 
 

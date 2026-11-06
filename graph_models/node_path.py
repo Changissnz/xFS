@@ -124,7 +124,21 @@ class NodePath:
 
         assert self.tail() == p.head() 
         self.p.extend(p.p[1:]) 
-        self.pweights.extend(p.pweights)  
+        self.pweights.extend(p.pweights) 
+
+    def add_path_v2(self,p,connector_weight=1): 
+        if len(p) == 0: return 
+
+        if len(self) == 0: 
+            self.p = p.p 
+            self.pweights = p.pweights
+            return 
+
+        self.p.extend(p.p) 
+        self.pweights.append(connector_weight)
+        self.pweights.extend(p.pweights)
+        return 
+
 
     def head(self):
         return self.p[0] 

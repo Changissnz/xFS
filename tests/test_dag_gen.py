@@ -8,7 +8,7 @@ def DAGraphGen__sample_QSTD(gen_scheme,num_node_range_per_layer,\
 
     dagg = DAGraphGen(num_node_range_per_layer,gen_scheme,multiparent_pr_range,\
         intralayer_conn_range,prg,uniform_depth)
-    return dagg 
+    return dagg,prg 
 
 """
 py -m tests.test_dag_gen
@@ -25,7 +25,7 @@ class DAGraphGenClass(unittest.TestCase):
     """
     def test__DAGraphGen__next__case_1(self): 
 
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.,0.2],\
             intralayer_conn_range = [0.1,0.2],uniform_depth = True)
@@ -64,7 +64,7 @@ class DAGraphGenClass(unittest.TestCase):
       to [0.,0.8] and uniform_depth set to False. 
     '''
     def test__DAGraphGen__next__case_2(self):
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.0,0.8],\
             intralayer_conn_range = [0.1,0.2],uniform_depth = False)
@@ -112,7 +112,7 @@ class DAGraphGenClass(unittest.TestCase):
     - uniform depth = True.
     '''
     def test__DAGraphGen__next__case_3(self): 
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="mult",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.0,0.0],\
             intralayer_conn_range = [0.0,0.0],uniform_depth = True)
@@ -139,7 +139,7 @@ class DAGraphGenClass(unittest.TestCase):
         assert len(I) == 0 
 
     def test__DAGraphContainer__n_paths_with_node__case_1(self): 
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
             num_node_range_per_layer = [5,10],\
             multiparent_pr_range = [0.5,1.0],\
             intralayer_conn_range = [0.1,0.35],uniform_depth = True)
@@ -170,7 +170,7 @@ class DAGraphGenClass(unittest.TestCase):
             assert does_path_exist(dagg.G,l) 
 
     def test__DAGraphGen__n_paths_with_node__case_2(self): 
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
         num_node_range_per_layer = [2,4],\
         multiparent_pr_range = [0.05,0.15],\
         intralayer_conn_range = [0.0,0.4],uniform_depth = True)
@@ -191,7 +191,7 @@ class DAGraphGenClass(unittest.TestCase):
     NOTE: verification is relatively long process. 
     """
     def test__DAGraphContainer__verify__case_1(self): 
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="mult",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="mult",\
         num_node_range_per_layer = [2,4],\
         multiparent_pr_range = [0.05,0.1],\
         intralayer_conn_range = [0.01,0.3],uniform_depth = True)
@@ -251,7 +251,7 @@ class DAGraphGenClass(unittest.TestCase):
             assert True 
 
     def test__DAGraphContainer__permute_nodes__case_1(self):
-        dagg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
         num_node_range_per_layer = [2,4],\
         multiparent_pr_range = [0.05,0.15],\
         intralayer_conn_range = [0.0,0.0],uniform_depth = True)
@@ -275,7 +275,186 @@ class DAGraphGenClass(unittest.TestCase):
             level = P.p.index(k)    
             assert k in dagg.l2n_map[level] 
 
+    def test__DAGraphContainer__children_of_node__case_1(self): 
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [7,16],\
+            multiparent_pr_range = [0.05,0.15],\
+            intralayer_conn_range = [0.4,0.8],uniform_depth = True)
+
+        for _ in range(10): 
+            next(dagg) 
+
+        assert dagg.intrasets_of_layer(0) == \
+            [{0}, {1}, {2}, {2, 3, 12}, {9, 3, 4}, {5}, {2, 6}, {7}, {8, 7}, {10}, {11}, {13}]
+
+        s5_1 = dagg.siblings_of_node(5,True)
+        assert s5_1.issubset(dagg.children_of_node(5,False)) 
+        s5_0 = dagg.siblings_of_node(5,False)
+        assert s5_0.issubset(dagg.parents_of_node(5,False)) 
+        assert s5_1 == s5_0 == set() 
+
+        s7_1 = dagg.siblings_of_node(7,True)
+        assert s7_1.issubset(dagg.parents_of_node(7,False))
+        assert s7_1 == {8} 
+
+        s12_1 = dagg.siblings_of_node(12,True)
+        assert s12_1.issubset(dagg.parents_of_node(12,False))
+        assert s12_1 == {3} 
+
+        s12_0 = dagg.siblings_of_node(12,False)
+        assert s12_0.issubset(dagg.children_of_node(12,False)) 
+        assert s12_0 == {2}  
         
+    """
+    the DAG is the same as that from 
+        <test__DAGraphContainer__children_of_node__case_1>. 
+    """
+    def test__DAGraphContainer__intralayer_node2node_path__case_1(self): 
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [7,16],\
+            multiparent_pr_range = [0.05,0.15],\
+            intralayer_conn_range = [0.4,0.8],uniform_depth = True)
+
+        for _ in range(10): 
+            next(dagg) 
+
+        P0_1 = dagg.intralayer_node2node_path(0,1)
+        assert type(P0_1) == type(None) 
+
+        P3_12 = dagg.intralayer_node2node_path(3,12)
+        assert type(P3_12) == NodePath 
+        assert {3,12}.issubset(set(P3_12.p)) 
+        assert does_path_exist(dagg.G,P3_12.p)
+
+        P12_3 = dagg.intralayer_node2node_path(12,3)
+        assert type(P12_3) == NodePath 
+        assert {3,12}.issubset(set(P12_3.p)) 
+        assert does_path_exist(dagg.G,P12_3.p)
+
+        P3_4 = dagg.intralayer_node2node_path(3,4)
+        assert type(P3_4) == NodePath 
+        assert {3,4}.issubset(set(P3_4.p)) 
+        assert does_path_exist(dagg.G,P3_4.p)
+
+        P4_3 = dagg.intralayer_node2node_path(4,3)
+        assert type(P4_3) == NodePath 
+        assert {3,4}.issubset(set(P4_3.p)) 
+        assert does_path_exist(dagg.G,P4_3.p)
+
+        P7_10 = dagg.intralayer_node2node_path(7,10)
+        assert type(P7_10) != NodePath 
+
+        P10_7 = dagg.intralayer_node2node_path(10,7)
+        assert type(P10_7) != NodePath 
+
+    """
+    the DAG is the same as that from 
+        <test__DAGraphContainer__children_of_node__case_1>. 
+    """
+    def test__DAGraphContainer__intralayer_nodeset_path__case_1(self): 
+        dagg,_ = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [7,16],\
+            multiparent_pr_range = [0.05,0.15],\
+            intralayer_conn_range = [0.4,0.8],uniform_depth = True)
+
+        for _ in range(10): 
+            next(dagg) 
+
+        assert dagg.intrasets_of_layer(0) == \
+            [{0}, {1}, {2}, {2, 3, 12}, {9, 3, 4}, {5}, {2, 6}, {7}, {8, 7}, {10}, {11}, {13}]
+
+        S0 = {2,3,12,4,9} 
+        P_S0 = dagg.intralayer_nodeset_path(S0) 
+        assert type(P_S0) == type(None)
+
+        S1 = {2,3,12} 
+        P_S1 = dagg.intralayer_nodeset_path(S1) 
+        assert S1.issubset(set(P_S1.p))
+        assert does_path_exist(dagg.G,P_S1.p)
+
+        S2 = {3,4,9} 
+        P_S2 = dagg.intralayer_nodeset_path(S2) 
+        assert S2.issubset(set(P_S2.p))
+        assert does_path_exist(dagg.G,P_S2.p)
+
+    def test__DAGraphContainer__n_paths_with_intra_nodeset__case_1(self): 
+
+        dagg,prg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [7,16],\
+            multiparent_pr_range = [0.05,0.15],\
+            intralayer_conn_range = [0.4,0.8],uniform_depth = True)
+
+        for _ in range(10): 
+            next(dagg) 
+
+        N0 = {2,3}
+        X = dagg.n_paths_with_intra_nodeset(N0,5) 
+        assert len(X) == 5 
+
+        N1 = {33, 34, 35, 29, 30}
+        X1 = dagg.n_paths_with_intra_nodeset(N1,5) 
+        assert len(X1) == 5 
+
+        N2 = {33, 34, 35, 29, 30,31}
+        X2 = dagg.n_paths_with_intra_nodeset(N2,5) 
+        assert len(X2) == 0 
+
+    def test__DAGraphContainer__n_paths_with_nodeset__case_1(self): 
+        dagg,prg = DAGraphGen__sample_QSTD(gen_scheme="constant",\
+            num_node_range_per_layer = [7,16],\
+            multiparent_pr_range = [0.05,0.15],\
+            intralayer_conn_range = [0.4,0.8],uniform_depth = True)
+
+        for _ in range(10): 
+            next(dagg) 
+
+        # subcase 1 
+        N0 = {2,3}
+        X = dagg.n_paths_with_nodeset(N0,5)
+        assert len(X) == 5 
+        for x in X: 
+            assert N0.issubset(set(x.p))
+        assert not dagg.trav_error
+
+        # subcase 2 
+        N1 = {2,3,17,14,21,44,48,50,45}
+        X2 = dagg.n_paths_with_nodeset(N1,5)
+        assert len(X) == 5 
+        for x in X2: 
+            assert N1.issubset(set(x.p))
+        assert not dagg.trav_error
+
+        # subcase 2.1 
+        X2_ = dagg.n_paths_with_nodeset(N1,5,False)
+        assert len(X2_) == 5 
+        dcount = 0 
+        for (i,x) in enumerate(X2_): 
+            assert N1.issubset(set(x.p))
+            p2 = X2[i]
+            if p2 != x: 
+                dcount += 1  
+        assert X2 != X2_ 
+        assert not dagg.trav_error
+
+        # subcase 2.2: consistency -> equal to subcase 2
+        X2__ = dagg.n_paths_with_nodeset(N1,5)
+        assert len(X2__) == 5 
+        for (x,x2) in zip(X2,X2__): 
+            assert x == x2 
+        assert not dagg.trav_error
+
+        # subcase 2: different paths using PRNG 
+        X2___ = dagg.n_paths_with_nodeset(N1,5,prg=prg)
+        assert len(X2___) == 5 
+        for (x,x2) in zip(X2,X2___): 
+            assert x != x2 
+        assert not dagg.trav_error
+
+        # subcase 3: no paths have that nodeset 
+        X3 = dagg.n_paths_with_nodeset({15,16,48,50},5) 
+        assert X3 == [] 
+        assert dagg.trav_error
+
 
 if __name__ == '__main__':
     unittest.main()
