@@ -2,6 +2,7 @@ from collections import defaultdict,deque
 from copy import deepcopy
 import numpy as np 
 from morebs2.numerical_generator import prg_seqsort,prg__single_to_int
+from morebs2.graph_basics import is_graph_path,endpoints_of_path
 
 DEFAULT_EDGE_COST_FUNCTION = lambda u,v,c: 1
 DEFAULT_EDGE_COST_FUNCTION_2 = lambda u,v:1 if u != v else 0
@@ -52,6 +53,36 @@ class NodePath:
         npath.p = p
         npath.pweights = pw 
         return npath 
+
+    @staticmethod 
+    def from_graph(g:defaultdict,is_dsg:bool,head_node=None,\
+        edge_cost_function=DEFAULT_EDGE_COST_FUNCTION_2): 
+
+        e0,e1 = endpoints_of_path(g,is_dsg)
+        assert type(e0) != type(None) 
+
+        if type(head_node) != type(None):
+            if is_dsg: 
+                assert head_node == e0 
+            else: 
+                assert head_node == e0 or head_node == e1 
+        else: 
+            head_node = e0 
+
+        n = NodePath(head_node) 
+        current_node = head_node 
+        done = {head_node} 
+
+        while True: 
+            neighbors = g[current_node] - done 
+            if len(neighbors) == 0: break 
+
+            n2 = neighbors.pop() 
+            n.append(n2,edge_cost_function(current_node,n2)) 
+
+            current_node = n2 
+            done |= {n2} 
+        return n 
 
     @staticmethod 
     def nodepath_set_to_graph(nodepath_set,is_dsg:bool=False): 

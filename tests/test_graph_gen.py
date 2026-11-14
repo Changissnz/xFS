@@ -148,7 +148,7 @@ class OtherGraphGeneratorFunctionsClass(unittest.TestCase):
         G_c = generate_graph__complete(4,starting_node_idn=4)
 
         assert P == defaultdict(set, {3: {4}, 4: {3, 5}, 5: {4, 6}, 6: {5, 7}, 7: {6}})
-        assert P1 == defaultdict(set, {4: {5}, 5: {6}, 6: {7}, 7: {8}, 8: {9}, 9: {10}})
+        assert P1 == defaultdict(set, {4: {5}, 5: {6}, 6: {7}, 7: {8}, 8: {9}, 9: {10},10: set()}), "got {}".format(P1)
         assert P2 == defaultdict(set, {5: set()})
         assert G_c == defaultdict(set, {4: {5, 6, 7}, 5: {4, 6, 7}, 6: {4, 5, 7}, 7: {4, 5, 6}})
 

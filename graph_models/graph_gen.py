@@ -172,6 +172,8 @@ def generate_graph__path(num_vertices,starting_node_idn:int,is_dsg:bool):
     G[c+num_vertices-2] |= {c+num_vertices-1} 
     if not is_dsg: 
         G[c+num_vertices-1] |= {c+num_vertices-2}
+
+    graph_childkey_fillin(G) 
     return G 
 
 def generate_graph__complete(num_vertices,starting_node_idn:int): 
